@@ -2,18 +2,23 @@ package net.pladum.tablero.tv
 
 import android.app.Activity
 import android.os.Bundle
+import android.util.Log
+import android.view.KeyEvent
 import android.view.WindowManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import net.pladum.tablero.shared.Command
+import net.pladum.tablero.shared.DispatchResult
 import net.pladum.tablero.shared.GameEngine
 
 /** The only screen: the scoreboard, rendered from the engine's snapshots. */
 class MainActivity : Activity() {
     private lateinit var engine: GameEngine
     private lateinit var scoreboard: ScoreboardView
+    private val keys = RemoteKeyAdapter(::dispatch)
     private var uiScope: CoroutineScope? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,5 +41,22 @@ class MainActivity : Activity() {
         uiScope?.cancel()
         uiScope = null
         super.onStop()
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        if (!keys.onKeyDown(keyCode, event.repeatCount)) return super.onKeyDown(keyCode, event)
+        if (event.repeatCount == 0) event.startTracking() // Enables onKeyLongPress for this key.
+        return true
+    }
+
+    override fun onKeyLongPress(keyCode: Int, event: KeyEvent): Boolean =
+        keys.onKeyLongPress(keyCode) || super.onKeyLongPress(keyCode, event)
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
+        keys.onKeyUp(keyCode, event.isCanceled) || super.onKeyUp(keyCode, event)
+
+    private fun dispatch(command: Command) {
+        val result = engine.dispatch(command)
+        if (result is DispatchResult.Rejected) Log.d(LOG_TAG, "$command rejected: ${result.reason}")
     }
 }
