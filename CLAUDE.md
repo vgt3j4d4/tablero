@@ -87,7 +87,7 @@ tablero/
 - Game clock LED red, scores LED amber. Team = color swatch + color name (white text). UI text in Barlow
   Condensed (OFL).
 - Layout (1920×1080): clock across the top; left/right team columns below; a thin status bar at the bottom
-  (next team up, clock running/stopped, action confirmations like `YELLOW +3 · 48 → 51`).
+  (game length, clock running/stopped, action confirmations like `YELLOW +3 · 48 → 51`).
 
 ## Remote control mapping (Phase 1, Xiaomi Bluetooth remote)
 
