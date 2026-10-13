@@ -14,3 +14,16 @@ fun TeamColor.nameRes(): Int = when (this) {
     TeamColor.PURPLE -> R.string.team_purple
     TeamColor.LIGHT_BLUE -> R.string.team_light_blue
 }
+
+/** The color resource for this team's swatch. */
+fun TeamColor.colorRes(): Int = when (this) {
+    TeamColor.YELLOW -> R.color.team_yellow
+    TeamColor.BLACK -> R.color.team_black
+    TeamColor.WHITE -> R.color.team_white
+    TeamColor.BLUE -> R.color.team_blue
+    TeamColor.RED -> R.color.team_red
+    TeamColor.GREEN -> R.color.team_green
+    TeamColor.ORANGE -> R.color.team_orange
+    TeamColor.PURPLE -> R.color.team_purple
+    TeamColor.LIGHT_BLUE -> R.color.team_light_blue
+}

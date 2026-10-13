@@ -33,7 +33,8 @@ object AppLanguage {
     }
 
     /** The language chosen in the app, or null to follow the device. */
-    fun chosen(context: Context): Locale? = resolveChosen(prefs(context).getString(PREF_LANGUAGE, null), available(context))
+    fun chosen(context: Context): Locale? =
+        resolveChosen(prefs(context).getString(PREF_LANGUAGE, null), available(context))
 
     /** Saves [locale] (null = follow the device) and recreates [activity] so it shows the new language. */
     fun set(activity: Activity, locale: Locale?) {

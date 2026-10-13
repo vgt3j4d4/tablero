@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 /** Commands kept for undo. */
 const val UNDO_HISTORY_SIZE = 20
 
-private const val EVENT_BUFFER_SIZE = 16
+private const val EVENT_BUFFER_SIZE = 64
 
 /**
  * The single source of truth for a game. Applies [Command]s, publishes [snapshot]s and emits [events].
@@ -66,11 +66,13 @@ class GameEngine(
         when (val step = if (command == Command.Undo) undo(current, now) else apply(current, command, now)) {
             is Step.Reject -> DispatchResult.Rejected(step.reason)
             is Step.Change -> {
-                if (step.entry != null) {
-                    if (history.size == UNDO_HISTORY_SIZE) history.removeFirst()
-                    history.addLast(step.entry)
-                }
-                commit(step.next, now)
+                if (history.size == UNDO_HISTORY_SIZE) history.removeFirst()
+                history.addLast(step.entry)
+                commit(step.next, now) { GameEvent.CommandApplied(step.entry.command, before = current, after = it) }
+                DispatchResult.Applied(_snapshot.value)
+            }
+            is Step.Revert -> {
+                commit(step.next, now) { GameEvent.CommandUndone(step.undone, before = current, after = it) }
                 DispatchResult.Applied(_snapshot.value)
             }
         }
@@ -145,7 +147,8 @@ class GameEngine(
     private fun undo(s: GameSnapshot, now: Long): Step {
         val entry = history.removeLastOrNull() ?: return Step.Reject(RejectReason.NOTHING_TO_UNDO)
         val before = entry.before
-        val next = when (val command = entry.command) {
+        val command = entry.command
+        val next = when (command) {
             Command.StartClock,
             Command.StopClock,
             is Command.SetGameClock,
@@ -166,7 +169,7 @@ class GameEngine(
             is Command.SetTeams -> s.copy(teams = before.teams)
             Command.ToggleClock, Command.Undo -> error("$command is never recorded")
         }
-        return Step.Change(next, entry = null)
+        return Step.Revert(next, undone = command)
     }
 
     private fun change(
@@ -193,9 +196,15 @@ class GameEngine(
     private fun ClockState.withTimeUp(s: GameSnapshot): GameSnapshot =
         s.copy(gameClock = this, timeUp = s.timeUp && remainingNanos == 0L)
 
-    private fun commit(next: GameSnapshot, now: Long) {
+    /**
+     * Publishes [next] and emits the event [describe] builds from it as published, ahead of the clock events and of
+     * an expiry the change may cause at once.
+     */
+    private fun commit(next: GameSnapshot, now: Long, describe: (GameSnapshot) -> GameEvent) {
         val previous = _snapshot.value
-        _snapshot.value = next.copy(version = previous.version + 1)
+        val committed = next.copy(version = previous.version + 1)
+        _snapshot.value = committed
+        _events.tryEmit(describe(committed))
         if (!previous.gameClock.running && next.gameClock.running) _events.tryEmit(GameEvent.ClockStarted)
         if (previous.gameClock.running && !next.gameClock.running) _events.tryEmit(GameEvent.ClockStopped)
         scheduleExpiry(now)
@@ -228,6 +237,10 @@ class GameEngine(
     private sealed interface Step {
         data class Reject(val reason: RejectReason) : Step
 
-        data class Change(val next: GameSnapshot, val entry: HistoryEntry?) : Step
+        /** A command applied; [entry] goes to the undo history. */
+        data class Change(val next: GameSnapshot, val entry: HistoryEntry) : Step
+
+        /** The last command in the history was undone. */
+        data class Revert(val next: GameSnapshot, val undone: Command) : Step
     }
 }

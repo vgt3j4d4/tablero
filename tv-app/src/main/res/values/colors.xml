@@ -3,5 +3,24 @@
     <!-- Scoreboard palette, see docs/design/README.md → Visual language. -->
     <color name="board_background">#FF07080A</color>
     <color name="led_red">#FFFF3B2F</color>
+    <color name="led_red_unlit">#FF240807</color>
     <color name="led_amber">#FFFFB21E</color>
+    <color name="led_amber_unlit">#FF241904</color>
+    <color name="clock_box">#FF0B0C0E</color>
+    <color name="clock_box_border">#FF1A1D22</color>
+    <color name="status_line">#FF16191D</color>
+    <color name="text">#FFF5F2EA</color>
+    <color name="text_muted">#FF8B919B</color>
+    <color name="text_off">#FF3A3F47</color>
+
+    <!-- Team (jersey) colors, one per TeamColor. -->
+    <color name="team_yellow">#FFFFD60A</color>
+    <color name="team_black">#FF111214</color>
+    <color name="team_white">#FFF5F5F5</color>
+    <color name="team_blue">#FF2F6BFF</color>
+    <color name="team_red">#FFE5372B</color>
+    <color name="team_green">#FF1FB85A</color>
+    <color name="team_orange">#FFFF7A00</color>
+    <color name="team_purple">#FF8B5CF6</color>
+    <color name="team_light_blue">#FF5BC8F5</color>
 </resources>

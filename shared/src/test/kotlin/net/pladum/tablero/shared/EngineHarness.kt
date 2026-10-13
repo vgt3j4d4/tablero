@@ -25,6 +25,10 @@ class EngineHarness(private val test: TestScope) {
         start()
     }
 
+    /** [events] without the per-command confirmations. */
+    val clockEvents: List<GameEvent>
+        get() = events.filterNot { it is GameEvent.CommandApplied || it is GameEvent.CommandUndone }
+
     val state: GameSnapshot get() = engine.snapshot.value
 
     val remainingMs: Long get() = state.gameClock.remainingAt(time.nowNanos()) / NANOS_PER_MS

@@ -15,12 +15,15 @@ import net.pladum.tablero.shared.Command
 import net.pladum.tablero.shared.DispatchResult
 import net.pladum.tablero.shared.GameEngine
 import net.pladum.tablero.shared.TeamColor
+import net.pladum.tablero.shared.TimeSource
 
 /** The only screen: the scoreboard, rendered from the engine's snapshots. */
 class MainActivity : Activity() {
     private lateinit var engine: GameEngine
+    private lateinit var timeSource: TimeSource
     private lateinit var scoreboard: ScoreboardView
     private val keys = RemoteKeyAdapter(::dispatch)
+    private val feedback = FeedbackGrouper()
     private var uiScope: CoroutineScope? = null
 
     override fun attachBaseContext(newBase: Context) {
@@ -32,9 +35,10 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         val app = application as TableroApplication
         engine = app.engine
+        timeSource = app.timeSource
         logLanguage()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        scoreboard = ScoreboardView(this, app.timeSource)
+        scoreboard = ScoreboardView(this, timeSource)
         setContentView(scoreboard)
     }
 
@@ -42,6 +46,9 @@ class MainActivity : Activity() {
         super.onStart()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         scope.launch { engine.snapshot.collect(scoreboard::render) }
+        scope.launch {
+            engine.events.collect { event -> feedback.onEvent(event, timeSource.nowNanos())?.let(scoreboard::show) }
+        }
         uiScope = scope
     }
 
@@ -71,6 +78,8 @@ class MainActivity : Activity() {
 
     private fun dispatch(command: Command) {
         val result = engine.dispatch(command)
-        if (result is DispatchResult.Rejected) Log.d(LOG_TAG, "$command rejected: ${result.reason}")
+        if (result !is DispatchResult.Rejected) return
+        Log.d(LOG_TAG, "$command rejected: ${result.reason}")
+        feedback.onRejected(command, result.reason)?.let(scoreboard::show)
     }
 }

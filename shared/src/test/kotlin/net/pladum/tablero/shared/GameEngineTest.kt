@@ -13,6 +13,8 @@ import net.pladum.tablero.shared.Command.ToggleClock
 import net.pladum.tablero.shared.Command.Undo
 import net.pladum.tablero.shared.GameEvent.ClockStarted
 import net.pladum.tablero.shared.GameEvent.ClockStopped
+import net.pladum.tablero.shared.GameEvent.CommandApplied
+import net.pladum.tablero.shared.GameEvent.CommandUndone
 import net.pladum.tablero.shared.GameEvent.GameClockExpired
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
@@ -58,7 +60,7 @@ class GameEngineTest {
             apply(ToggleClock)
             advance(5 * SECOND_MS)
             assertClock(GAME_MS - 3 * SECOND_MS, running = false)
-            assertEquals(listOf(ClockStarted, ClockStopped), events)
+            assertEquals(listOf(ClockStarted, ClockStopped), clockEvents)
         }
 
         @Test
@@ -77,7 +79,7 @@ class GameEngineTest {
             assertTrue(state.timeUp)
             assertClock(0, running = false)
             advance(MINUTE_MS)
-            assertEquals(listOf(ClockStarted, GameClockExpired), events)
+            assertEquals(listOf(ClockStarted, GameClockExpired), clockEvents)
         }
 
         @Test
@@ -166,7 +168,7 @@ class GameEngineTest {
             apply(StartClock)
             apply(AdjustGameClock(-GAME_MS))
             assertTrue(state.timeUp)
-            assertEquals(listOf(ClockStarted, GameClockExpired), events)
+            assertEquals(listOf(ClockStarted, GameClockExpired), clockEvents)
         }
 
         @Test
@@ -224,7 +226,7 @@ class GameEngineTest {
             advance(SECOND_MS)
             apply(ResetGameClock)
             assertClock(GAME_MS, running = false)
-            assertEquals(listOf(ClockStarted, ClockStopped), events)
+            assertEquals(listOf(ClockStarted, ClockStopped), clockEvents)
         }
 
         @Test
@@ -305,7 +307,7 @@ class GameEngineTest {
             advance(5 * SECOND_MS)
             apply(Undo)
             assertClock(GAME_MS, running = false)
-            assertEquals(listOf(ClockStarted, ClockStopped), events)
+            assertEquals(listOf(ClockStarted, ClockStopped), clockEvents)
         }
 
         @Test
@@ -326,7 +328,7 @@ class GameEngineTest {
             advance(10 * SECOND_MS)
             apply(Undo)
             assertTrue(state.timeUp)
-            assertEquals(GameClockExpired, events.last())
+            assertEquals(GameClockExpired, clockEvents.last())
         }
 
         @Test
@@ -398,6 +400,58 @@ class GameEngineTest {
             repeat(UNDO_HISTORY_SIZE) { apply(Undo) }
             assertRejected(Undo, RejectReason.NOTHING_TO_UNDO)
             assertEquals(5, state.left.score)
+        }
+    }
+
+    @Nested
+    inner class CommandEvents {
+        @Test
+        fun `an applied command reports the snapshots around it`() = engineTest {
+            apply(Score(LEFT, 1))
+            val before = state
+            val after = apply(Score(LEFT, 1))
+            assertEquals(CommandApplied(Score(LEFT, 1), before, after), events.last())
+            assertEquals(1, before.left.score)
+            assertEquals(2, after.left.score)
+        }
+
+        @Test
+        fun `a toggle is reported as the start or stop it resolved to`() = engineTest {
+            apply(ToggleClock)
+            apply(ToggleClock)
+            val commands = events.filterIsInstance<CommandApplied>().map { it.command }
+            assertEquals(listOf(StartClock, StopClock), commands)
+        }
+
+        @Test
+        fun `an undo reports the command it reverted`() = engineTest {
+            apply(Score(RIGHT, 1))
+            val before = state
+            val after = apply(Undo)
+            assertEquals(CommandUndone(Score(RIGHT, 1), before, after), events.last())
+            assertEquals(0, after.right.score)
+        }
+
+        @Test
+        fun `rejected commands emit nothing`() = engineTest {
+            assertRejected(Score(LEFT, -1), RejectReason.SCORE_AT_ZERO)
+            assertRejected(Undo, RejectReason.NOTHING_TO_UNDO)
+            assertEquals(emptyList(), events)
+        }
+
+        @Test
+        fun `events come in the order things happened`() = engineTest {
+            apply(StartClock)
+            advance(SECOND_MS)
+            apply(AdjustGameClock(-GAME_MS))
+            val adjusted = events[2] as CommandApplied
+            assertEquals(0, adjusted.after.gameClock.remainingAt(time.nowNanos()))
+            assertFalse(adjusted.after.timeUp)
+            assertEquals(
+                listOf(CommandApplied::class, ClockStarted::class, CommandApplied::class, GameClockExpired::class),
+                events.map { it::class },
+            )
+            assertTrue(state.timeUp)
         }
     }
 }
