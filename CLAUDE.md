@@ -119,6 +119,9 @@ stopped; confirm screen with Cancel focused; exit requires holding OK 2 s).
 ## Tech stack
 
 - Kotlin, Gradle Kotlin DSL, version catalog (`gradle/libs.versions.toml`).
+- Package / application IDs: `tv-app` = `net.pladum.tablero.tv`, `remote-app` = `net.pladum.tablero.remote`,
+  `shared` = `net.pladum.tablero.shared` (Kotlin package). Debug builds add `.debug`. Application IDs are
+  permanent once published — never rename them.
 - `shared`: Kotlin/JVM library + JUnit 5 (or kotlin.test).
 - `tv-app`: Android Views + Leanback-free custom UI; Kotlin coroutines/Flow for state.
 - Localization: Android string resources. **English is the default** (`res/values/`), Spanish in
