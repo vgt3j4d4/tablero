@@ -11,7 +11,7 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
 - [x] `shared`: state serialization (JSON) for persistence
 - [x] `tv-app`: single activity, `FLAG_KEEP_SCREEN_ON`, launcher entry; first `ScoreboardView` (clock + scores,
       system font)
-- [ ] `tv-app`: string resources — English default + Spanish, `locales_config.xml`, in-app language setting,
+- [x] `tv-app`: string resources — English default + Spanish, `locales_config.xml`, in-app language setting,
       lint `MissingTranslation` as error
 - [x] `tv-app`: bundle DSEG7 Classic (Bold) and Barlow Condensed (500–800) as **TTF** in `res/font/` with their
       OFL license files (in `assets/licenses/`)

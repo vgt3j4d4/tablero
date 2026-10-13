@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">tablero</string>
+
+    <!-- Team colors (TeamColor). Shown next to the team's swatch; uppercased in the status bar. -->
+    <string name="team_yellow">Yellow</string>
+    <string name="team_black">Black</string>
+    <string name="team_white">White</string>
+    <string name="team_blue">Blue</string>
+    <string name="team_red">Red</string>
+    <string name="team_green">Green</string>
+    <string name="team_orange">Orange</string>
+    <string name="team_purple">Purple</string>
+    <string name="team_light_blue">Light blue</string>
 </resources>

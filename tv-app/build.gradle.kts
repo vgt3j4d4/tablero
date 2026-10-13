@@ -29,8 +29,23 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    bundle {
+        // The language is chosen in the app, so an App Bundle must ship every language to every device.
+        language { enableSplit = false }
+    }
+
+    lint {
+        // Every bundled language must stay complete (already the default severity; kept explicit on purpose).
+        error += "MissingTranslation"
+    }
+
     testOptions {
-        unitTests.all { it.useJUnitPlatform() }
+        unitTests.all {
+            it.useJUnitPlatform()
+            // LocalesConfigTest reads the resource files directly; without this a new values-* folder that adds no
+            // resource ids would leave the test task up to date.
+            it.inputs.dir("src/main/res").withPathSensitivity(PathSensitivity.RELATIVE)
+        }
     }
 }
 

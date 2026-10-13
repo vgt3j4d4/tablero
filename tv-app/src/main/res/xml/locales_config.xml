@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The single list of bundled languages (see docs/architecture.md → Localization). The menu's Language option is
+  built from it, and Android 13+ reads it for the system per-app language setting. The first entry is the default
+  language (res/values/).
+-->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="es" />
+</locale-config>
