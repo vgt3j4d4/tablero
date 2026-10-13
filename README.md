@@ -83,5 +83,13 @@ Preparing the stick (developer mode, debloat, boot into tablero): [`docs/stick-s
 
 ## License
 
-[MIT](LICENSE). Bundled fonts keep their own license (SIL Open Font License 1.1) and ship with their license
-files.
+[MIT](LICENSE). Bundled fonts keep their own license, the SIL Open Font License 1.1, and ship unmodified with
+their license files:
+
+| Font | Version | Source | License file |
+| --- | --- | --- | --- |
+| DSEG7 Classic Bold | 0.46 | [keshikan/DSEG](https://github.com/keshikan/DSEG) | [`OFL-DSEG.txt`](tv-app/src/main/assets/licenses/OFL-DSEG.txt) |
+| Barlow Condensed 500–800 | 1.422 | [jpt/barlow](https://github.com/jpt/barlow) | [`OFL-BarlowCondensed.txt`](tv-app/src/main/assets/licenses/OFL-BarlowCondensed.txt) |
+
+The app's font files are in `tv-app/src/main/res/font/`. The design mockups use the same fonts as web fonts in
+`docs/design/fonts/`.

@@ -25,8 +25,8 @@ translation file (see `docs/architecture.md` → Localization).
 
 - Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
   display rounding, persisted state) are done with unit tests. `tv-app` skeleton is done: one activity, a first
-  `ScoreboardView` (clock + scores, system font), remote key adapter, persistence. Next: fonts, localization and
-  the final scoreboard look.
+  `ScoreboardView` (clock + scores in DSEG7), remote key adapter, persistence; fonts bundled. Next:
+  localization and the final scoreboard look.
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
@@ -84,8 +84,12 @@ tablero/
 
 ## Scoreboard look
 
-- Black background; digits mimic LED scoreboards: **DSEG7 Classic** (seven-segment, SIL OFL — bundle the TTF
-  and its license in `tv-app/src/main/res/font/`) with dim "unlit 8" ghost segments drawn behind the digits.
+- Black background; digits mimic LED scoreboards: **DSEG7 Classic** (seven-segment, SIL OFL) with dim "unlit 8"
+  ghost segments drawn behind the digits. All digits share one width, and `.` is zero-width (it lights the
+  decimal point of the digit before it), so `88.8` lines up under any reading.
+- Fonts ship unmodified as TTF in `tv-app/src/main/res/font/` (`dseg7_classic_bold`, `barlow_condensed` family
+  500–800); their OFL license files live in `tv-app/src/main/assets/licenses/` (`res/font` only accepts font and
+  XML files). DSEG has the Reserved Font Name "DSEG": never subset or modify that file.
 - Game clock LED red, scores LED amber. Team = color swatch + color name (white text). UI text in Barlow
   Condensed (OFL).
 - Layout (1920×1080): clock across the top; left/right team columns below; a thin status bar at the bottom
