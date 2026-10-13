@@ -13,8 +13,8 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
       system font)
 - [ ] `tv-app`: string resources — English default + Spanish, `locales_config.xml`, in-app language setting,
       lint `MissingTranslation` as error
-- [ ] `tv-app`: bundle DSEG7 Classic (Bold) and Barlow Condensed (500–800) as **TTF** in `res/font/` with their
-      OFL license files — `docs/design/fonts/` only has woff2 web fonts, which Android `res/font` can't use
+- [x] `tv-app`: bundle DSEG7 Classic (Bold) and Barlow Condensed (500–800) as **TTF** in `res/font/` with their
+      OFL license files (in `assets/licenses/`)
 - [ ] `tv-app`: `ScoreboardView` (Canvas) — clock + scores in DSEG7 with ghost segments, team swatches, status bar
 - [x] `tv-app`: remote key adapter (OK on key-down, short/long press mapping, see CLAUDE.md)
 - [ ] `tv-app`: quick clock adjust overlay (↓)
