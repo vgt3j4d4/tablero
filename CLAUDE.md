@@ -122,7 +122,8 @@ stopped; confirm screen with Cancel focused; exit requires holding OK 2 s).
 - Package / application IDs: `tv-app` = `net.pladum.tablero.tv`, `remote-app` = `net.pladum.tablero.remote`,
   `shared` = `net.pladum.tablero.shared` (Kotlin package). Debug builds add `.debug`. Application IDs are
   permanent once published — never rename them.
-- `shared`: Kotlin/JVM library. Tests: JUnit 5 (`@ParameterizedTest`, `@Nested`) with kotlin.test assertions.
+- `shared`: Kotlin/JVM library. Tests: JUnit Jupiter (JUnit 6, the successor of JUnit 5; `@ParameterizedTest`,
+  `@Nested`) with kotlin.test assertions.
 - JSON: kotlinx.serialization (no reflection) for persisted state and, later, the Phase 2 protocol.
 - `tv-app`: Android Views + Leanback-free custom UI; Kotlin coroutines/Flow for state.
 - Localization: Android string resources. **English is the default** (`res/values/`), Spanish in
