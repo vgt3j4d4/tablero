@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.graphics.Typeface
 import android.view.View
 import net.pladum.tablero.shared.ClockReading
 import net.pladum.tablero.shared.GameSnapshot
@@ -46,6 +45,8 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         }
     }
 
+    /** DSEG7 Classic Bold: seven-segment digits. Loaded once; the paints share it. */
+    private val ledTypeface = context.resources.getFont(R.font.dseg7_classic_bold)
     private val clockPaint = ledPaint(context.getColor(R.color.led_red))
     private val scorePaint = ledPaint(context.getColor(R.color.led_amber))
 
@@ -118,7 +119,7 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
 
     private fun ledPaint(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         this.color = color
-        typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        typeface = ledTypeface
         textAlign = Paint.Align.CENTER
     }
 }
