@@ -135,9 +135,13 @@ Goal: the app ships English + Spanish, and adding a language is a translation-on
 - `res/xml/locales_config.xml` is the single list of bundled languages. The menu's _Language_ option is built
   from it (each language shown by its own name, e.g. "English", "Español"). Android 13+ also reads this file
   for the system per-app language setting.
-- API 28 has no per-app language setting, so the chosen language is stored in preferences and applied by
-  wrapping the activity's base context with that locale. With nothing chosen, the app follows the device
-  language and falls back to English.
+- API 28 has no per-app language setting, so the language chosen in the app's menu is stored in preferences
+  (`AppLanguage`) and applied to the activity as an override configuration (`applyOverrideConfiguration` in
+  `attachBaseContext`). With nothing chosen, the app follows the device language (on Android 13+ also the system
+  per-app setting, which `locales_config.xml` enables) and falls back to English. When both exist, the in-app choice
+  wins. Only activity contexts carry the choice, so user-visible strings are resolved from the activity.
+- The language split of App Bundles is disabled (`bundle.language.enableSplit = false`), so every device gets every
+  language and the in-app switch always works.
 - Rules for translatable strings: format arguments (`%1$s +%2$d`) instead of concatenation, `<plurals>` for
   counts, no text in images, and layouts that tolerate ~30% longer text. Lint `MissingTranslation` is an error so
   every bundled language stays complete.
@@ -148,7 +152,9 @@ Goal: the app ships English + Spanish, and adding a language is a translation-on
 
 1. Copy `res/values/strings.xml` to `res/values-<code>/strings.xml` (e.g. `values-pt`) and translate it.
 2. Add `<locale android:name="<code>"/>` to `res/xml/locales_config.xml`.
-3. Run `./gradlew :tv-app:lint` (catches missing strings) and check the screens on the stick.
+3. Run `./gradlew :tv-app:lint` (catches missing strings) and `./gradlew :tv-app:testDebugUnitTest`
+   (`LocalesConfigTest` catches a `values-*` folder missing from `locales_config.xml`), then check the screens on
+   the stick.
 
 No Kotlin changes are needed.
 

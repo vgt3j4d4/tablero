@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Team colors (TeamColor). Shown next to the team's swatch; uppercased in the status bar. -->
+    <string name="team_yellow">Amarillo</string>
+    <string name="team_black">Negro</string>
+    <string name="team_white">Blanco</string>
+    <string name="team_blue">Azul</string>
+    <string name="team_red">Rojo</string>
+    <string name="team_green">Verde</string>
+    <string name="team_orange">Naranja</string>
+    <string name="team_purple">Morado</string>
+    <string name="team_light_blue">Celeste</string>
+</resources>

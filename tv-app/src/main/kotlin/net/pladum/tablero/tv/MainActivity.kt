@@ -1,6 +1,7 @@
 package net.pladum.tablero.tv
 
 import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
@@ -13,6 +14,7 @@ import kotlinx.coroutines.launch
 import net.pladum.tablero.shared.Command
 import net.pladum.tablero.shared.DispatchResult
 import net.pladum.tablero.shared.GameEngine
+import net.pladum.tablero.shared.TeamColor
 
 /** The only screen: the scoreboard, rendered from the engine's snapshots. */
 class MainActivity : Activity() {
@@ -21,10 +23,16 @@ class MainActivity : Activity() {
     private val keys = RemoteKeyAdapter(::dispatch)
     private var uiScope: CoroutineScope? = null
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase)
+        AppLanguage.overrideConfiguration(newBase)?.let(::applyOverrideConfiguration)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val app = application as TableroApplication
         engine = app.engine
+        logLanguage()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         scoreboard = ScoreboardView(this, app.timeSource)
         setContentView(scoreboard)
@@ -54,6 +62,12 @@ class MainActivity : Activity() {
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
         keys.onKeyUp(keyCode, event.isCanceled) || super.onKeyUp(keyCode, event)
+
+    private fun logLanguage() {
+        val source = if (AppLanguage.chosen(this) != null) "chosen in the app" else "from the device"
+        val locale = resources.configuration.locales[0].toLanguageTag()
+        Log.i(LOG_TAG, "Language $locale ($source), e.g. ${getString(TeamColor.YELLOW.nameRes())}")
+    }
 
     private fun dispatch(command: Command) {
         val result = engine.dispatch(command)

@@ -25,8 +25,8 @@ translation file (see `docs/architecture.md` → Localization).
 
 - Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
   display rounding, persisted state) are done with unit tests. `tv-app` skeleton is done: one activity, a first
-  `ScoreboardView` (clock + scores in DSEG7), remote key adapter, persistence; fonts bundled. Next:
-  localization and the final scoreboard look.
+  `ScoreboardView` (clock + scores in DSEG7), remote key adapter, persistence; fonts bundled; localization
+  (English + Spanish, in-app language via `AppLanguage`, team color names). Next: the final scoreboard look.
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
@@ -136,7 +136,7 @@ stopped; confirm screen with Cancel focused; exit requires holding OK 2 s).
 - Localization: Android string resources. **English is the default** (`res/values/`), Spanish in
   `res/values-es/`. The list of languages lives in one place (`res/xml/locales_config.xml`). API 28 has no
   per-app language setting, so the app applies the language chosen in its own menu (stored in preferences) via
-  a configuration-wrapped context; with nothing chosen it follows the device language.
+  an override configuration on the activity; with nothing chosen it follows the device language.
 - Phase 2 networking: WebSocket server on the TV (Ktor server or Java-WebSocket — decide when Phase 2 starts),
   service discovery via Android NSD (`_tablero._tcp`), QR-code fallback with `ws://ip:port`. JSON messages.
 - `remote-app`: modern Android (Compose OK here), foreground service type `connectedDevice`, `MediaSession` +

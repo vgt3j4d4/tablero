@@ -22,6 +22,7 @@
         android:enableOnBackInvokedCallback="false"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:theme="@style/Theme.Tablero"
         tools:ignore="UnusedAttribute">
 
