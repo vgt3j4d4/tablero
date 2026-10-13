@@ -5,10 +5,10 @@
 Scope: two color teams, scores, game clock, buzzer, undo, next-game team picker (see `CLAUDE.md` →
 Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred.
 
-- [ ] Gradle multi-module scaffold (`shared`, `tv-app`), version catalog, CI-friendly `./gradlew test`
-- [ ] `shared`: `TimeSource`, `GameEngine`, `Command`, `GameSnapshot`, `GameEvent`, undo history (+ undo semantics tests)
-- [ ] `shared`: `AdjustGameClock`, `SetGameClock`, `ResetGameClock`, `NewGame`, display rounding + unit tests
-- [ ] `shared`: state serialization (JSON) for persistence
+- [x] Gradle multi-module scaffold (`shared`, `tv-app`), version catalog, CI-friendly `./gradlew test`
+- [x] `shared`: `TimeSource`, `GameEngine`, `Command`, `GameSnapshot`, `GameEvent`, undo history (+ undo semantics tests)
+- [x] `shared`: `AdjustGameClock`, `SetGameClock`, `ResetGameClock`, `NewGame`, display rounding + unit tests
+- [x] `shared`: state serialization (JSON) for persistence
 - [ ] `tv-app`: single activity, `HOME` intent filter, `FLAG_KEEP_SCREEN_ON`
 - [ ] `tv-app`: string resources — English default + Spanish, `locales_config.xml`, in-app language setting,
       lint `MissingTranslation` as error

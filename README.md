@@ -51,21 +51,22 @@ Details: [`docs/hardware.md`](docs/hardware.md).
 
 ## Status
 
-Early planning — documentation only; the Phase 1 design is agreed. See [`docs/roadmap.md`](docs/roadmap.md).
+Early development — the Phase 1 design is agreed and the game engine is in place; the TV UI is next. See [`docs/roadmap.md`](docs/roadmap.md).
 
 | Phase | Scope                                                             | Status                        |
 | ----- | ----------------------------------------------------------------- | ----------------------------- |
-| 1     | TV app + stick remote                                             | design done, code not started |
+| 1     | TV app + stick remote                                             | engine done, TV UI next       |
 | 2     | Phone controller over Wi-Fi                                       | —                             |
 | 3     | Locked-phone control (volume keys, clicker, notification)         | —                             |
 | 4     | Full basketball rules, roles, branding, more languages and sports | —                             |
 
 ## Getting started (developers)
 
-The Gradle project is not scaffolded yet. Planned flow:
+Requires JDK 17+ and the Android SDK (Android Studio recent enough for AGP 9.4).
 
 ```bash
-./gradlew :shared:test
+./gradlew :shared:test                 # engine unit tests
+./gradlew :tv-app:assembleDebug
 adb connect <stick-ip>:5555
 ./gradlew :tv-app:installDebug
 ```

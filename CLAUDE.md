@@ -23,7 +23,8 @@ translation file (see `docs/architecture.md` → Localization).
 
 ## Current status
 
-- Phase 1 (TV app + stick remote) — **design agreed, code not started; repo contains docs only.**
+- Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
+  display rounding, persisted state) are done with unit tests. `tv-app` is an empty module: UI not started.
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
@@ -119,7 +120,12 @@ stopped; confirm screen with Cancel focused; exit requires holding OK 2 s).
 ## Tech stack
 
 - Kotlin, Gradle Kotlin DSL, version catalog (`gradle/libs.versions.toml`).
-- `shared`: Kotlin/JVM library + JUnit 5 (or kotlin.test).
+- Package / application IDs: `tv-app` = `net.pladum.tablero.tv`, `remote-app` = `net.pladum.tablero.remote`,
+  `shared` = `net.pladum.tablero.shared` (Kotlin package). Debug builds add `.debug`. Application IDs are
+  permanent once published — never rename them.
+- `shared`: Kotlin/JVM library. Tests: JUnit Jupiter (JUnit 6, the successor of JUnit 5; `@ParameterizedTest`,
+  `@Nested`) with kotlin.test assertions.
+- JSON: kotlinx.serialization (no reflection) for persisted state and, later, the Phase 2 protocol.
 - `tv-app`: Android Views + Leanback-free custom UI; Kotlin coroutines/Flow for state.
 - Localization: Android string resources. **English is the default** (`res/values/`), Spanish in
   `res/values-es/`. The list of languages lives in one place (`res/xml/locales_config.xml`). API 28 has no
