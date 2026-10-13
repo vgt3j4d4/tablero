@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Scoreboard palette, see docs/design/README.md → Visual language. -->
+    <color name="board_background">#FF07080A</color>
+    <color name="led_red">#FFFF3B2F</color>
+    <color name="led_amber">#FFFFB21E</color>
+</resources>
