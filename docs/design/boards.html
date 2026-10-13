@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>tablero design boards</title>
+<!--
+  Source of the design images in this folder. Each board is a 1920×1080 TV screen.
+  Open boards.html?board=<id>&lang=<en|es> in a browser, or run ./render.sh to regenerate the PNGs.
+-->
+<style>
+@font-face { font-family: 'DSEG7 Classic'; src: url(fonts/DSEG7Classic-Bold.woff2) format('woff2'); font-weight: 700; font-display: block; }
+@font-face { font-family: 'Barlow Condensed'; src: url(fonts/barlow-condensed-latin-500-normal.woff2) format('woff2'); font-weight: 500; font-display: block; }
+@font-face { font-family: 'Barlow Condensed'; src: url(fonts/barlow-condensed-latin-600-normal.woff2) format('woff2'); font-weight: 600; font-display: block; }
+@font-face { font-family: 'Barlow Condensed'; src: url(fonts/barlow-condensed-latin-700-normal.woff2) format('woff2'); font-weight: 700; font-display: block; }
+@font-face { font-family: 'Barlow Condensed'; src: url(fonts/barlow-condensed-latin-800-normal.woff2) format('woff2'); font-weight: 800; font-display: block; }
+
+:root {
+  --bg: #07080A;
+  --panel: #111317;
+  --panel-raised: #1A1D22;
+  --line: #262A31;
+  --line-soft: #16191D;
+  --text: #F5F2EA;
+  --soft: #B4B9C0;
+  --muted: #8B919B;
+  --faint: #6B717A;
+  --off: #3A3F47;
+  --clock: #FF3B2F;
+  --score: #FFB21E;
+  --alert: #D92D20;
+  --alert-frame: #FF3B2F;
+  --adjust: #FFB21E;
+  --adjust-ink: #3A2A05;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlow Condensed', sans-serif; }
+.screen { width: 1920px; height: 1080px; position: relative; overflow: hidden; background: var(--bg); }
+.layer { position: absolute; inset: 0; }
+
+/* Scoreboard */
+.board { display: flex; flex-direction: column; height: 100%; }
+.clock-row { height: 476px; padding-top: 36px; display: flex; justify-content: center; }
+.clock-box { width: 1240px; height: 440px; background: #0B0C0E; border: 2px solid #1A1D22; border-radius: 32px;
+  display: flex; align-items: center; justify-content: center; }
+.led { display: grid; justify-items: end; align-items: center; font-family: 'DSEG7 Classic', monospace; font-weight: 700; line-height: 1; }
+.led > span { grid-area: 1 / 1; }
+.led.clock { font-size: 330px; color: var(--clock); }
+.led.clock .ghost { color: rgb(36, 8, 7); }
+.led.score { font-size: 330px; color: var(--score); }
+.led.score .ghost { color: rgb(36, 25, 4); }
+.teams { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 260px minmax(0, 1fr); }
+.team { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; min-width: 0; }
+.team-name { display: flex; align-items: center; gap: 24px; max-width: 800px; font-size: 84px; font-weight: 700; line-height: 1;
+  letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; }
+.swatch { width: 72px; height: 72px; flex-shrink: 0; border-radius: 16px; border: 4px solid var(--muted); }
+.status { height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 48px;
+  border-top: 2px solid var(--line-soft); font-size: 28px; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); }
+.status .state { display: flex; align-items: center; gap: 12px; color: var(--text); }
+
+/* Shared bits */
+.keycap { border: 2px solid currentColor; border-radius: 8px; padding: 0 10px; line-height: 38px; white-space: nowrap; }
+.hints { display: flex; align-items: center; justify-content: center; gap: 40px; font-size: 28px; font-weight: 600; letter-spacing: 0.06em; color: var(--muted); }
+.hint { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.scrim { position: absolute; inset: 0; background: rgba(7, 8, 10, 0.8); }
+.modal { position: absolute; background: var(--panel); border: 2px solid var(--line); border-radius: 28px; }
+.eyebrow { font-size: 30px; font-weight: 600; letter-spacing: 0.24em; color: var(--muted); }
+
+/* Bottom bars over the status bar */
+.toast { position: absolute; left: 500px; bottom: 0; width: 920px; height: 64px; padding: 0 28px; display: flex; align-items: center;
+  justify-content: space-between; background: var(--text); color: var(--bg); border-radius: 16px 16px 0 0; }
+.time-up-frame { position: absolute; inset: 0; border: 14px solid var(--alert-frame); }
+.time-up-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 104px; padding: 0 48px; display: flex; align-items: center;
+  justify-content: space-between; gap: 24px; background: var(--alert); color: #FFFFFF; }
+.btn { height: 68px; padding: 0 24px; border-radius: 12px; font-family: inherit; font-weight: 800; letter-spacing: 0.04em; }
+.adjust-ring { position: absolute; left: 326px; top: 22px; width: 1268px; height: 468px; border: 8px solid var(--adjust); border-radius: 40px; }
+.adjust-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; padding: 0 48px; display: flex; align-items: center;
+  justify-content: space-between; background: var(--adjust); color: var(--bg); }
+
+/* Menu */
+.menu { position: absolute; top: 0; right: 0; width: 820px; height: 1080px; background: var(--panel); border-left: 2px solid var(--line);
+  display: flex; flex-direction: column; }
+.menu-group { display: flex; flex-direction: column; padding-bottom: 14px; border-bottom: 2px solid #22262D; }
+.menu-group:last-child { border-bottom-color: transparent; }
+.menu-row { height: 70px; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; font-size: 38px; font-weight: 600; }
+.menu-row .value { display: flex; align-items: center; gap: 14px; color: var(--soft); font-variant-numeric: tabular-nums; }
+.menu-row .value span { min-width: 120px; text-align: center; }
+.menu-row.focused { background: var(--text); color: var(--bg); }
+.menu-row.focused .value { color: var(--bg); }
+
+/* Next game picker */
+.slot { border-radius: 20px; border: 2px solid var(--dim, #2A2E35); padding: 28px 28px 32px; display: flex; flex-direction: column; gap: 10px; }
+.slot.focused { border: 6px solid var(--text); }
+.pick { height: 76px; padding: 0 20px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; }
+.pick .who { display: flex; align-items: center; gap: 18px; font-size: 44px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+.pick .tag { font-size: 24px; font-weight: 600; letter-spacing: 0.12em; }
+.pick .swatch { width: 44px; height: 44px; border-radius: 10px; border-width: 3px; }
+.pick.selected { background: var(--text); color: var(--bg); }
+.pick.taken { color: #4A5059; }
+
+/* Remote mapping */
+.spec { padding: 72px 96px; display: flex; gap: 112px; background: #0E1013; height: 100%; }
+.remote { width: 300px; height: 900px; background: #1B1E23; border: 2px solid #2A2E35; border-radius: 120px 120px 80px 80px;
+  display: flex; flex-direction: column; align-items: center; padding-top: 56px; gap: 40px; }
+.rkey { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 20px; font-weight: 600; letter-spacing: 0.1em; color: var(--faint); }
+.rkey.live { color: var(--text); font-weight: 700; }
+.dot { border-radius: 50%; border: 3px solid var(--off); }
+.rkey.live .dot { border: 4px solid var(--text); display: flex; align-items: center; justify-content: center; }
+.dpad { position: relative; width: 236px; height: 236px; border-radius: 50%; border: 4px solid var(--text); font-size: 30px; font-weight: 700; }
+.dpad > div { position: absolute; }
+.map { display: grid; grid-template-columns: 180px minmax(0, 1fr) minmax(0, 1fr); border-top: 2px solid #2A2E35; }
+.map .th { padding: 18px 0; font-size: 26px; font-weight: 600; letter-spacing: 0.2em; color: var(--muted); border-bottom: 2px solid #2A2E35; }
+.map .td { padding: 20px 24px 20px 0; border-bottom: 2px solid #1C1F24; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.map .main { font-size: 38px; font-weight: 600; }
+.map .main.none { color: var(--faint); }
+.map .note { font-size: 26px; font-weight: 500; color: var(--muted); }
+.map .kc { align-self: flex-start; min-width: 76px; text-align: center; border: 3px solid var(--text); border-radius: 12px; padding: 2px 14px; font-size: 34px; font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const TEAM_COLORS = {
+  yellow: '#FFD60A', black: '#111214', white: '#F5F5F5', blue: '#2F6BFF',
+  red: '#E5372B', green: '#1FB85A', orange: '#FF7A00', purple: '#8B5CF6', lightBlue: '#5BC8F5',
+};
+
+const STRINGS = {
+  en: {
+    team: { yellow: 'Yellow', black: 'Black', white: 'White', blue: 'Blue' },
+    running: 'CLOCK RUNNING', stopped: 'CLOCK STOPPED',
+    footer: '10:00 GAMES',
+    back: 'BACK', undo: 'UNDO', cancel: 'CANCEL',
+    timeUp: 'TIME UP', result: 'Yellow wins 62–58',
+    nextGameBtn: 'NEXT GAME', resetBtn: 'RESET CLOCK · KEEP SCORE',
+    nextGameTitle: 'Next game', lastGame: 'Last: Yellow 62 – 58 Black',
+    left: 'LEFT', right: 'RIGHT',
+    startsLine: 'Starts 0 – 0 · clock at 10:00, stopped · OK on the scoreboard to tip off',
+    side: 'SIDE', teamKey: 'TEAM', start: 'START',
+    menu: 'Menu',
+    menuRows: [
+      [['Game clock', '07:42', false], ['Game length', '10:00', true]],
+      [['Yellow score', '48', true], ['Black score', '45', true]],
+      [['Teams', '4 colors', false], ['New game', '', false], ['Language', 'English', true], ['Exit to Android TV', '', false]],
+    ],
+    menuFocused: 'Yellow score',
+    move: 'MOVE', change: 'CHANGE', open: 'OPEN', close: 'CLOSE',
+    adjust: 'ADJUST CLOCK', was: 'was 07:42', min: '±1 MIN', sec: '±1 SEC', done: 'DONE',
+    setClock: 'SET GAME CLOCK', setClockSub: 'Was 07:42 · clock stopped', minLabel: 'MIN', secLabel: 'SEC',
+    field: 'FIELD', save: 'SAVE',
+    admin: 'ADMIN', exitTitle: 'Exit to Android TV?',
+    exitBody: 'Score and clock are saved. Press HOME on the remote to come back to the scoreboard.',
+    exit: 'EXIT', holdOk: 'HOLD OK · 2 S',
+    remoteEyebrow: 'PHASE 1 · XIAOMI MI TV STICK REMOTE', remoteTitle: 'Remote mapping',
+    keyCol: 'KEY', shortCol: 'SHORT PRESS', longCol: 'LONG PRESS',
+    remoteRows: [
+      ['OK', 'Start / stop clock', 'Fires on key-down: no delay', '—', ''],
+      ['←', 'Left team +1', 'Repeated presses add up: YELLOW +3', 'Left team −1', ''],
+      ['→', 'Right team +1', 'Repeated presses add up: BLACK +2', 'Right team −1', ''],
+      ['↑', 'Unused', '', '—', ''],
+      ['↓', 'Adjust clock', 'Then ↑↓ ±1 min, ←→ ±1 s, OK done, BACK cancel', '—', ''],
+      ['BACK', 'Undo last action', 'Shows what was undone', 'Open menu', ''],
+    ],
+    remoteLegend: 'Grey keys are handled by the system or the TV. HOME just reopens the scoreboard (tablero is the default launcher).',
+    rk: { power: 'POWER', assist: 'ASSIST.', back: 'BACK', home: 'HOME', volume: 'VOLUME' },
+    schematic: 'Schematic, not to scale',
+    feedbackTeam: 'YELLOW +3',
+  },
+  es: {
+    team: { yellow: 'Amarillo', black: 'Negro', white: 'Blanco', blue: 'Azul' },
+    running: 'RELOJ EN MARCHA', stopped: 'RELOJ DETENIDO',
+    footer: 'PARTIDOS DE 10:00',
+    back: 'ATRÁS', undo: 'DESHACER', cancel: 'CANCELAR',
+    timeUp: 'FIN DEL PARTIDO', result: 'Gana Amarillo 62–58',
+    nextGameBtn: 'SIGUIENTE PARTIDO', resetBtn: 'REINICIAR RELOJ · MISMO PUNTAJE',
+    nextGameTitle: 'Siguiente partido', lastGame: 'Anterior: Amarillo 62 – 58 Negro',
+    left: 'IZQUIERDA', right: 'DERECHA',
+    startsLine: 'Empieza 0 – 0 · reloj en 10:00, detenido · OK en el marcador para iniciar',
+    side: 'LADO', teamKey: 'EQUIPO', start: 'EMPEZAR',
+    menu: 'Menú',
+    menuRows: [
+      [['Reloj de juego', '07:42', false], ['Duración del partido', '10:00', true]],
+      [['Puntos Amarillo', '48', true], ['Puntos Negro', '45', true]],
+      [['Equipos', '4 colores', false], ['Nuevo partido', '', false], ['Idioma', 'Español', true], ['Salir a Android TV', '', false]],
+    ],
+    menuFocused: 'Puntos Amarillo',
+    move: 'MOVER', change: 'CAMBIAR', open: 'ABRIR', close: 'CERRAR',
+    adjust: 'AJUSTAR RELOJ', was: 'antes 07:42', min: '±1 MIN', sec: '±1 SEG', done: 'LISTO',
+    setClock: 'FIJAR RELOJ DE JUEGO', setClockSub: 'Antes 07:42 · reloj detenido', minLabel: 'MIN', secLabel: 'SEG',
+    field: 'CAMPO', save: 'GUARDAR',
+    admin: 'ADMINISTRACIÓN', exitTitle: '¿Salir a Android TV?',
+    exitBody: 'El puntaje y el reloj quedan guardados. Presiona INICIO en el control para volver al marcador.',
+    exit: 'SALIR', holdOk: 'MANTÉN OK · 2 S',
+    remoteEyebrow: 'FASE 1 · CONTROL DEL XIAOMI MI TV STICK', remoteTitle: 'Mapeo del control',
+    keyCol: 'TECLA', shortCol: 'PULSACIÓN CORTA', longCol: 'PULSACIÓN LARGA',
+    remoteRows: [
+      ['OK', 'Iniciar / detener reloj', 'Actúa al presionar: sin demora', '—', ''],
+      ['←', 'Equipo izquierdo +1', 'Pulsaciones seguidas se suman: AMARILLO +3', 'Equipo izquierdo −1', ''],
+      ['→', 'Equipo derecho +1', 'Pulsaciones seguidas se suman: NEGRO +2', 'Equipo derecho −1', ''],
+      ['↑', 'Sin uso', '', '—', ''],
+      ['↓', 'Ajustar reloj', 'Luego ↑↓ ±1 min, ←→ ±1 s, OK listo, ATRÁS cancela', '—', ''],
+      ['ATRÁS', 'Deshacer última acción', 'Muestra qué se deshizo', 'Abrir menú', ''],
+    ],
+    remoteLegend: 'Teclas grises: las maneja el sistema o la TV. INICIO solo reabre el marcador (tablero es el launcher por defecto).',
+    rk: { power: 'ENCENDER', assist: 'ASIST.', back: 'ATRÁS', home: 'INICIO', volume: 'VOLUMEN' },
+    schematic: 'Esquema, no a escala',
+    feedbackTeam: 'AMARILLO +3',
+  },
+};
+
+const params = new URLSearchParams(location.search);
+const lang = STRINGS[params.get('lang')] ? params.get('lang') : 'en';
+const T = STRINGS[lang];
+document.documentElement.lang = lang;
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ghost = (s) => s.replace(/[0-9]/g, '8');
+const scoreGhost = (s) => '8'.repeat(Math.max(2, s.length));
+const hint = (key, label) => `<span class="hint"><span class="keycap">${esc(key)}</span>${esc(label)}</span>`;
+const PAUSE_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2" y="1" width="5" height="16" rx="1" fill="currentColor"/><rect x="11" y="1" width="5" height="16" rx="1" fill="currentColor"/></svg>';
+const RUN_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="currentColor"/></svg>';
+const CHEVRON_L = '<svg width="24" height="24" viewBox="0 0 22 22" aria-hidden="true"><path d="M14 4 L7 11 L14 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const CHEVRON_R = '<svg width="24" height="24" viewBox="0 0 22 22" aria-hidden="true"><path d="M8 4 L15 11 L8 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function team(colorId, score) {
+  return `
+    <div class="team">
+      <div class="team-name"><span class="swatch" style="background:${TEAM_COLORS[colorId]}"></span><span>${esc(T.team[colorId])}</span></div>
+      <div class="led score"><span class="ghost">${scoreGhost(score)}</span><span>${esc(score)}</span></div>
+    </div>`;
+}
+
+function scoreboard({ left = 'yellow', right = 'black', leftScore = '48', rightScore = '45', clock = '07:42', running = true } = {}) {
+  const state = running ? `${RUN_ICON}<span>${T.running}</span>` : `${PAUSE_ICON}<span>${T.stopped}</span>`;
+  return `
+    <div class="board">
+      <div class="clock-row"><div class="clock-box">
+        <div class="led clock"><span class="ghost">${ghost(clock)}</span><span>${esc(clock)}</span></div>
+      </div></div>
+      <div class="teams">${team(left, leftScore)}<div></div>${team(right, rightScore)}</div>
+      <div class="status"><div>${esc(T.footer)}</div><div class="state">${state}</div></div>
+    </div>`;
+}
+
+const BOARDS = {
+  'live-game': () => scoreboard(),
+
+  'final-minute': () => scoreboard({ leftScore: '58', rightScore: '59', clock: '38.4' }),
+
+  'time-up': () => `
+    ${scoreboard({ leftScore: '62', rightScore: '58', clock: '0.0', running: false })}
+    <div class="time-up-frame"></div>
+    <div class="time-up-bar">
+      <div style="display:flex;align-items:baseline;gap:20px;min-width:0">
+        <span style="font-size:48px;font-weight:800;letter-spacing:0.06em;white-space:nowrap">${esc(T.timeUp)}</span>
+        <span style="font-size:30px;font-weight:600">${esc(T.result)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;flex-shrink:0">
+        <button class="btn" style="border:4px solid #fff;background:#fff;color:#A3180E;font-size:32px">${esc(T.nextGameBtn)}</button>
+        <button class="btn" style="border:3px solid rgba(255,255,255,0.7);background:transparent;color:#fff;font-size:28px;font-weight:700">${esc(T.resetBtn)}</button>
+      </div>
+    </div>`,
+
+  'next-game': () => {
+    const teams = ['yellow', 'black', 'blue', 'white'];
+    const picks = { left: 'yellow', right: 'blue' };
+    const slot = (side, focused) => {
+      const other = side === 'left' ? picks.right : picks.left;
+      const rows = teams.map((id) => {
+        let cls = '', tag = '';
+        if (id === picks[side]) cls = 'selected';
+        else if (id === other) { cls = 'taken'; tag = side === 'left' ? T.right : T.left; }
+        return `<div class="pick ${cls}"><span class="who"><span class="swatch" style="background:${TEAM_COLORS[id]}"></span>${esc(T.team[id])}</span><span class="tag">${esc(tag)}</span></div>`;
+      }).join('');
+      return `<div class="slot ${focused ? 'focused' : ''}">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 8px 8px">
+          <span style="font-size:32px;font-weight:700;letter-spacing:0.2em">${esc(side === 'left' ? T.left : T.right)}</span>
+        </div>${rows}</div>`;
+    };
+    return `
+      ${scoreboard({ leftScore: '62', rightScore: '58', clock: '0.0', running: false })}
+      <div class="scrim" style="background:rgba(7,8,10,0.84)"></div>
+      <div class="modal" style="left:260px;top:90px;width:1400px;height:900px;padding:48px 64px 0;display:flex;flex-direction:column;gap:36px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between">
+          <div style="font-size:64px;font-weight:700;line-height:1">${esc(T.nextGameTitle)}</div>
+          <div style="font-size:32px;font-weight:500;color:var(--soft)">${esc(T.lastGame)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 120px minmax(0,1fr);align-items:center">
+          ${slot('left', false)}
+          <div style="text-align:center;font-size:44px;font-weight:700;color:var(--faint)">VS</div>
+          ${slot('right', true)}
+        </div>
+        <div style="font-size:32px;font-weight:500;color:var(--soft)">${esc(T.startsLine)}</div>
+        <div class="hints" style="margin-top:auto;height:84px;border-top:2px solid var(--line);gap:44px">
+          ${hint('← →', T.side)}${hint('↑ ↓', T.teamKey)}${hint('OK', T.start)}${hint(T.back, T.cancel)}
+        </div>
+      </div>`;
+  },
+
+  'action-feedback': () => `
+    ${scoreboard({ leftScore: '51', clock: '06:58', running: false })}
+    <div class="toast">
+      <div style="display:flex;align-items:center;gap:16px">
+        <span class="swatch" style="width:32px;height:32px;border-radius:8px;border:3px solid var(--off);background:${TEAM_COLORS.yellow}"></span>
+        <span style="font-size:40px;font-weight:800;letter-spacing:0.04em">${esc(T.feedbackTeam)}</span>
+        <span style="font-size:32px;font-weight:600;color:var(--off)">48 → 51</span>
+      </div>
+      <div class="hint" style="font-size:28px;font-weight:600;letter-spacing:0.06em;color:var(--off)"><span class="keycap">${esc(T.back)}</span>${esc(T.undo)}</div>
+    </div>`,
+
+  'menu': () => {
+    const groups = T.menuRows.map((rows) => `<div class="menu-group">${rows.map(([label, value, adjust]) => `
+      <div class="menu-row ${label === T.menuFocused ? 'focused' : ''}">
+        <span>${esc(label)}</span>
+        <span class="value">${adjust ? CHEVRON_L : ''}<span>${esc(value)}</span>${CHEVRON_R}</span>
+      </div>`).join('')}</div>`).join('');
+    return `
+      ${scoreboard({ running: false })}
+      <div class="scrim" style="background:rgba(7,8,10,0.74)"></div>
+      <div class="menu">
+        <div style="padding:44px 48px 24px;display:flex;align-items:baseline;justify-content:space-between">
+          <div style="font-size:60px;font-weight:700">${esc(T.menu)}</div>
+          <div style="font-size:28px;font-weight:600;letter-spacing:0.12em;color:var(--muted)">${esc(T.stopped)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;flex-grow:1">${groups}</div>
+        <div class="hints" style="height:80px;padding:0 48px;justify-content:space-between;gap:16px;border-top:2px solid var(--line);font-size:24px">
+          ${hint('↑ ↓', T.move)}${hint('← →', T.change)}${hint('OK', T.open)}${hint(T.back, T.close)}
+        </div>
+      </div>`;
+  },
+
+  'quick-clock-adjust': () => `
+    ${scoreboard({ clock: '08:42' })}
+    <div class="adjust-ring"></div>
+    <div class="adjust-bar">
+      <div style="display:flex;align-items:baseline;gap:18px">
+        <span style="font-size:36px;font-weight:800;letter-spacing:0.06em">${esc(T.adjust)}</span>
+        <span style="font-size:36px;font-weight:800">+1:00</span>
+        <span style="font-size:30px;font-weight:600;color:var(--adjust-ink)">${esc(T.was)}</span>
+      </div>
+      <div class="hints" style="gap:28px;font-size:26px;color:var(--adjust-ink)">
+        ${hint('↑ ↓', T.min)}${hint('← →', T.sec)}${hint('OK', T.done)}${hint(T.back, T.cancel)}
+      </div>
+    </div>`,
+
+  'set-game-clock': () => {
+    const field = (value, label, focused) => `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        ${focused ? '<svg width="56" height="40" viewBox="0 0 56 40" aria-hidden="true"><path d="M8 32 L28 10 L48 32" fill="none" stroke="#FFB21E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<div style="height:40px"></div>'}
+        <div class="led" style="width:300px;height:300px;justify-items:center;border-radius:20px;font-size:170px;
+          ${focused ? 'border:6px solid var(--adjust);background:var(--panel-raised)' : 'border:4px solid #2A2E35'};color:var(--text)">
+          <span>${value}</span></div>
+        <div style="font-size:26px;font-weight:600;letter-spacing:0.2em;color:${focused ? 'var(--adjust)' : 'var(--muted)'}">${esc(label)}</div>
+        ${focused ? '<svg width="56" height="40" viewBox="0 0 56 40" aria-hidden="true"><path d="M8 8 L28 30 L48 8" fill="none" stroke="#FFB21E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '<div style="height:40px"></div>'}
+      </div>`;
+    return `
+      ${scoreboard({ running: false })}
+      <div class="scrim"></div>
+      <div class="modal" style="left:400px;top:150px;width:1120px;height:780px;padding:44px 56px 0;display:flex;flex-direction:column;align-items:center;justify-content:space-between">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+          <div class="eyebrow">${esc(T.setClock)}</div>
+          <div style="font-size:30px;font-weight:500;color:var(--soft)">${esc(T.setClockSub)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:24px">
+          ${field('07', T.minLabel, false)}
+          <div style="font-family:'DSEG7 Classic';font-size:170px;color:var(--text)">:</div>
+          ${field('51', T.secLabel, true)}
+        </div>
+        <div class="hints" style="align-self:stretch;height:84px;border-top:2px solid var(--line);gap:44px">
+          ${hint('↑ ↓', T.change)}${hint('← →', T.field)}${hint('OK', T.save)}${hint(T.back, T.cancel)}
+        </div>
+      </div>`;
+  },
+
+  'exit-confirm': () => `
+    ${scoreboard({ running: false })}
+    <div class="scrim"></div>
+    <div class="modal" style="left:460px;top:230px;width:1000px;height:620px;padding:56px 64px;display:flex;flex-direction:column;justify-content:space-between">
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div class="eyebrow">${esc(T.admin)}</div>
+        <div style="font-size:72px;font-weight:700;line-height:1">${esc(T.exitTitle)}</div>
+        <div style="font-size:34px;font-weight:500;line-height:1.3;color:var(--soft)">${esc(T.exitBody)}</div>
+      </div>
+      <div style="display:flex;gap:28px">
+        <button class="btn" style="flex:1 1 0;height:104px;border:3px solid var(--off);background:transparent;color:var(--text);font-size:40px;font-weight:700">${esc(T.cancel)}</button>
+        <button class="btn" style="flex:1 1 0;height:104px;border:6px solid var(--text);background:var(--panel-raised);color:var(--text);position:relative;overflow:hidden;padding:0">
+          <span style="position:absolute;left:0;top:0;bottom:0;width:62%;background:var(--alert)"></span>
+          <span style="position:relative;display:flex;flex-direction:column;align-items:center;line-height:1.05">
+            <span style="font-size:40px;font-weight:700;letter-spacing:0.06em">${esc(T.exit)}</span>
+            <span style="font-size:24px;font-weight:600;letter-spacing:0.12em">${esc(T.holdOk)}</span>
+          </span>
+        </button>
+      </div>
+    </div>`,
+
+  'remote-mapping': () => {
+    const rows = T.remoteRows.map(([key, short, note, long]) => `
+      <div class="td"><span class="kc">${esc(key)}</span></div>
+      <div class="td"><span class="main ${short === 'Unused' || short === 'Sin uso' ? 'none' : ''}">${esc(short)}</span><span class="note">${esc(note)}</span></div>
+      <div class="td"><span class="main ${long === '—' ? 'none' : ''}">${esc(long)}</span></div>`).join('');
+    return `
+      <div class="spec">
+        <div style="width:340px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:20px">
+          <div class="remote">
+            <div style="display:flex;gap:120px">
+              <div class="rkey"><div class="dot" style="width:52px;height:52px"></div>${esc(T.rk.power)}</div>
+              <div class="rkey"><div class="dot" style="width:52px;height:52px"></div>${esc(T.rk.assist)}</div>
+            </div>
+            <div class="dpad">
+              <div style="top:10px;left:0;right:0;text-align:center;color:var(--faint)">↑</div>
+              <div style="bottom:10px;left:0;right:0;text-align:center">↓</div>
+              <div style="left:16px;top:0;bottom:0;display:flex;align-items:center">←</div>
+              <div style="right:16px;top:0;bottom:0;display:flex;align-items:center">→</div>
+              <div style="left:58px;top:58px;width:112px;height:112px;border-radius:50%;background:var(--text);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800">OK</div>
+            </div>
+            <div style="display:flex;gap:72px">
+              <div class="rkey live"><div class="dot" style="width:72px;height:72px">
+                <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8 L5 15 L12 22 M5 15 H20 a7 7 0 0 1 0 14 H14" fill="none" stroke="#F5F2EA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>${esc(T.rk.back)}</div>
+              <div class="rkey"><div class="dot" style="width:72px;height:72px"></div>${esc(T.rk.home)}</div>
+            </div>
+            <div class="rkey">
+              <div style="width:64px;height:150px;border-radius:32px;border:3px solid var(--off);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:12px 0;font-size:30px;font-weight:700"><span>+</span><span>−</span></div>
+              ${esc(T.rk.volume)}
+            </div>
+            <div style="display:flex;gap:20px">
+              <div style="width:104px;height:44px;border-radius:22px;border:3px solid var(--off)"></div>
+              <div style="width:104px;height:44px;border-radius:22px;border:3px solid var(--off)"></div>
+            </div>
+          </div>
+          <div style="font-size:24px;font-weight:500;color:var(--muted)">${esc(T.schematic)}</div>
+        </div>
+        <div style="flex-grow:1;display:flex;flex-direction:column;gap:32px;min-width:0">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div class="eyebrow">${esc(T.remoteEyebrow)}</div>
+            <div style="font-size:72px;font-weight:700;line-height:1">${esc(T.remoteTitle)}</div>
+          </div>
+          <div class="map">
+            <div class="th">${esc(T.keyCol)}</div><div class="th">${esc(T.shortCol)}</div><div class="th">${esc(T.longCol)}</div>
+            ${rows}
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;font-size:28px;font-weight:500;color:var(--soft)">
+            <span style="width:18px;height:18px;flex-shrink:0;border-radius:4px;border:3px solid var(--off)"></span>
+            <span>${esc(T.remoteLegend)}</span>
+          </div>
+        </div>
+      </div>`;
+  },
+};
+
+const id = BOARDS[params.get('board')] ? params.get('board') : 'live-game';
+document.title = `tablero — ${id} (${lang})`;
+document.getElementById('root').innerHTML = `<div class="screen">${BOARDS[id]()}</div>`;
+</script>
+</body>
+</html>

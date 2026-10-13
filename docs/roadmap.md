@@ -2,17 +2,18 @@
 
 ## Phase 1 — TV app + stick remote
 
-Scope: two color teams, scores, game clock, buzzer, undo, rotation for pickup sessions (see `CLAUDE.md` →
+Scope: two color teams, scores, game clock, buzzer, undo, next-game team picker (see `CLAUDE.md` →
 Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred.
 
 - [ ] Gradle multi-module scaffold (`shared`, `tv-app`), version catalog, CI-friendly `./gradlew test`
 - [ ] `shared`: `TimeSource`, `GameEngine`, `Command`, `GameSnapshot`, `GameEvent`, undo history (+ undo semantics tests)
 - [ ] `shared`: `AdjustGameClock`, `SetGameClock`, `ResetGameClock`, `NewGame`, display rounding + unit tests
-- [ ] `shared`: `Rotation` (winner stays, rest after 2 wins, tie → both to the line) as data + unit tests
 - [ ] `shared`: state serialization (JSON) for persistence
 - [ ] `tv-app`: single activity, `HOME` intent filter, `FLAG_KEEP_SCREEN_ON`
 - [ ] `tv-app`: string resources — English default + Spanish, `locales_config.xml`, in-app language setting,
       lint `MissingTranslation` as error
+- [ ] `tv-app`: bundle DSEG7 Classic (Bold) and Barlow Condensed (500–800) as **TTF** in `res/font/` with their
+      OFL license files — `docs/design/fonts/` only has woff2 web fonts, which Android `res/font` can't use
 - [ ] `tv-app`: `ScoreboardView` (Canvas) — clock + scores in DSEG7 with ghost segments, team swatches, status bar
 - [ ] `tv-app`: remote key adapter (OK on key-down, short/long press mapping, see CLAUDE.md)
 - [ ] `tv-app`: quick clock adjust overlay (↓)

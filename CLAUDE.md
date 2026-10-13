@@ -19,54 +19,43 @@ so the app ships **English (default) + Spanish from day one**, and adding anothe
 translation file (see `docs/architecture.md` → Localization).
 
 **Usage pattern (drives Phase 1 design):** pickup sessions of ~2 hours, **4 teams** identified by jersey/pinnie
-**color**, back-to-back **10-minute games** on a single running clock. After each game the app suggests the next
-pairing using the rotation rules below.
+**color**, back-to-back **10-minute games** on a single running clock; the scorer picks the two teams for each new game.
 
 ## Current status
 
 - Phase 1 (TV app + stick remote) — **design agreed, code not started; repo contains docs only.**
-- Design canvas (private): https://claude.ai/artifact/JdU1KoAJfeFtfB4572MHc3
+- Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
 ## Phase 1 scope
 
 **In:** two teams (left/right) with color + score, game clock (tenths under 1:00), buzzer at 0, undo,
-quick clock adjust, team rotation / next-game picker, menu, guarded exit to Android TV.
+quick clock adjust, next-game team picker, menu, guarded exit to Android TV.
 
 **Out for now (designed for, not built):** shot clock, team fouls, timeouts, periods, possession arrow,
 FIBA/NBA/NCAA presets. Keep the engine open to them, but don't implement or render them.
-
-### Rotation rules (data, not code branches)
-
-- First game of a session: the scorer picks both teams.
-- Winner stays on; loser goes to the back of the waiting line; the next team in line comes on.
-- A team that wins **2 games in a row** rests for 1 game: it leaves the court and re-enters the line **ahead
-  of** that game's loser, so it plays again in the following game.
-- **Tie:** both teams go to the back of the line (most recently entered team first); the two waiting teams play.
-- The suggestion is only a default: the scorer can override either side on the next-game screen.
-
 ## Repository layout (planned)
 
 ```
 tablero/
-├── shared/       # Pure Kotlin/JVM module: GameEngine, Rotation, Command model, rules, protocol DTOs. No Android deps.
+├── shared/       # Pure Kotlin/JVM module: GameEngine, Command model, rules, protocol DTOs. No Android deps.
 ├── tv-app/       # Android TV app: scoreboard view, buzzer, input adapters (remote keys, later WebSocket server)
 ├── remote-app/   # Android phone controller (Phase 2+)
 ├── scripts/      # adb helpers: setup-stick.sh / restore-stick.sh (debloat + kiosk)
-└── docs/         # architecture.md, hardware.md, stick-setup.md, roadmap.md
+└── docs/         # architecture.md, hardware.md, stick-setup.md, roadmap.md, design/ (screens)
 ```
 
 ## Architecture invariants (do not break these)
 
-1. **The display device is the single source of truth.** `GameEngine` on the TV owns the game clock, scores and
-   rotation state. Controllers never own state.
+1. **The display device is the single source of truth.** `GameEngine` on the TV owns the game clock, teams and
+   scores. Controllers never own state.
 2. **Inputs are commands, not values.** Every input source (remote keys, WebSocket, keyboard, clicker) is an
    adapter that maps to a `Command` (`ToggleClock`, `Score(side, delta)`, `AdjustGameClock(deltaMs)`, `Undo`, …)
    and calls `engine.dispatch(command)`. Absolute `Set…` commands exist only for corrections.
 3. **Time comes from an injected monotonic clock** (`interface TimeSource { fun nowNanos(): Long }`;
    production = `SystemClock.elapsedRealtimeNanos()`). Never use wall-clock time. This makes the engine
    deterministic in unit tests (fake time source).
-4. **The engine is pure Kotlin in `shared/`** with exhaustive unit tests for clock, rotation and undo rules.
+4. **The engine is pure Kotlin in `shared/`** with exhaustive unit tests for clock and undo rules.
    Android code only renders state and plays sounds.
 5. **The engine emits state snapshots + events** (e.g. `GameClockExpired`); the UI observes them. Buzzer playback
    reacts to events, not to polling.
@@ -120,8 +109,8 @@ via HDMI-CEC (verify with a key logger).
 - **Quick clock adjust (↓):** clock gets highlighted; ↑/↓ = ±1 min, ←/→ = ±1 s, OK = done, Back = cancel all
   changes made in this session. Auto-exits after ~5 s idle. Works while the clock runs (relative command).
 - **Time up:** red frame + bar with `NEXT GAME` (default) / `RESET CLOCK · KEEP SCORE`.
-- **Next game screen:** suggested pairing pre-selected; ←/→ choose side, ↑/↓ change team, OK start (0–0, clock at
-  game length, stopped), Back cancel.
+- **Next game screen:** the last game's two teams pre-selected; ←/→ choose side, ↑/↓ change team, OK start (0–0,
+  clock at game length, stopped), Back cancel.
 
 Menu overlay (Back long press; D-pad navigable): game clock (set exact time, stopped only), game length, left/right
 score, teams (session roster of colors), new game, language, exit to Android TV (only while
@@ -161,13 +150,14 @@ adb logcat -s tablero
 - Keep on-screen labels short and uppercase where they sit on the scoreboard, and leave room for ~30% longer
   translations. Spanish copy uses *tú* ("Presiona INICIO…").
 - Every rules change in `shared/` comes with unit tests using a fake `TimeSource`.
-- Rules are data: game length, tenths threshold and rotation rules (winner stays, max consecutive wins, tie
-  behavior) are defined as data objects, not `if (mode == …)` branches scattered in the code.
+- Rules are data: game length and the tenths threshold (and later presets) are defined as data objects, not
+  `if (mode == …)` branches scattered in the code.
 - Prefer small, reviewable commits; keep `docs/` updated when behavior or decisions change.
 
 ## Further reading
 
-- `docs/architecture.md` — engine model, commands, clock, rotation, persistence, Phase 2 protocol.
+- `docs/architecture.md` — engine model, commands, clock, persistence, Phase 2 protocol.
 - `docs/hardware.md` — hardware choices, budget, audio, placement.
 - `docs/stick-setup.md` — preparing the Xiaomi stick (ADB, debloat, default launcher, settings).
 - `docs/roadmap.md` — phases and task checklists.
+- `docs/design/` — reference screens for the TV app.

@@ -23,14 +23,13 @@ phone over local Wi-Fi.
 
 Portable LED scoreboards cost ~US$120 (~US$250 with a shot clock) and more once shipped to Peru, and they are
 awkward to correct mid-game. A cheap TV plus an Android TV stick gives bigger digits, a clock you can fix in a
-couple of key presses, undo, and a next-game picker for pickup rotations — for under US$150 total. The same
+couple of key presses, undo, and a quick way to start the next game — for under US$150 total. The same
 setup can grow into a proper 24/14 shot clock and phone control.
 
 ## Features (planned)
 
 - **Phase 1 — pickup sessions:** two teams identified by jersey color, scores, game clock (tenths under 1:00)
-  with LED-style digits, buzzer, undo, quick clock adjust, and a next-game picker that follows the rotation
-  (winner stays, rest after 2 wins in a row, ties send both teams to the line).
+  with LED-style digits, buzzer, undo, quick clock adjust, and a next-game team picker.
 - Control from the stick's Bluetooth remote (Phase 1).
 - English and Spanish built in; adding a language is a translation-only change.
 - Later: 24/14 shot clock, periods, team fouls / bonus, timeouts, possession arrow and presets (FIBA, NBA, NCAA,
@@ -75,6 +74,7 @@ Preparing the stick (developer mode, debloat, boot into tablero): [`docs/stick-s
 
 ## Docs
 
+- [Design (TV screens)](docs/design/README.md)
 - [Architecture](docs/architecture.md)
 - [Hardware](docs/hardware.md)
 - [Stick setup](docs/stick-setup.md)
@@ -82,4 +82,5 @@ Preparing the stick (developer mode, debloat, boot into tablero): [`docs/stick-s
 
 ## License
 
-TBD.
+[MIT](LICENSE). Bundled fonts keep their own license (SIL Open Font License 1.1) and ship with their license
+files.
