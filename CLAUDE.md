@@ -24,9 +24,10 @@ translation file (see `docs/architecture.md` → Localization).
 ## Current status
 
 - Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
-  display rounding, persisted state) are done with unit tests. `tv-app` skeleton is done: one activity, a first
-  `ScoreboardView` (clock + scores in DSEG7), remote key adapter, persistence; fonts bundled; localization
-  (English + Spanish, in-app language via `AppLanguage`, team color names). Next: the final scoreboard look.
+  display rounding, persisted state) are done with unit tests. `tv-app`: one activity, the final scoreboard look
+  (`ScoreboardView`: LED clock and scores, team swatches, status bar, action confirmations), remote key adapter,
+  persistence, fonts, localization (English + Spanish, in-app language via `AppLanguage`). Next: quick clock
+  adjust, time-up bar and next-game picker, menu.
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
@@ -78,7 +79,9 @@ tablero/
 - Amazon Fire TV Stick 2nd gen (Fire OS 5 / API 22) is **not** a target.
 - **Performance budget:** 1 GB RAM device. For the scoreboard surface use a single custom `View` drawn with
   `Canvas` (hardware accelerated). **No WebView.** No object allocation inside `onDraw`. Redraw at ~10 Hz while
-  a clock runs, only on change otherwise. Preload buzzer sounds with `SoundPool`.
+  a clock runs, only on change otherwise. Everything but the lit clock digits is cached in a bitmap layer redrawn
+  on change: the stick's CPU can't re-record the whole scene at 10 Hz without missing frames. Preload buzzer
+  sounds with `SoundPool`.
 - Keep screen awake with `FLAG_KEEP_SCREEN_ON`. The app is the **default HOME** on the stick (activity has a
   `HOME` intent filter; the stock launcher stays installed so admins can exit — see `docs/stick-setup.md`).
 

@@ -7,7 +7,7 @@
 | `GameEngine`    | `shared/` (pure Kotlin) | Owns all game state and the game clock; applies `Command`s; emits snapshots + events |
 | Rules           | `shared/`               | Data: game length, tenths threshold                                                  |
 | Protocol DTOs   | `shared/`               | Messages exchanged with controllers (Phase 2)                                        |
-| Scoreboard view | `tv-app/`               | Renders the latest `GameSnapshot` with `Canvas`                                      |
+| Scoreboard view | `tv-app/`               | Renders the latest `GameSnapshot` and confirmations with `Canvas`                   |
 | Overlays        | `tv-app/`               | Menu, quick clock adjust, set clock, time up, next game, exit confirm                |
 | Sound           | `tv-app/`               | Plays the buzzer in response to engine events (`SoundPool`)                          |
 | Persistence     | `tv-app/`               | Saves/restores engine state after every applied command                              |
@@ -102,6 +102,12 @@ The quick-adjust overlay's Back ("cancel") undoes every adjustment made since th
 
 `GameClockExpired`, `ClockStarted`, `ClockStopped`. The sound player maps `GameClockExpired` to the buzzer; the UI
 shows the time-up bar.
+
+`CommandApplied(command, before, after)` and `CommandUndone(command, before, after)` report every change with the
+snapshots around it, whichever input sent the command (a toggle is reported as the start or stop it resolved to).
+`tv-app` turns them into the confirmation over the status bar (`YELLOW +3 · 48 → 51`, `UNDONE · START CLOCK`):
+consecutive score presses on one side and in one direction, each within 1.5 s of the previous one, add up into one
+confirmation, while staying separate commands. A command event comes before the clock events it causes.
 
 ## Next game
 

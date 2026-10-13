@@ -15,7 +15,7 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
       lint `MissingTranslation` as error
 - [x] `tv-app`: bundle DSEG7 Classic (Bold) and Barlow Condensed (500–800) as **TTF** in `res/font/` with their
       OFL license files (in `assets/licenses/`)
-- [ ] `tv-app`: `ScoreboardView` (Canvas) — clock + scores in DSEG7 with ghost segments, team swatches, status bar
+- [x] `tv-app`: `ScoreboardView` (Canvas) — clock + scores in DSEG7 with ghost segments, team swatches, status bar
 - [x] `tv-app`: remote key adapter (OK on key-down, short/long press mapping, see CLAUDE.md)
 - [ ] `tv-app`: quick clock adjust overlay (↓)
 - [ ] `tv-app`: time-up bar + next-game picker

@@ -1,0 +1,62 @@
+package net.pladum.tablero.tv
+
+import android.content.Context
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.Typeface
+
+/**
+ * The design's reference canvas (docs/design/boards.html). Everything on the scoreboard is laid out in these
+ * "design pixels"; [ScoreboardView] scales them to the screen (the stick renders at 1280×720).
+ */
+const val DESIGN_WIDTH = 1920f
+const val DESIGN_HEIGHT = 1080f
+
+/** The bundled fonts: DSEG7 Classic Bold for digits, Barlow Condensed (weights 500–800) for text. */
+class BoardFonts(context: Context) {
+    val led: Typeface = context.resources.getFont(R.font.dseg7_classic_bold)
+    private val barlow: Typeface = context.resources.getFont(R.font.barlow_condensed)
+
+    fun barlow(weight: Int): Typeface = Typeface.create(barlow, weight, false)
+}
+
+fun textPaint(
+    typeface: Typeface,
+    size: Float,
+    color: Int,
+    letterSpacingEm: Float = 0f,
+    align: Paint.Align = Paint.Align.LEFT,
+) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    this.typeface = typeface
+    textSize = size
+    this.color = color
+    letterSpacing = letterSpacingEm
+    textAlign = align
+}
+
+fun fillPaint(color: Int = 0) = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
+
+fun strokePaint(color: Int, width: Float) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    this.color = color
+    style = Paint.Style.STROKE
+    strokeWidth = width
+}
+
+/**
+ * Text is placed by its visual center line, like the design's flex centering. This is the distance from that
+ * center down to the baseline, per pixel of text size, measured on [sample]: capitals for text, an 8 for digits.
+ */
+fun Paint.centerToBaselinePerPx(sample: String): Float {
+    val bounds = Rect()
+    getTextBounds(sample, 0, sample.length, bounds)
+    return -(bounds.top + bounds.bottom) / 2f / textSize
+}
+
+/** Sets [Paint.textSize] to [size], or smaller so that [text] fits [maxWidth]. Returns the text's width. */
+fun Paint.fitText(text: String, size: Float, maxWidth: Float): Float {
+    textSize = size
+    val width = measureText(text)
+    if (width <= maxWidth) return width
+    textSize = size * maxWidth / width
+    return measureText(text)
+}
