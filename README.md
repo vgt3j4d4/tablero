@@ -82,4 +82,5 @@ Preparing the stick (developer mode, debloat, boot into tablero): [`docs/stick-s
 
 ## License
 
-TBD.
+[MIT](LICENSE). Bundled fonts keep their own license (SIL Open Font License 1.1) and ship with their license
+files.
