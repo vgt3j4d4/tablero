@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- TV-only app: no touchscreen; leanback marks it as an Android TV app. -->
     <uses-feature
@@ -9,7 +10,30 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
+    <!--
+      enableOnBackInvokedCallback=false: with targetSdk 36+ on Android 16+, predictive back stops delivering
+      KEYCODE_BACK and Back would finish the activity. Back is a scoreboard key here (undo / menu). Older
+      platforms ignore the attribute, which is fine: they always deliver KEYCODE_BACK.
+    -->
     <application
+        android:name=".TableroApplication"
         android:allowBackup="false"
-        android:label="@string/app_name" />
+        android:banner="@drawable/banner"
+        android:enableOnBackInvokedCallback="false"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Tablero"
+        tools:ignore="UnusedAttribute">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            tools:ignore="DiscouragedApi">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
 </manifest>

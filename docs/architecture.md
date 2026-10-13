@@ -116,6 +116,10 @@ both sides) and confirms, which dispatches `NewGame(left, right)`. The app does 
 - Running-clock timestamps are `elapsedRealtime` based: valid across process death, not across a reboot. After
   a reboot (detected via `Settings.Global.BOOT_COUNT`), restore the clock **stopped** at the last saved remaining
   time and drop the undo history (its timestamps belong to the previous boot).
+- The boot count each save belongs to is kept in preferences and written **after** the state file, so a crash
+  between the two writes makes the next start assume a reboot (clock stopped, at most ~5 s lost) rather than
+  apply the previous boot's timestamps. The app also saves once at start, which records the current boot.
+  An unreadable state file, or one from a newer schema, is ignored and replaced by the next save.
 - The engine side lives in `shared`: `GameEngine.exportState()` → `EngineState.toJson()`, and
   `GameEngine(…, restored = EngineState.fromJson(json), rebooted = …)`. The JSON carries a `schemaVersion`;
   unknown keys are ignored, state from a newer schema is refused.
@@ -144,7 +148,7 @@ Goal: the app ships English + Spanish, and adding a language is a translation-on
 
 1. Copy `res/values/strings.xml` to `res/values-<code>/strings.xml` (e.g. `values-pt`) and translate it.
 2. Add `<locale android:name="<code>"/>` to `res/xml/locales_config.xml`.
-3. Run `./gradlew :tv-app:lint` (catches missing strings) and check the screens on the emulator.
+3. Run `./gradlew :tv-app:lint` (catches missing strings) and check the screens on the stick.
 
 No Kotlin changes are needed.
 

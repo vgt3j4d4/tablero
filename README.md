@@ -51,11 +51,11 @@ Details: [`docs/hardware.md`](docs/hardware.md).
 
 ## Status
 
-Early development — the Phase 1 design is agreed and the game engine is in place; the TV UI is next. See [`docs/roadmap.md`](docs/roadmap.md).
+Early development — the Phase 1 design is agreed, the game engine is in place and a first TV app can be played with the remote; the final scoreboard look is next. See [`docs/roadmap.md`](docs/roadmap.md).
 
 | Phase | Scope                                                             | Status                        |
 | ----- | ----------------------------------------------------------------- | ----------------------------- |
-| 1     | TV app + stick remote                                             | engine done, TV UI next       |
+| 1     | TV app + stick remote                                             | engine + TV skeleton done     |
 | 2     | Phone controller over Wi-Fi                                       | —                             |
 | 3     | Locked-phone control (volume keys, clicker, notification)         | —                             |
 | 4     | Full basketball rules, roles, branding, more languages and sports | —                             |

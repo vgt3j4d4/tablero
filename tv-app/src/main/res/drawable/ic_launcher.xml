@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder app icon: LED red clock bar over two amber score bars. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="@color/board_background"
+        android:pathData="M0,0h48v48h-48z" />
+    <path
+        android:fillColor="@color/led_red"
+        android:pathData="M10,8h28v14h-28z" />
+    <path
+        android:fillColor="@color/led_amber"
+        android:pathData="M6,28h14v12h-14z M28,28h14v12h-14z" />
+</vector>

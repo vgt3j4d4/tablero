@@ -24,7 +24,9 @@ translation file (see `docs/architecture.md` → Localization).
 ## Current status
 
 - Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
-  display rounding, persisted state) are done with unit tests. `tv-app` is an empty module: UI not started.
+  display rounding, persisted state) are done with unit tests. `tv-app` skeleton is done: one activity, a first
+  `ScoreboardView` (clock + scores, system font), remote key adapter, persistence. Next: fonts, localization and
+  the final scoreboard look.
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
@@ -143,9 +145,18 @@ stopped; confirm screen with Cancel focused; exit requires holding OK 2 s).
 ./gradlew :tv-app:assembleDebug
 adb connect <stick-ip>:5555                # stick: Developer options → network debugging
 ./gradlew :tv-app:installDebug
-adb shell input keyevent KEYCODE_DPAD_CENTER   # simulate remote keys (also works on the Android TV emulator)
+adb shell input keyevent KEYCODE_DPAD_CENTER   # simulate remote keys
+adb shell input keyevent --longpress KEYCODE_DPAD_LEFT
+adb exec-out screencap -p > screen.png     # screenshot (the stick renders at 1280×720)
 adb logcat -s tablero
 ```
+
+On-device testing happens **on the stick only**, installed over adb; there is no emulator setup. Tips:
+
+- `adb shell input keyevent` can take several seconds on the stick, so judge clock timing from screenshots and
+  `logcat` timestamps, not from host-side timing.
+- Right after a fresh install the stock launcher may jump back in front; launch the app again with
+  `adb shell am start -n net.pladum.tablero.tv.debug/net.pladum.tablero.tv.MainActivity`.
 
 ## Conventions
 

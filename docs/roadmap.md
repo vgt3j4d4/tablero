@@ -9,20 +9,21 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
 - [x] `shared`: `TimeSource`, `GameEngine`, `Command`, `GameSnapshot`, `GameEvent`, undo history (+ undo semantics tests)
 - [x] `shared`: `AdjustGameClock`, `SetGameClock`, `ResetGameClock`, `NewGame`, display rounding + unit tests
 - [x] `shared`: state serialization (JSON) for persistence
-- [ ] `tv-app`: single activity, `HOME` intent filter, `FLAG_KEEP_SCREEN_ON`
+- [x] `tv-app`: single activity, `FLAG_KEEP_SCREEN_ON`, launcher entry; first `ScoreboardView` (clock + scores,
+      system font)
 - [ ] `tv-app`: string resources — English default + Spanish, `locales_config.xml`, in-app language setting,
       lint `MissingTranslation` as error
 - [ ] `tv-app`: bundle DSEG7 Classic (Bold) and Barlow Condensed (500–800) as **TTF** in `res/font/` with their
       OFL license files — `docs/design/fonts/` only has woff2 web fonts, which Android `res/font` can't use
 - [ ] `tv-app`: `ScoreboardView` (Canvas) — clock + scores in DSEG7 with ghost segments, team swatches, status bar
-- [ ] `tv-app`: remote key adapter (OK on key-down, short/long press mapping, see CLAUDE.md)
+- [x] `tv-app`: remote key adapter (OK on key-down, short/long press mapping, see CLAUDE.md)
 - [ ] `tv-app`: quick clock adjust overlay (↓)
 - [ ] `tv-app`: time-up bar + next-game picker
 - [ ] `tv-app`: menu overlay (game clock, game length, scores, teams, new game, language, exit)
-- [ ] `tv-app`: guarded exit to Android TV (stopped clock only, hold OK 2 s)
-- [ ] `tv-app`: persistence (`AtomicFile`, restore on start, reboot detection)
+- [ ] `tv-app`: `HOME` intent filter and guarded exit to Android TV (stopped clock only, hold OK 2 s)
+- [x] `tv-app`: persistence (`AtomicFile`, restore on start, reboot detection)
 - [ ] `tv-app`: buzzer sound via `SoundPool`
-- [ ] Test on Android TV emulator, then on the Xiaomi stick
+- [ ] Test the full Phase 1 flow on the Xiaomi stick
 - [ ] `scripts/setup-stick.sh` / `restore-stick.sh`
 - [ ] Readability test on a real TV from the far corner of a court
 
