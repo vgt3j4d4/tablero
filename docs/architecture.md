@@ -5,8 +5,7 @@
 | Component | Where | Responsibility |
 |---|---|---|
 | `GameEngine` | `shared/` (pure Kotlin) | Owns all game state and the game clock; applies `Command`s; emits snapshots + events |
-| `Rotation` | `shared/` (pure Kotlin) | Session roster, waiting line and win streaks; suggests the next pairing |
-| Rules | `shared/` | Data: game length, tenths threshold, rotation rules |
+| Rules | `shared/` | Data: game length, tenths threshold |
 | Protocol DTOs | `shared/` | Messages exchanged with controllers (Phase 2) |
 | Scoreboard view | `tv-app/` | Renders the latest `GameSnapshot` with `Canvas` |
 | Overlays | `tv-app/` | Menu, quick clock adjust, set clock, time up, next game, exit confirm |
@@ -25,7 +24,7 @@
 
 ## Phase 1 scope
 
-Two teams (left/right) identified by color, scores, one game clock, buzzer, undo, rotation. Shot clock, fouls,
+Two teams (left/right) identified by color, scores, one game clock, buzzer, undo, next-game picker. Shot clock, fouls,
 timeouts, periods and the possession arrow are **out of scope for now** (see "Later" at the end); keep the model
 open to them but don't implement them.
 
@@ -56,21 +55,10 @@ data class GameSnapshot(
     val left: TeamState,
     val right: TeamState,
     val timeUp: Boolean,               // clock reached 0; UI shows the time-up bar
-    val rotation: RotationState,
+    val teams: List<TeamColor>,        // the session's team colors, offered in the next-game picker
 )
 data class TeamState(val color: TeamColor, val score: Int)
 enum class TeamColor { YELLOW, BLACK, WHITE, BLUE, RED, GREEN, ORANGE, PURPLE, LIGHT_BLUE } // names localized in tv-app
-
-data class RotationRules(
-    val winnerStays: Boolean = true,
-    val maxConsecutiveWins: Int = 2,   // then the winner rests one game
-    val onTie: TieRule = TieRule.BOTH_TO_LINE,
-)
-data class RotationState(
-    val roster: List<TeamColor>,       // the session's teams (4 today)
-    val waiting: List<TeamColor>,      // the line, front first
-    val winStreak: Map<TeamColor, Int>,
-)
 ```
 
 ## Commands
@@ -82,9 +70,9 @@ data class RotationState(
 | `AdjustGameClock(deltaMs)` | Relative; allowed running or stopped; result clamped to ≥ 0 |
 | `SetGameClock(ms)` | Absolute correction, only while stopped |
 | `ResetGameClock` | Back to the game length, scores kept |
-| `NewGame(left, right)` | Records the finished game in the rotation; scores 0–0; clock at game length, stopped |
+| `NewGame(left, right)` | The two teams for the next game; scores 0–0; clock at game length, stopped |
 | `SetGameLength(ms)` | Applies from the next reset / new game |
-| `SetRoster(colors)` | Session teams; resets the waiting line and streaks |
+| `SetTeams(colors)` | Session team colors offered in the next-game picker |
 | `Undo` | Reverts the last applied command (bounded history ≈ 20) |
 
 Each command carries metadata for Phase 2: `clientId`, `cmdId` (idempotency), `baseVersion` (for `Set…`).
@@ -97,7 +85,7 @@ Undo reverts the **effect** of the last command, not the passage of time:
 - `StartClock` → stops the clock and restores the remaining time it had when started (an accidental start costs
   no time). `StopClock` → resumes as if it had never stopped.
 - `AdjustGameClock` → applies the opposite delta.
-- `NewGame` → restores the previous game (scores, teams, rotation), clock stopped.
+- `NewGame` → restores the previous game (teams and scores), clock stopped.
 
 The quick-adjust overlay's Back ("cancel") undoes every adjustment made since the overlay opened.
 
@@ -106,28 +94,14 @@ The quick-adjust overlay's Back ("cancel") undoes every adjustment made since th
 `GameClockExpired`, `ClockStarted`, `ClockStopped`. The sound player maps `GameClockExpired` to the buzzer; the UI
 shows the time-up bar.
 
-## Rotation
+## Next game
 
-Rules are data (`RotationRules`); the algorithm runs when `NewGame` records the finished game:
-
-1. **Win, winner's streak < max:** winner stays on its side; loser goes to the back of the line; the front of the
-   line comes on.
-2. **Win, winner reaches max (2) in a row:** winner leaves and joins the line, then the loser joins behind it; the
-   first two in the line play. The winner therefore rests exactly one game. Its streak resets.
-3. **Tie:** both teams join the back of the line (the team that came on most recently first); the first two in
-   the line play. Both streaks reset.
-
-Example, teams Yellow (Y), Black (B), Blue (U), White (W), line `[U, W]`:
-- Y beats B (Y's 1st win) → line `[U, W, B]`, next Y vs U.
-- Y beats B (Y's 2nd win) → line `[U, W, Y, B]`, next U vs W, then the winner of that game vs Y.
-- Y and B tie → line `[U, W, B, Y]` (if B came on later), next U vs W.
-
-The first game of a session is picked by hand. The suggestion is a default; the next-game screen lets the scorer
-override either side (a team can't be on both sides).
+The next-game picker pre-selects the last game's two teams; the scorer changes either side (a team can't be on
+both sides) and confirms, which dispatches `NewGame(left, right)`. The app does not decide who plays next.
 
 ## Persistence
 
-- After every applied command `tv-app` writes the engine state (snapshot incl. rotation and the undo history)
+- After every applied command `tv-app` writes the engine state (snapshot and the undo history)
   as JSON with `AtomicFile` in the app's files dir; on start it restores it. While the clock runs it also saves
   every ~5 s.
 - Running-clock timestamps are `elapsedRealtime` based: valid across process death, not across a reboot. After
