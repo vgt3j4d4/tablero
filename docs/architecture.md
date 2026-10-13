@@ -2,17 +2,17 @@
 
 ## Components
 
-| Component | Where | Responsibility |
-|---|---|---|
-| `GameEngine` | `shared/` (pure Kotlin) | Owns all game state and the game clock; applies `Command`s; emits snapshots + events |
-| Rules | `shared/` | Data: game length, tenths threshold |
-| Protocol DTOs | `shared/` | Messages exchanged with controllers (Phase 2) |
-| Scoreboard view | `tv-app/` | Renders the latest `GameSnapshot` with `Canvas` |
-| Overlays | `tv-app/` | Menu, quick clock adjust, set clock, time up, next game, exit confirm |
-| Sound | `tv-app/` | Plays the buzzer in response to engine events (`SoundPool`) |
-| Persistence | `tv-app/` | Saves/restores engine state after every applied command |
-| Input adapters | `tv-app/` | Remote keys → `Command`; WebSocket messages → `Command` (Phase 2) |
-| Controller app | `remote-app/` | Sends commands, shows mirrored state, works while locked (Phase 2–3) |
+| Component       | Where                   | Responsibility                                                                       |
+| --------------- | ----------------------- | ------------------------------------------------------------------------------------ |
+| `GameEngine`    | `shared/` (pure Kotlin) | Owns all game state and the game clock; applies `Command`s; emits snapshots + events |
+| Rules           | `shared/`               | Data: game length, tenths threshold                                                  |
+| Protocol DTOs   | `shared/`               | Messages exchanged with controllers (Phase 2)                                        |
+| Scoreboard view | `tv-app/`               | Renders the latest `GameSnapshot` with `Canvas`                                      |
+| Overlays        | `tv-app/`               | Menu, quick clock adjust, set clock, time up, next game, exit confirm                |
+| Sound           | `tv-app/`               | Plays the buzzer in response to engine events (`SoundPool`)                          |
+| Persistence     | `tv-app/`               | Saves/restores engine state after every applied command                              |
+| Input adapters  | `tv-app/`               | Remote keys → `Command`; WebSocket messages → `Command` (Phase 2)                    |
+| Controller app  | `remote-app/`           | Sends commands, shows mirrored state, works while locked (Phase 2–3)                 |
 
 ```
  remote keys ─┐
@@ -63,17 +63,17 @@ enum class TeamColor { YELLOW, BLACK, WHITE, BLUE, RED, GREEN, ORANGE, PURPLE, L
 
 ## Commands
 
-| Command | Notes |
-|---|---|
-| `ToggleClock` / `StartClock` / `StopClock` | Ignored while `timeUp` (use `ResetGameClock` / `NewGame`) |
-| `Score(side, delta)` | delta ±1; score never goes below 0 |
-| `AdjustGameClock(deltaMs)` | Relative; allowed running or stopped; result clamped to ≥ 0 |
-| `SetGameClock(ms)` | Absolute correction, only while stopped |
-| `ResetGameClock` | Back to the game length, scores kept |
-| `NewGame(left, right)` | The two teams for the next game; scores 0–0; clock at game length, stopped |
-| `SetGameLength(ms)` | Applies from the next reset / new game |
-| `SetTeams(colors)` | Session team colors offered in the next-game picker |
-| `Undo` | Reverts the last applied command (bounded history ≈ 20) |
+| Command                                    | Notes                                                                      |
+| ------------------------------------------ | -------------------------------------------------------------------------- |
+| `ToggleClock` / `StartClock` / `StopClock` | Ignored while `timeUp` (use `ResetGameClock` / `NewGame`)                  |
+| `Score(side, delta)`                       | delta ±1; score never goes below 0                                         |
+| `AdjustGameClock(deltaMs)`                 | Relative; allowed running or stopped; result clamped to ≥ 0                |
+| `SetGameClock(ms)`                         | Absolute correction, only while stopped                                    |
+| `ResetGameClock`                           | Back to the game length, scores kept                                       |
+| `NewGame(left, right)`                     | The two teams for the next game; scores 0–0; clock at game length, stopped |
+| `SetGameLength(ms)`                        | Applies from the next reset / new game                                     |
+| `SetTeams(colors)`                         | Session team colors offered in the next-game picker                        |
+| `Undo`                                     | Reverts the last applied command (bounded history ≈ 20)                    |
 
 Each command carries metadata for Phase 2: `clientId`, `cmdId` (idempotency), `baseVersion` (for `Set…`).
 
@@ -116,7 +116,7 @@ Goal: the app ships English + Spanish, and adding a language is a translation-on
 - `tv-app` string resources: English is the default (`res/values/strings.xml`), Spanish in
   `res/values-es/strings.xml` (generic Spanish; region overrides such as `values-es-rPE` only if ever needed).
   Team color names come from resources (`TeamColor.YELLOW` → "Yellow" / "Amarillo").
-- `res/xml/locales_config.xml` is the single list of bundled languages. The menu's *Language* option is built
+- `res/xml/locales_config.xml` is the single list of bundled languages. The menu's _Language_ option is built
   from it (each language shown by its own name, e.g. "English", "Español"). Android 13+ also reads this file
   for the system per-app language setting.
 - API 28 has no per-app language setting, so the chosen language is stored in preferences and applied by
@@ -154,7 +154,7 @@ No Kotlin changes are needed.
 ## Locked-phone control (Phase 3, remote-app)
 
 - Foreground service, `foregroundServiceType="connectedDevice"` (Android 14+ requirements), partial wake lock
-  + Wi-Fi lock while a game is active.
+  and Wi-Fi lock while a game is active.
 - `MediaSessionCompat` + `VolumeProviderCompat` (remote playback) to receive volume keys with the screen off:
   Vol+ = toggle clock; Vol− mapping TBD (shot reset once the shot clock exists). Haptic confirmation on every
   accepted action.
@@ -176,10 +176,10 @@ league presets.
 
 Rules presets (initial values — verify against current rulebooks):
 
-| Preset | Periods | Period length | OT | Shot clock | Short reset | Bonus |
-|---|---|---|---|---|---|---|
-| FIBA | 4 | 10:00 | 5:00 | 24 | 14 | from 5th team foul per quarter |
-| NBA | 4 | 12:00 | 5:00 | 24 | 14 (offensive rebound) | from 5th team foul per quarter |
-| NCAA (men) | 2 | 20:00 | 5:00 | 30 | 20 (offensive rebound) | per-half thresholds (verify) |
-| FIBA 3x3 | 1 | 10:00 | — | 12 | — | from 7th team foul; first to 21 wins (verify) |
-| Timer | 1 | configurable, up or down | — | off | — | — |
+| Preset     | Periods | Period length            | OT   | Shot clock | Short reset            | Bonus                                         |
+| ---------- | ------- | ------------------------ | ---- | ---------- | ---------------------- | --------------------------------------------- |
+| FIBA       | 4       | 10:00                    | 5:00 | 24         | 14                     | from 5th team foul per quarter                |
+| NBA        | 4       | 12:00                    | 5:00 | 24         | 14 (offensive rebound) | from 5th team foul per quarter                |
+| NCAA (men) | 2       | 20:00                    | 5:00 | 30         | 20 (offensive rebound) | per-half thresholds (verify)                  |
+| FIBA 3x3   | 1       | 10:00                    | —    | 12         | —                      | from 7th team foul; first to 21 wins (verify) |
+| Timer      | 1       | configurable, up or down | —    | off        | —                      | —                                             |

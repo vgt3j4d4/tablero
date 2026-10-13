@@ -5,18 +5,18 @@ stick's remote — no internet required. Later: a full 24/14 shot clock, other s
 phone over local Wi-Fi.
 
 ```
- ┌──────────────────────────────┐        HDMI        ┌──────────────────────────────┐
- │  Android TV stick / Google TV │ ─────────────────▶ │  TV (24–32", built-in audio)  │
- │  tablero tv-app               │                    │  scoreboard + buzzer          │
- │  • GameEngine (owns the clock)│                    └──────────────────────────────┘
- │  • WebSocket server (Phase 2) │
- └──────────────▲───────────────┘
+ ┌────────────────────────────────┐        HDMI        ┌──────────────────────────────┐
+ │  Android TV stick / Google TV  │ ─────────────────▶ │  TV (24–32", built-in audio) │
+ │  tablero tv-app                │                    │  scoreboard + buzzer         │
+ │  • GameEngine (owns the clock) │                    └──────────────────────────────┘
+ │  • WebSocket server (Phase 2)  │
+ └────────────────▲───────────────┘
         Bluetooth │ remote (Phase 1)        local Wi-Fi (phone hotspot) │ WebSocket (Phase 2)
                   │                                                     │
-          ┌───────┴──────┐                                    ┌─────────┴────────┐
-          │ Stick remote │                                    │ tablero remote-app│
-          │ (scorer)     │                                    │ (referee / table) │
-          └──────────────┘                                    └──────────────────┘
+          ┌───────┴──────┐                                    ┌─────────┴──────────┐
+          │ Stick remote │                                    │ tablero remote-app │
+          │ (scorer)     │                                    │ (referee / table)  │
+          └──────────────┘                                    └────────────────────┘
 ```
 
 ## Why
@@ -40,12 +40,12 @@ setup can grow into a proper 24/14 shot clock and phone control.
 
 ## Hardware
 
-| Part | Example | Approx. cost (Lima, Oct 2026) |
-|---|---|---|
-| Display device | Xiaomi Mi TV Stick (MDZ-24-AA, Android TV 9) — or any Google TV set | already owned |
-| TV | 32" HD, e.g. Miray MS32-E2000GBT (Google TV, 16 W speakers) | ~S/ 399 |
-| Optional | Wired powered speaker (+ HDMI audio extractor if the TV has no audio out) | ~S/ 100–170 |
-| Controller | Android phone (hotspot + remote app) | owned |
+| Part           | Example                                                                   | Approx. cost (Lima, Oct 2026) |
+| -------------- | ------------------------------------------------------------------------- | ----------------------------- |
+| Display device | Xiaomi Mi TV Stick (MDZ-24-AA, Android TV 9) — or any Google TV set       | already owned                 |
+| TV             | 32" HD, e.g. Miray MS32-E2000GBT (Google TV, 16 W speakers)               | ~S/ 399                       |
+| Optional       | Wired powered speaker (+ HDMI audio extractor if the TV has no audio out) | ~S/ 100–170                   |
+| Controller     | Android phone (hotspot + remote app)                                      | owned                         |
 
 Details: [`docs/hardware.md`](docs/hardware.md).
 
@@ -53,12 +53,12 @@ Details: [`docs/hardware.md`](docs/hardware.md).
 
 Early planning — documentation only; the Phase 1 design is agreed. See [`docs/roadmap.md`](docs/roadmap.md).
 
-| Phase | Scope | Status |
-|---|---|---|
-| 1 | TV app + stick remote | design done, code not started |
-| 2 | Phone controller over Wi-Fi | — |
-| 3 | Locked-phone control (volume keys, clicker, notification) | — |
-| 4 | Full basketball rules, roles, branding, more languages and sports | — |
+| Phase | Scope                                                             | Status                        |
+| ----- | ----------------------------------------------------------------- | ----------------------------- |
+| 1     | TV app + stick remote                                             | design done, code not started |
+| 2     | Phone controller over Wi-Fi                                       | —                             |
+| 3     | Locked-phone control (volume keys, clicker, notification)         | —                             |
+| 4     | Full basketball rules, roles, branding, more languages and sports | —                             |
 
 ## Getting started (developers)
 

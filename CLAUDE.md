@@ -153,6 +153,8 @@ adb logcat -s tablero
 - Rules are data: game length and the tenths threshold (and later presets) are defined as data objects, not
   `if (mode == …)` branches scattered in the code.
 - Prefer small, reviewable commits; keep `docs/` updated when behavior or decisions change.
+- **Branches:** `develop` is the integration branch. Create feature branches from `develop` and open PRs against
+  it. `main` only holds released code: merge `develop` → `main` when a release is ready.
 
 ## Further reading
 
