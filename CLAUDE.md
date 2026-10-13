@@ -23,7 +23,8 @@ translation file (see `docs/architecture.md` → Localization).
 
 ## Current status
 
-- Phase 1 (TV app + stick remote) — **design agreed, code not started; repo contains docs only.**
+- Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
+  display rounding, persisted state) are done with unit tests. `tv-app` is an empty module: UI not started.
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 

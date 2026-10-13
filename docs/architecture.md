@@ -65,15 +65,22 @@ enum class TeamColor { YELLOW, BLACK, WHITE, BLUE, RED, GREEN, ORANGE, PURPLE, L
 
 | Command                                    | Notes                                                                      |
 | ------------------------------------------ | -------------------------------------------------------------------------- |
-| `ToggleClock` / `StartClock` / `StopClock` | Ignored while `timeUp` (use `ResetGameClock` / `NewGame`)                  |
+| `ToggleClock` / `StartClock` / `StopClock` | Start is rejected while `timeUp` or with 0 on the clock                    |
 | `Score(side, delta)`                       | delta ±1; score never goes below 0                                         |
-| `AdjustGameClock(deltaMs)`                 | Relative; allowed running or stopped; result clamped to ≥ 0                |
-| `SetGameClock(ms)`                         | Absolute correction, only while stopped                                    |
-| `ResetGameClock`                           | Back to the game length, scores kept                                       |
+| `AdjustGameClock(deltaMs)`                 | Relative; allowed running or stopped; result clamped to 0–60:00            |
+| `SetGameClock(ms)`                         | Absolute correction (0–60:00), only while stopped                          |
+| `ResetGameClock`                           | Back to the game length, stopped, scores kept                              |
 | `NewGame(left, right)`                     | The two teams for the next game; scores 0–0; clock at game length, stopped |
-| `SetGameLength(ms)`                        | Applies from the next reset / new game                                     |
-| `SetTeams(colors)`                         | Session team colors offered in the next-game picker                        |
-| `Undo`                                     | Reverts the last applied command (bounded history ≈ 20)                    |
+| `SetGameLength(ms)`                        | 1–60 min; applies from the next reset / new game                           |
+| `SetTeams(colors)`                         | Session team colors offered in the next-game picker (≥ 2, distinct)        |
+| `Undo`                                     | Reverts the last applied command (history of 20)                           |
+
+- Giving the clock time while `timeUp` (adjust or set to > 0) clears `timeUp`, so a scorer can add back seconds
+  the clock ran over and restart it. A running clock adjusted down to 0 expires (buzzer).
+- `dispatch` returns `Applied(snapshot)` or `Rejected(reason)`. A rejected command changes nothing, is not
+  recorded for undo and does not bump the version; a command that would leave the state as it is is rejected
+  as `NO_CHANGE`. Phase 2 acks reuse the reason.
+- First launch: every color in the roster, Yellow (left) vs Black (right), 0–0, 10:00 stopped.
 
 Each command carries metadata for Phase 2: `clientId`, `cmdId` (idempotency), `baseVersion` (for `Set…`).
 
@@ -84,7 +91,9 @@ Undo reverts the **effect** of the last command, not the passage of time:
 - `Score` → only the score changes back.
 - `StartClock` → stops the clock and restores the remaining time it had when started (an accidental start costs
   no time). `StopClock` → resumes as if it had never stopped.
-- `AdjustGameClock` → applies the opposite delta.
+- `AdjustGameClock` → applies the opposite of the delta actually applied (after clamping); a running clock
+  keeps running.
+- `SetGameClock` / `ResetGameClock` → the previous clock (and time-up state) comes back.
 - `NewGame` → restores the previous game (teams and scores), clock stopped.
 
 The quick-adjust overlay's Back ("cancel") undoes every adjustment made since the overlay opened.
@@ -106,7 +115,10 @@ both sides) and confirms, which dispatches `NewGame(left, right)`. The app does 
   every ~5 s.
 - Running-clock timestamps are `elapsedRealtime` based: valid across process death, not across a reboot. After
   a reboot (detected via `Settings.Global.BOOT_COUNT`), restore the clock **stopped** at the last saved remaining
-  time.
+  time and drop the undo history (its timestamps belong to the previous boot).
+- The engine side lives in `shared`: `GameEngine.exportState()` → `EngineState.toJson()`, and
+  `GameEngine(…, restored = EngineState.fromJson(json), rebooted = …)`. The JSON carries a `schemaVersion`;
+  unknown keys are ignored, state from a newer schema is refused.
 
 ## Localization
 
