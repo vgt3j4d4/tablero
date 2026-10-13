@@ -1,0 +1,211 @@
+# Architecture
+
+## Components
+
+| Component | Where | Responsibility |
+|---|---|---|
+| `GameEngine` | `shared/` (pure Kotlin) | Owns all game state and the game clock; applies `Command`s; emits snapshots + events |
+| `Rotation` | `shared/` (pure Kotlin) | Session roster, waiting line and win streaks; suggests the next pairing |
+| Rules | `shared/` | Data: game length, tenths threshold, rotation rules |
+| Protocol DTOs | `shared/` | Messages exchanged with controllers (Phase 2) |
+| Scoreboard view | `tv-app/` | Renders the latest `GameSnapshot` with `Canvas` |
+| Overlays | `tv-app/` | Menu, quick clock adjust, set clock, time up, next game, exit confirm |
+| Sound | `tv-app/` | Plays the buzzer in response to engine events (`SoundPool`) |
+| Persistence | `tv-app/` | Saves/restores engine state after every applied command |
+| Input adapters | `tv-app/` | Remote keys → `Command`; WebSocket messages → `Command` (Phase 2) |
+| Controller app | `remote-app/` | Sends commands, shows mirrored state, works while locked (Phase 2–3) |
+
+```
+ remote keys ─┐
+ WebSocket  ──┼──▶ Command ──▶ GameEngine.dispatch() ──▶ GameSnapshot (StateFlow) ──▶ ScoreboardView
+ keyboard   ──┘                     │                          │                 └──▶ WebSocket broadcast (Phase 2)
+                                    │                          └──▶ StateStore (save after every command)
+                                    └──▶ GameEvent (SharedFlow) ──▶ SoundPlayer (buzzer), overlays
+```
+
+## Phase 1 scope
+
+Two teams (left/right) identified by color, scores, one game clock, buzzer, undo, rotation. Shot clock, fouls,
+timeouts, periods and the possession arrow are **out of scope for now** (see "Later" at the end); keep the model
+open to them but don't implement them.
+
+## Time model
+
+- The engine reads time from an injected `TimeSource` (monotonic nanoseconds). Production:
+  `SystemClock.elapsedRealtimeNanos()`. Tests: a fake clock advanced manually.
+- A running clock is stored as `(remainingAtStartNanos, startedAtNanos)`; remaining time is computed on read,
+  so there is no drift from tick timers. A UI ticker (~10 Hz) only triggers redraws.
+- Adjusting a running clock (`AdjustGameClock`) shifts `remainingAtStartNanos`; the clock keeps running and no
+  time is lost.
+- Expiry detection: the engine checks the expiry instant and emits `GameClockExpired` exactly once; the clock
+  stops at 0.
+
+### Display rules
+
+- `MM:SS` at ≥ 1:00, `SS.t` (tenths) below 1:00 (threshold is rules data).
+- Round **up** to the displayed unit (seconds, then tenths) so the display reads 0 only at the moment of expiry.
+- Digits are drawn in DSEG7 Classic over dim "8" ghost segments (`88:88` / `88.8`, `88` per score).
+
+## State (sketch)
+
+```kotlin
+data class GameSnapshot(
+    val version: Long,                 // increments on every applied command
+    val rules: GameRules,              // gameLength, tenthsBelow
+    val gameClock: ClockState,         // remaining, running
+    val left: TeamState,
+    val right: TeamState,
+    val timeUp: Boolean,               // clock reached 0; UI shows the time-up bar
+    val rotation: RotationState,
+)
+data class TeamState(val color: TeamColor, val score: Int)
+enum class TeamColor { YELLOW, BLACK, WHITE, BLUE, RED, GREEN, ORANGE, PURPLE, LIGHT_BLUE } // names localized in tv-app
+
+data class RotationRules(
+    val winnerStays: Boolean = true,
+    val maxConsecutiveWins: Int = 2,   // then the winner rests one game
+    val onTie: TieRule = TieRule.BOTH_TO_LINE,
+)
+data class RotationState(
+    val roster: List<TeamColor>,       // the session's teams (4 today)
+    val waiting: List<TeamColor>,      // the line, front first
+    val winStreak: Map<TeamColor, Int>,
+)
+```
+
+## Commands
+
+| Command | Notes |
+|---|---|
+| `ToggleClock` / `StartClock` / `StopClock` | Ignored while `timeUp` (use `ResetGameClock` / `NewGame`) |
+| `Score(side, delta)` | delta ±1; score never goes below 0 |
+| `AdjustGameClock(deltaMs)` | Relative; allowed running or stopped; result clamped to ≥ 0 |
+| `SetGameClock(ms)` | Absolute correction, only while stopped |
+| `ResetGameClock` | Back to the game length, scores kept |
+| `NewGame(left, right)` | Records the finished game in the rotation; scores 0–0; clock at game length, stopped |
+| `SetGameLength(ms)` | Applies from the next reset / new game |
+| `SetRoster(colors)` | Session teams; resets the waiting line and streaks |
+| `Undo` | Reverts the last applied command (bounded history ≈ 20) |
+
+Each command carries metadata for Phase 2: `clientId`, `cmdId` (idempotency), `baseVersion` (for `Set…`).
+
+### Undo semantics
+
+Undo reverts the **effect** of the last command, not the passage of time:
+
+- `Score` → only the score changes back.
+- `StartClock` → stops the clock and restores the remaining time it had when started (an accidental start costs
+  no time). `StopClock` → resumes as if it had never stopped.
+- `AdjustGameClock` → applies the opposite delta.
+- `NewGame` → restores the previous game (scores, teams, rotation), clock stopped.
+
+The quick-adjust overlay's Back ("cancel") undoes every adjustment made since the overlay opened.
+
+## Events
+
+`GameClockExpired`, `ClockStarted`, `ClockStopped`. The sound player maps `GameClockExpired` to the buzzer; the UI
+shows the time-up bar.
+
+## Rotation
+
+Rules are data (`RotationRules`); the algorithm runs when `NewGame` records the finished game:
+
+1. **Win, winner's streak < max:** winner stays on its side; loser goes to the back of the line; the front of the
+   line comes on.
+2. **Win, winner reaches max (2) in a row:** winner leaves and joins the line, then the loser joins behind it; the
+   first two in the line play. The winner therefore rests exactly one game. Its streak resets.
+3. **Tie:** both teams join the back of the line (the team that came on most recently first); the first two in
+   the line play. Both streaks reset.
+
+Example, teams Yellow (Y), Black (B), Blue (U), White (W), line `[U, W]`:
+- Y beats B (Y's 1st win) → line `[U, W, B]`, next Y vs U.
+- Y beats B (Y's 2nd win) → line `[U, W, Y, B]`, next U vs W, then the winner of that game vs Y.
+- Y and B tie → line `[U, W, B, Y]` (if B came on later), next U vs W.
+
+The first game of a session is picked by hand. The suggestion is a default; the next-game screen lets the scorer
+override either side (a team can't be on both sides).
+
+## Persistence
+
+- After every applied command `tv-app` writes the engine state (snapshot incl. rotation and the undo history)
+  as JSON with `AtomicFile` in the app's files dir; on start it restores it. While the clock runs it also saves
+  every ~5 s.
+- Running-clock timestamps are `elapsedRealtime` based: valid across process death, not across a reboot. After
+  a reboot (detected via `Settings.Global.BOOT_COUNT`), restore the clock **stopped** at the last saved remaining
+  time.
+
+## Localization
+
+Goal: the app ships English + Spanish, and adding a language is a translation-only change.
+
+- The engine emits values, enums and events only — never display text.
+- `tv-app` string resources: English is the default (`res/values/strings.xml`), Spanish in
+  `res/values-es/strings.xml` (generic Spanish; region overrides such as `values-es-rPE` only if ever needed).
+  Team color names come from resources (`TeamColor.YELLOW` → "Yellow" / "Amarillo").
+- `res/xml/locales_config.xml` is the single list of bundled languages. The menu's *Language* option is built
+  from it (each language shown by its own name, e.g. "English", "Español"). Android 13+ also reads this file
+  for the system per-app language setting.
+- API 28 has no per-app language setting, so the chosen language is stored in preferences and applied by
+  wrapping the activity's base context with that locale. With nothing chosen, the app follows the device
+  language and falls back to English.
+- Rules for translatable strings: format arguments (`%1$s +%2$d`) instead of concatenation, `<plurals>` for
+  counts, no text in images, and layouts that tolerate ~30% longer text. Lint `MissingTranslation` is an error so
+  every bundled language stays complete.
+- Fonts: digits use DSEG7 (language-independent). The UI font (Barlow Condensed) covers Latin scripts; a
+  language in another script needs a fallback font added to the font family.
+
+### Adding a language
+
+1. Copy `res/values/strings.xml` to `res/values-<code>/strings.xml` (e.g. `values-pt`) and translate it.
+2. Add `<locale android:name="<code>"/>` to `res/xml/locales_config.xml`.
+3. Run `./gradlew :tv-app:lint` (catches missing strings) and check the screens on the emulator.
+
+No Kotlin changes are needed.
+
+## Phase 2 protocol (draft)
+
+- Network: TV joins the referee phone's hotspot (or a travel router). No internet needed.
+- Discovery: Android NSD service `_tablero._tcp`; fallback QR code on the TV with `ws://<ip>:<port>`.
+- Transport: WebSocket, JSON text frames.
+- Client → TV: `{ "type": "command", "clientId", "cmdId", "baseVersion", "command": {…} }`
+- TV → clients: `{ "type": "snapshot", "version", "state": {…} }` on every change and at 4–10 Hz while running;
+  `{ "type": "ack", "cmdId", "applied": true|false, "reason"? }`.
+- Heartbeat: client ping every 1 s; no pong for 2.5 s → controller shows LINK LOST + vibrates, reconnects with
+  backoff (≤ 1 s) and requests a snapshot. The TV never stops the clock because a client disconnected.
+- Idempotency: TV de-duplicates by `(clientId, cmdId)` so retries are safe; stale `Set…` (old `baseVersion`)
+  is rejected.
+- Roles: `REFEREE` (clock), `TABLE` (scores, teams), `ADMIN` (all + rules).
+  Any role may STOP the clock; only clock owners may START it.
+
+## Locked-phone control (Phase 3, remote-app)
+
+- Foreground service, `foregroundServiceType="connectedDevice"` (Android 14+ requirements), partial wake lock
+  + Wi-Fi lock while a game is active.
+- `MediaSessionCompat` + `VolumeProviderCompat` (remote playback) to receive volume keys with the screen off:
+  Vol+ = toggle clock; Vol− mapping TBD (shot reset once the shot clock exists). Haptic confirmation on every
+  accepted action.
+- Bluetooth selfie clicker (sends Volume Up) paired to the phone rides the same path.
+- MediaStyle notification with up to 3 lock-screen actions; optional `setShowWhenLocked` full UI for the table.
+- OEM battery killers (Xiaomi, Huawei, Samsung): onboarding screen for battery-optimization exemptions; the
+  system must tolerate the controller being killed (see invariant: TV owns the clock).
+
+## Later (out of Phase 1 scope)
+
+Kept for when the scope grows again: shot clock, team fouls / bonus, timeouts, periods, possession arrow and
+league presets.
+
+- Shot clock display: whole seconds, tenths below 5.0 s; hidden when the game clock has less time remaining than
+  the shot clock (FIBA behavior). Events `ShotClockExpired`, `PeriodEnded`.
+- FIBA 14-second logic (for a future "smart reset" helper): after a stoppage for a defensive foul/violation in the
+  frontcourt, if the shot clock shows ≥ 14 it continues, otherwise it resets to 14. Backcourt throw-ins reset
+  to 24.
+
+Rules presets (initial values — verify against current rulebooks):
+
+| Preset | Periods | Period length | OT | Shot clock | Short reset | Bonus |
+|---|---|---|---|---|---|---|
+| FIBA | 4 | 10:00 | 5:00 | 24 | 14 | from 5th team foul per quarter |
+| NBA | 4 | 12:00 | 5:00 | 24 | 14 (offensive rebound) | from 5th team foul per quarter |
+| NCAA (men) | 2 | 20:00 | 5:00 | 30 | 20 (offensive rebound) | per-half thresholds (verify) |
+| FIBA 3x3 | 1 | 10:00 | — | 12 | — | from 7th team foul; first to 21 wins (verify) |
+| Timer | 1 | configurable, up or down | — | off | — | — |
