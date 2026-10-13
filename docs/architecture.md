@@ -148,7 +148,7 @@ Goal: the app ships English + Spanish, and adding a language is a translation-on
 
 1. Copy `res/values/strings.xml` to `res/values-<code>/strings.xml` (e.g. `values-pt`) and translate it.
 2. Add `<locale android:name="<code>"/>` to `res/xml/locales_config.xml`.
-3. Run `./gradlew :tv-app:lint` (catches missing strings) and check the screens on the emulator.
+3. Run `./gradlew :tv-app:lint` (catches missing strings) and check the screens on the stick.
 
 No Kotlin changes are needed.
 
