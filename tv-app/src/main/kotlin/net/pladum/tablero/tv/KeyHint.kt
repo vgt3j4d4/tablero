@@ -23,6 +23,10 @@ class KeyHint(private val key: String, private val label: String) {
     private var keyX = 0f
     private var labelX = 0f
 
+    /** The hint's width with [paint]: keycap, gap and label. */
+    fun width(paint: Paint): Float =
+        paint.measureText(key) + 2 * (KEYCAP_PADDING + KEYCAP_BORDER) + KEYCAP_GAP + paint.measureText(label)
+
     /** Places the hint so that it ends at [right], centered on [centerY]; returns its left edge. */
     fun layoutEndingAt(right: Float, centerY: Float, paint: Paint): Float {
         labelX = right - paint.measureText(label)

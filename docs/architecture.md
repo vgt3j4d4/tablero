@@ -112,6 +112,28 @@ are reverted with one opposite `AdjustGameClock` instead. Keys in the overlay ac
 are swallowed until released so that a key-up never acts on the scoreboard; the overlay closes on its own, keeping
 its changes, after 5 s without a key.
 
+### Menu
+
+A long press on Back opens the menu (design 06) unless another overlay owns the remote (quick adjust, or an open
+time-up bar: there Back closes the bar first). It stays open until Back closes it, and the game clock keeps running
+behind it. Its keys act on key-down like the other overlays: ↑/↓ move between rows (no wrap), ←/→ change the focused
+value, OK opens the focused row.
+
+- **Scores** change with every press, one `Score(side, ±1)` each, exactly as on the scoreboard.
+- **Game length** (whole minutes, 1–60) and **language** stay pending while their row is focused and apply when
+  focus leaves the row or the menu closes. Game length goes out as one `SetGameLength`, so stepping 10 → 7 takes
+  one undo instead of three and can't push older actions (an accidental new game) out of the 20-entry history.
+  Language is applied once because applying it recreates the activity; the menu reopens on the row it was on.
+  The activity also applies a pending game length when it stops.
+- **Game clock** opens the set game clock dialog (design 08) only while the clock is stopped: ↑/↓ change the focused
+  field (minutes stop at 0 and 60, seconds wrap without carrying), ←/→ switch field, OK sends one `SetGameClock`
+  (nothing when the time wasn't changed), Back cancels; both return to the menu.
+- **New game** sends `NewGame` and closes the menu; Back on the scoreboard undoes it.
+- **Exit to Android TV** comes with the guarded exit (only while stopped, confirm screen, hold OK 2 s).
+
+A language change recreates the activity, and the new one may receive the key-up of the key that applied it, so the
+remote key adapter ignores key-ups whose key-down it never saw (a stray Back release would otherwise undo).
+
 ## Events
 
 `GameClockExpired`, `ClockStarted`, `ClockStopped`. The sound player maps `GameClockExpired` to the buzzer.

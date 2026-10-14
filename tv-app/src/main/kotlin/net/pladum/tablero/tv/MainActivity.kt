@@ -21,6 +21,9 @@ import net.pladum.tablero.shared.TimeSource
 /** Quick clock adjust closes on its own, keeping its changes, after this long without a key. */
 private const val CLOCK_ADJUST_IDLE_MS = 5_000L
 
+/** Saved instance state: the focused menu row, when the menu was open (a language change recreates the activity). */
+private const val STATE_MENU_ROW = "menuRow"
+
 /** The only screen: the scoreboard, rendered from the engine's snapshots. */
 class MainActivity : Activity() {
     private lateinit var engine: GameEngine
@@ -28,7 +31,8 @@ class MainActivity : Activity() {
     private lateinit var scoreboard: ScoreboardView
     private val clockAdjust = ClockAdjustController()
     private val timeUp = TimeUpBar({ dispatch(it) }, { scoreboard.showTimeUpBar(it) })
-    private val keys = RemoteKeyAdapter({ dispatch(it) }, clockAdjust, timeUp)
+    private lateinit var menu: Menu
+    private lateinit var keys: RemoteKeyAdapter
     private val feedback = FeedbackGrouper()
     private var uiScope: CoroutineScope? = null
 
@@ -46,6 +50,23 @@ class MainActivity : Activity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         scoreboard = ScoreboardView(this, timeSource)
         setContentView(scoreboard)
+        menu = Menu(
+            dispatch = { dispatch(it) },
+            snapshot = { engine.snapshot.value },
+            languages = AppLanguage.available(this),
+            language = AppLanguage.inUse(this),
+            applyLanguage = { AppLanguage.set(this, it) },
+            onChange = { scoreboard.showMenu(it) },
+        )
+        keys = RemoteKeyAdapter({ dispatch(it) }, clockAdjust, timeUp, menu)
+        savedInstanceState?.getString(STATE_MENU_ROW)
+            ?.let { saved -> MenuRow.entries.firstOrNull { it.name == saved } }
+            ?.let(menu::open)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        menu.focused?.let { outState.putString(STATE_MENU_ROW, it.name) }
     }
 
     override fun onStart() {
@@ -65,6 +86,7 @@ class MainActivity : Activity() {
 
     override fun onStop() {
         if (clockAdjust.isOpen) clockAdjust.done()
+        menu.applyGameLength() // The menu may stay open; a pending change must not wait for it.
         uiScope?.cancel()
         uiScope = null
         super.onStop()
