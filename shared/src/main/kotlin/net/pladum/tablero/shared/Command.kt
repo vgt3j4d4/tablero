@@ -41,20 +41,15 @@ sealed interface Command {
     @SerialName("reset_game_clock")
     data object ResetGameClock : Command
 
-    /** The two teams for the next game; scores 0–0, clock at the game length, stopped. */
+    /** Scores 0–0, clock at the game length, stopped. */
     @Serializable
     @SerialName("new_game")
-    data class NewGame(val left: TeamColor, val right: TeamColor) : Command
+    data object NewGame : Command
 
     /** Takes effect from the next reset or new game. */
     @Serializable
     @SerialName("set_game_length")
     data class SetGameLength(val gameLengthMs: Long) : Command
-
-    /** The session roster offered in the next-game picker: at least two distinct colors. */
-    @Serializable
-    @SerialName("set_teams")
-    data class SetTeams(val colors: List<TeamColor>) : Command
 
     /** Reverts the effect of the last applied command. */
     @Serializable

@@ -9,7 +9,7 @@ import android.graphics.RectF
 import android.view.View
 import net.pladum.tablero.shared.ClockReading
 import net.pladum.tablero.shared.GameSnapshot
-import net.pladum.tablero.shared.TeamColor
+import net.pladum.tablero.shared.Side
 import net.pladum.tablero.shared.TeamState
 import net.pladum.tablero.shared.TimeSource
 
@@ -38,12 +38,8 @@ private const val NAME_CENTER_Y = 567f
 private const val SCORE_CENTER_Y = 802f
 private const val NAME_SIZE = 84f
 
-/** Swatch, gap and name together; longer names shrink to fit. */
-private const val NAME_ROW_MAX_WIDTH = 800f
-private const val SWATCH_SIZE = 72f
-private const val SWATCH_RADIUS = 16f
-private const val SWATCH_BORDER = 4f
-private const val SWATCH_GAP = 24f
+/** Longer team names shrink to fit. */
+private const val NAME_MAX_WIDTH = 800f
 
 private const val STATUS_TOP = 1016f
 private const val STATUS_CENTER_Y = 1048f
@@ -95,8 +91,8 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
     private var clockGhostX = 0f
     private var clockRight = 0f
 
-    private val left = TeamSlot(LEFT_TEAM_X)
-    private val right = TeamSlot(RIGHT_TEAM_X)
+    private val left = TeamSlot(Side.LEFT, LEFT_TEAM_X)
+    private val right = TeamSlot(Side.RIGHT, RIGHT_TEAM_X)
 
     private val statusLinePaint = fillPaint(context.getColor(R.color.status_line))
     private val clockStatePaint = textPaint(fonts.barlow(600), STATUS_SIZE, textColor, 0.08f, Paint.Align.RIGHT)
@@ -284,20 +280,15 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
     private fun ledPaint(colorRes: Int, align: Paint.Align) =
         textPaint(fonts.led, LED_SIZE, context.getColor(colorRes), align = align)
 
-    /** One team column: swatch and color name, score over its unlit segments. */
-    private inner class TeamSlot(private val centerX: Float) {
-        private var color: TeamColor? = null
+    /** One team column: its name (HOME / AWAY), score over its unlit segments. */
+    private inner class TeamSlot(side: Side, private val centerX: Float) {
         private var score = -1
 
-        private val swatch = RectF()
-        private val swatchBorder = RectF()
-        private val swatchPaint = fillPaint()
-        private val swatchBorderPaint = strokePaint(context.getColor(R.color.text_muted), SWATCH_BORDER)
-        private var name = ""
-        private var nameX = 0f
-        private var nameBaseline = 0f
-        private val namePaint = textPaint(fonts.barlow(700), NAME_SIZE, textColor, 0.03f)
-        private val nameCenter = namePaint.centerToBaselinePerPx("H")
+        private val name = context.getString(side.teamNameRes()).uppercase(resources.configuration.locales[0])
+        private val namePaint = textPaint(fonts.barlow(700), NAME_SIZE, textColor, 0.03f, Paint.Align.CENTER).apply {
+            fitText(name, NAME_SIZE, NAME_MAX_WIDTH)
+        }
+        private val nameBaseline = NAME_CENTER_Y + namePaint.centerToBaselinePerPx("H") * namePaint.textSize
 
         private var scoreText = ""
         private var scoreGhost = ""
@@ -309,45 +300,23 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
 
         /** Returns true when anything this column shows changed. */
         fun update(team: TeamState): Boolean {
-            var changed = false
-            if (team.color != color) {
-                color = team.color
-                layoutName(team.color)
-                changed = true
+            if (team.score == score) return false
+            score = team.score
+            scoreText = score.toString()
+            val ghost = scoreGhost(scoreText)
+            if (ghost != scoreGhost) {
+                scoreGhost = ghost
+                val width = scoreGhostPaint.measureText(ghost)
+                scoreGhostX = centerX - width / 2
+                scoreRight = scoreGhostX + width
             }
-            if (team.score != score) {
-                score = team.score
-                scoreText = score.toString()
-                val ghost = scoreGhost(scoreText)
-                if (ghost != scoreGhost) {
-                    scoreGhost = ghost
-                    val width = scoreGhostPaint.measureText(ghost)
-                    scoreGhostX = centerX - width / 2
-                    scoreRight = scoreGhostX + width
-                }
-                changed = true
-            }
-            return changed
+            return true
         }
 
         fun draw(canvas: Canvas) {
-            canvas.drawRoundRect(swatch, SWATCH_RADIUS, SWATCH_RADIUS, swatchPaint)
-            canvas.drawRoundRect(swatchBorder, SWATCH_RADIUS, SWATCH_RADIUS, swatchBorderPaint)
-            canvas.drawText(name, nameX, nameBaseline, namePaint)
+            canvas.drawText(name, centerX, nameBaseline, namePaint)
             canvas.drawText(scoreGhost, scoreGhostX, scoreBaseline, scoreGhostPaint)
             canvas.drawText(scoreText, scoreRight, scoreBaseline, scorePaint)
-        }
-
-        private fun layoutName(color: TeamColor) {
-            name = context.getString(color.nameRes()).uppercase(resources.configuration.locales[0])
-            swatchPaint.color = context.getColor(color.colorRes())
-            val nameWidth = namePaint.fitText(name, NAME_SIZE, NAME_ROW_MAX_WIDTH - SWATCH_SIZE - SWATCH_GAP)
-            val rowLeft = centerX - (SWATCH_SIZE + SWATCH_GAP + nameWidth) / 2
-            swatch.set(rowLeft, NAME_CENTER_Y - SWATCH_SIZE / 2, rowLeft + SWATCH_SIZE, NAME_CENTER_Y + SWATCH_SIZE / 2)
-            swatchBorder.set(swatch)
-            swatchBorder.inset(SWATCH_BORDER / 2, SWATCH_BORDER / 2)
-            nameX = rowLeft + SWATCH_SIZE + SWATCH_GAP
-            nameBaseline = NAME_CENTER_Y + nameCenter * namePaint.textSize
         }
     }
 }

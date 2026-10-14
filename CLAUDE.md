@@ -18,23 +18,24 @@ No internet is required at any point. Total hardware budget: < US$150 including 
 so the app ships **English (default) + Spanish from day one**, and adding another language must only take a new
 translation file (see `docs/architecture.md` → Localization).
 
-**Usage pattern (drives Phase 1 design):** pickup sessions of ~2 hours, **4 teams** identified by jersey/pinnie
-**color**, back-to-back **10-minute games** on a single running clock; the scorer picks the two teams for each new game.
+**Usage pattern (drives Phase 1 design):** pickup sessions of ~2 hours, back-to-back **10-minute games** on a single
+running clock. The board names its two teams the usual way, **HOME** (left) and **AWAY** (right) — *LOCAL* / *VISITA*
+in Spanish — whoever is actually playing; it never tracks teams or who plays next.
 
 ## Current status
 
 - Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
   display rounding, persisted state) are done with unit tests. `tv-app`: one activity, the final scoreboard look
-  (`ScoreboardView`: LED clock and scores, team swatches, status bar, action confirmations), quick clock adjust,
+  (`ScoreboardView`: LED clock and scores, HOME / AWAY labels, status bar, action confirmations), quick clock adjust,
   remote key adapter, persistence, fonts, localization (English + Spanish, in-app language via `AppLanguage`).
-  Next: time-up bar and next-game picker, menu.
+  Next: time-up bar, menu.
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
 ## Phase 1 scope
 
-**In:** two teams (left/right) with color + score, game clock (tenths under 1:00), buzzer at 0, undo,
-quick clock adjust, next-game team picker, menu, guarded exit to Android TV.
+**In:** two teams, HOME on the left and AWAY on the right (fixed, no swap), with scores; game clock (tenths under
+1:00), buzzer at 0, undo, quick clock adjust, time-up bar with a new game (0–0), menu, guarded exit to Android TV.
 
 **Out for now (designed for, not built):** shot clock, team fouls, timeouts, periods, possession arrow,
 FIBA/NBA/NCAA presets. Keep the engine open to them, but don't implement or render them.
@@ -93,10 +94,10 @@ tablero/
 - Fonts ship unmodified as TTF in `tv-app/src/main/res/font/` (`dseg7_classic_bold`, `barlow_condensed` family
   500–800); their OFL license files live in `tv-app/src/main/assets/licenses/` (`res/font` only accepts font and
   XML files). DSEG has the Reserved Font Name "DSEG": never subset or modify that file.
-- Game clock LED red, scores LED amber. Team = color swatch + color name (white text). UI text in Barlow
-  Condensed (OFL).
+- Game clock LED red, scores LED amber. Each team column is labelled `HOME` / `AWAY` (white text). UI text in
+  Barlow Condensed (OFL).
 - Layout (1920×1080): clock across the top; left/right team columns below; a thin status bar at the bottom
-  (clock running/stopped, action confirmations like `YELLOW +3 · 48 → 51`).
+  (clock running/stopped, action confirmations like `HOME +3 · 48 → 51`).
 
 ## Remote control mapping (Phase 1, Xiaomi Bluetooth remote)
 
@@ -107,24 +108,23 @@ via HDMI-CEC (verify with a key logger).
 | Key | Short press | Long press |
 |---|---|---|
 | OK | Start/stop game clock — **fires on key-down** (no long press on OK, so no delay) | — |
-| ← | Left team +1 | Left team −1 |
-| → | Right team +1 | Right team −1 |
+| ← | Home +1 | Home −1 |
+| → | Away +1 | Away −1 |
 | ↑ | — (unused) | — |
 | ↓ | Quick clock adjust mode | — |
 | Back | Undo last action | Open menu |
 
 - Ignore key repeats (`repeatCount > 0`) for OK so holding it never toggles twice.
-- Consecutive +1 presses on the same side within ~1.5 s are shown as one confirmation (`YELLOW +3`), but are
+- Consecutive +1 presses on the same side within ~1.5 s are shown as one confirmation (`HOME +3`), but are
   still separate `Score` commands.
 - **Quick clock adjust (↓):** clock gets highlighted; ↑/↓ = ±1 min, ←/→ = ±1 s, OK = done, Back = cancel all
   changes made in this session. Auto-exits after ~5 s idle. Works while the clock runs (relative command).
-- **Time up:** red frame + bar with `NEXT GAME` (default) / `RESET CLOCK · KEEP SCORE`.
-- **Next game screen:** the last game's two teams pre-selected; ←/→ choose side, ↑/↓ change team, OK start (0–0,
-  clock at game length, stopped), Back cancel.
+- **Time up:** red frame + bar with `NEW GAME` (default: 0–0, clock at game length, stopped) /
+  `RESET CLOCK · KEEP SCORE`. Back closes the bar instead of undoing.
 
 Menu overlay (Back long press; D-pad navigable): game clock (set exact time, stopped only), game length, left/right
-score, teams (session roster of colors), new game, language, exit to Android TV (only while
-stopped; confirm screen with Cancel focused; exit requires holding OK 2 s).
+score, new game, language, exit to Android TV (only while stopped; confirm screen with Cancel focused; exit
+requires holding OK 2 s).
 
 ## Tech stack
 

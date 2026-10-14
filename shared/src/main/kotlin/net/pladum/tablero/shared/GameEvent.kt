@@ -10,7 +10,7 @@ sealed interface GameEvent {
     data object GameClockExpired : GameEvent
 
     /**
-     * A [command] changed the state, from whichever input it came; the UI confirms it (`YELLOW +1 · 48 → 49`).
+     * A [command] changed the state, from whichever input it came; the UI confirms it (`HOME +1 · 48 → 49`).
      * [ToggleClock][Command.ToggleClock] is reported as the start or stop it resolved to. [before] and [after] are
      * the snapshots around this command only, so a confirmation never reads a later change.
      */

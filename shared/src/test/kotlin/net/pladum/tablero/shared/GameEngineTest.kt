@@ -6,7 +6,6 @@ import net.pladum.tablero.shared.Command.ResetGameClock
 import net.pladum.tablero.shared.Command.Score
 import net.pladum.tablero.shared.Command.SetGameClock
 import net.pladum.tablero.shared.Command.SetGameLength
-import net.pladum.tablero.shared.Command.SetTeams
 import net.pladum.tablero.shared.Command.StartClock
 import net.pladum.tablero.shared.Command.StopClock
 import net.pladum.tablero.shared.Command.ToggleClock
@@ -18,11 +17,6 @@ import net.pladum.tablero.shared.GameEvent.CommandUndone
 import net.pladum.tablero.shared.GameEvent.GameClockExpired
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
-import net.pladum.tablero.shared.TeamColor.BLACK
-import net.pladum.tablero.shared.TeamColor.BLUE
-import net.pladum.tablero.shared.TeamColor.RED
-import net.pladum.tablero.shared.TeamColor.WHITE
-import net.pladum.tablero.shared.TeamColor.YELLOW
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -31,12 +25,11 @@ import kotlin.test.assertTrue
 
 class GameEngineTest {
     @Test
-    fun `first launch is yellow vs black, 0-0, full clock stopped, every color in the roster`() = engineTest {
-        assertEquals(TeamState(YELLOW, 0), state.left)
-        assertEquals(TeamState(BLACK, 0), state.right)
+    fun `first launch is 0-0, full clock stopped`() = engineTest {
+        assertEquals(TeamState(0), state.left)
+        assertEquals(TeamState(0), state.right)
         assertClock(GAME_MS, running = false)
         assertFalse(state.timeUp)
-        assertEquals(TeamColor.entries, state.teams)
         assertEquals(0, state.version)
     }
 
@@ -230,25 +223,31 @@ class GameEngineTest {
         }
 
         @Test
-        fun `a new game sets the teams, 0-0 and a full stopped clock`() = engineTest {
+        fun `a new game is 0-0 with a full stopped clock`() = engineTest {
             apply(Score(LEFT, 1))
+            apply(Score(RIGHT, 1))
             apply(StartClock)
             advance(GAME_MS)
-            apply(NewGame(left = BLUE, right = YELLOW))
-            assertEquals(TeamState(BLUE, 0), state.left)
-            assertEquals(TeamState(YELLOW, 0), state.right)
+            apply(NewGame)
+            assertEquals(TeamState(0), state.left)
+            assertEquals(TeamState(0), state.right)
             assertClock(GAME_MS, running = false)
             assertFalse(state.timeUp)
         }
 
         @Test
-        fun `a team cannot play itself`() = engineTest {
-            assertRejected(NewGame(RED, RED), RejectReason.INVALID_ARGUMENT)
+        fun `a new game stops a running clock`() = engineTest {
+            apply(Score(LEFT, 1))
+            apply(StartClock)
+            advance(SECOND_MS)
+            apply(NewGame)
+            assertClock(GAME_MS, running = false)
+            assertEquals(listOf(ClockStarted, ClockStopped), clockEvents)
         }
     }
 
     @Nested
-    inner class RulesAndRoster {
+    inner class Rules {
         @Test
         fun `game length applies from the next reset or new game`() = engineTest {
             apply(SetGameLength(8 * MINUTE_MS))
@@ -256,7 +255,7 @@ class GameEngineTest {
             apply(ResetGameClock)
             assertClock(8 * MINUTE_MS, running = false)
             apply(SetGameLength(12 * MINUTE_MS))
-            apply(NewGame(RED, BLUE))
+            apply(NewGame)
             assertClock(12 * MINUTE_MS, running = false)
         }
 
@@ -266,15 +265,6 @@ class GameEngineTest {
             apply(SetGameLength(GameRules.MAX_GAME_LENGTH_MS))
             assertRejected(SetGameLength(GameRules.MIN_GAME_LENGTH_MS - 1), RejectReason.INVALID_ARGUMENT)
             assertRejected(SetGameLength(GameRules.MAX_GAME_LENGTH_MS + 1), RejectReason.INVALID_ARGUMENT)
-        }
-
-        @Test
-        fun `the roster needs at least two distinct colors`() = engineTest {
-            apply(SetTeams(listOf(YELLOW, BLACK, WHITE)))
-            assertEquals(listOf(YELLOW, BLACK, WHITE), state.teams)
-            assertRejected(SetTeams(listOf(YELLOW)), RejectReason.INVALID_ARGUMENT)
-            assertRejected(SetTeams(listOf(YELLOW, BLACK, YELLOW)), RejectReason.INVALID_ARGUMENT)
-            assertRejected(SetTeams(listOf(YELLOW, BLACK, WHITE)), RejectReason.NO_CHANGE)
         }
     }
 
@@ -368,22 +358,31 @@ class GameEngineTest {
             apply(Score(RIGHT, 1))
             apply(StartClock)
             advance(MINUTE_MS)
-            apply(NewGame(RED, BLUE))
+            apply(NewGame)
             advance(MINUTE_MS)
             apply(Undo)
-            assertEquals(TeamState(YELLOW, 1), state.left)
-            assertEquals(TeamState(BLACK, 1), state.right)
+            assertEquals(TeamState(1), state.left)
+            assertEquals(TeamState(1), state.right)
             assertClock(GAME_MS - MINUTE_MS, running = false)
         }
 
         @Test
-        fun `game length and roster go back`() = engineTest {
-            apply(SetGameLength(5 * MINUTE_MS))
-            apply(SetTeams(listOf(RED, BLUE)))
+        fun `undoing a new game after time up brings the time-up state back`() = engineTest {
+            apply(Score(LEFT, 1))
+            apply(StartClock)
+            advance(GAME_MS)
+            apply(NewGame)
             apply(Undo)
+            assertEquals(1, state.left.score)
+            assertClock(0, running = false)
+            assertTrue(state.timeUp)
+        }
+
+        @Test
+        fun `game length goes back`() = engineTest {
+            apply(SetGameLength(5 * MINUTE_MS))
             apply(Undo)
             assertEquals(GameRules(), state.rules)
-            assertEquals(TeamColor.entries, state.teams)
         }
 
         @Test

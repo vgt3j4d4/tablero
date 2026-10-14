@@ -117,26 +117,16 @@ class GameEngine(
                 ClockState.stopped(command.remainingMs).withTimeUp(s)
             }
             Command.ResetGameClock -> s.copy(gameClock = ClockState.stopped(s.rules.gameLengthMs), timeUp = false)
-            is Command.NewGame -> {
-                if (command.left == command.right) return Step.Reject(RejectReason.INVALID_ARGUMENT)
-                s.copy(
-                    gameClock = ClockState.stopped(s.rules.gameLengthMs),
-                    left = TeamState(command.left),
-                    right = TeamState(command.right),
-                    timeUp = false,
-                )
-            }
+            Command.NewGame -> s.copy(
+                gameClock = ClockState.stopped(s.rules.gameLengthMs),
+                left = TeamState(),
+                right = TeamState(),
+                timeUp = false,
+            )
             is Command.SetGameLength -> {
                 val range = GameRules.MIN_GAME_LENGTH_MS..GameRules.MAX_GAME_LENGTH_MS
                 if (command.gameLengthMs !in range) return Step.Reject(RejectReason.INVALID_ARGUMENT)
                 s.copy(rules = s.rules.copy(gameLengthMs = command.gameLengthMs))
-            }
-            is Command.SetTeams -> {
-                val colors = command.colors
-                if (colors.size < 2 || colors.distinct().size != colors.size) {
-                    return Step.Reject(RejectReason.INVALID_ARGUMENT)
-                }
-                s.copy(teams = colors)
             }
             Command.Undo -> error("Undo is handled by undo()")
         }
@@ -159,14 +149,13 @@ class GameEngine(
                 s.withTeam(command.side, s.team(command.side).copy(score = score))
             }
             is Command.AdjustGameClock -> adjust(s.gameClock, -entry.appliedDeltaNanos, now).first.withTimeUp(s)
-            is Command.NewGame -> s.copy(
+            Command.NewGame -> s.copy(
                 gameClock = before.gameClock.stopAt(entry.appliedAtNanos),
                 left = before.left,
                 right = before.right,
                 timeUp = before.timeUp,
             )
             is Command.SetGameLength -> s.copy(rules = before.rules)
-            is Command.SetTeams -> s.copy(teams = before.teams)
             Command.ToggleClock, Command.Undo -> error("$command is never recorded")
         }
         return Step.Revert(next, undone = command)

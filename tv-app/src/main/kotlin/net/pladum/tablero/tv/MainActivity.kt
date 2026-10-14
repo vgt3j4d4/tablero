@@ -15,7 +15,7 @@ import net.pladum.tablero.shared.ClockReading
 import net.pladum.tablero.shared.Command
 import net.pladum.tablero.shared.DispatchResult
 import net.pladum.tablero.shared.GameEngine
-import net.pladum.tablero.shared.TeamColor
+import net.pladum.tablero.shared.Side
 import net.pladum.tablero.shared.TimeSource
 
 /** Quick clock adjust closes on its own, keeping its changes, after this long without a key. */
@@ -79,7 +79,7 @@ class MainActivity : Activity() {
     private fun logLanguage() {
         val source = if (AppLanguage.chosen(this) != null) "chosen in the app" else "from the device"
         val locale = resources.configuration.locales[0].toLanguageTag()
-        Log.i(LOG_TAG, "Language $locale ($source), e.g. ${getString(TeamColor.YELLOW.nameRes())}")
+        Log.i(LOG_TAG, "Language $locale ($source), e.g. ${getString(Side.LEFT.teamNameRes())}")
     }
 
     private fun dispatch(command: Command): DispatchResult {
