@@ -6,7 +6,7 @@ and [`architecture.md`](../architecture.md); these images show how it looks.
 
 | # | Screen | What it shows |
 |---|---|---|
-| 01 | [Live game](en/01-live-game.png) | The scoreboard: game clock on top, the two color teams and their scores, status bar with the game length and whether the clock is running |
+| 01 | [Live game](en/01-live-game.png) | The scoreboard: game clock on top, the two color teams and their scores, status bar showing whether the clock is running |
 | 02 | [Final minute](en/02-final-minute.png) | Below 1:00 the clock shows tenths (`38.4`) |
 | 03 | [Time up](en/03-time-up.png) | Buzzer state: red frame, result, and the choice between *Next game* (default) and *Reset clock · keep score* |
 | 04 | [Next game](en/04-next-game.png) | Team picker: the last game's teams pre-selected; ←/→ side, ↑/↓ team |

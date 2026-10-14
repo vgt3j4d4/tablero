@@ -99,16 +99,11 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
     private val right = TeamSlot(RIGHT_TEAM_X)
 
     private val statusLinePaint = fillPaint(context.getColor(R.color.status_line))
-    private val gameLengthPaint = textPaint(
-        fonts.barlow(600), STATUS_SIZE, context.getColor(R.color.text_muted), 0.08f,
-    )
     private val clockStatePaint = textPaint(fonts.barlow(600), STATUS_SIZE, textColor, 0.08f, Paint.Align.RIGHT)
-    private val statusBaseline = STATUS_CENTER_Y + gameLengthPaint.centerToBaselinePerPx("H") * STATUS_SIZE
+    private val statusBaseline = STATUS_CENTER_Y + clockStatePaint.centerToBaselinePerPx("H") * STATUS_SIZE
     private val statusIconPaint = fillPaint(textColor)
     private val pauseBarLeft = RectF()
     private val pauseBarRight = RectF()
-    private var gameLengthMs = -1L
-    private var gameLengthText = ""
     private var running: Boolean? = null
     private var clockStateText = ""
     private var statusIconX = 0f
@@ -188,26 +183,18 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
 
     /** Returns true when the status bar text changed. */
     private fun updateStatus(s: GameSnapshot): Boolean {
-        var changed = false
-        if (s.rules.gameLengthMs != gameLengthMs) {
-            gameLengthMs = s.rules.gameLengthMs
-            gameLengthText = context.getString(R.string.status_game_length, durationText(gameLengthMs))
-            changed = true
-        }
-        if (s.gameClock.running != running) {
-            running = s.gameClock.running
-            clockStateText = context.getString(
-                if (s.gameClock.running) R.string.status_clock_running else R.string.status_clock_stopped,
-            )
-            val textLeft = DESIGN_WIDTH - STATUS_PADDING - clockStatePaint.measureText(clockStateText)
-            statusIconX = textLeft - STATUS_ICON_GAP - STATUS_ICON_SIZE
-            // The pause icon: two 5×16 bars in an 18×18 box (boards.html PAUSE_ICON).
-            val top = STATUS_CENTER_Y - STATUS_ICON_SIZE / 2
-            pauseBarLeft.set(statusIconX + 2, top + 1, statusIconX + 7, top + 17)
-            pauseBarRight.set(statusIconX + 11, top + 1, statusIconX + 16, top + 17)
-            changed = true
-        }
-        return changed
+        if (s.gameClock.running == running) return false
+        running = s.gameClock.running
+        clockStateText = context.getString(
+            if (s.gameClock.running) R.string.status_clock_running else R.string.status_clock_stopped,
+        )
+        val textLeft = DESIGN_WIDTH - STATUS_PADDING - clockStatePaint.measureText(clockStateText)
+        statusIconX = textLeft - STATUS_ICON_GAP - STATUS_ICON_SIZE
+        // The pause icon: two 5×16 bars in an 18×18 box (boards.html PAUSE_ICON).
+        val top = STATUS_CENTER_Y - STATUS_ICON_SIZE / 2
+        pauseBarLeft.set(statusIconX + 2, top + 1, statusIconX + 7, top + 17)
+        pauseBarRight.set(statusIconX + 11, top + 1, statusIconX + 16, top + 17)
+        return true
     }
 
     /** Runs the ticker only while the clock runs and the view is on a visible window. */
@@ -277,7 +264,6 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         right.draw(canvas)
 
         canvas.drawRect(0f, STATUS_TOP, DESIGN_WIDTH, STATUS_TOP + STATUS_LINE, statusLinePaint)
-        canvas.drawText(gameLengthText, STATUS_PADDING, statusBaseline, gameLengthPaint)
         canvas.drawText(clockStateText, DESIGN_WIDTH - STATUS_PADDING, statusBaseline, clockStatePaint)
         if (running == true) {
             canvas.drawCircle(statusIconX + STATUS_ICON_SIZE / 2, STATUS_CENTER_Y, 8f, statusIconPaint)

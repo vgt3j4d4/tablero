@@ -13,8 +13,7 @@
     <string name="team_purple">Purple</string>
     <string name="team_light_blue">Light blue</string>
 
-    <!-- Status bar. %1$s is the game length, e.g. 10:00. -->
-    <string name="status_game_length">%1$s GAMES</string>
+    <!-- Status bar. -->
     <string name="status_clock_running">CLOCK RUNNING</string>
     <string name="status_clock_stopped">CLOCK STOPPED</string>
 
