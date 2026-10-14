@@ -53,7 +53,7 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
 .team-name { display: flex; align-items: center; gap: 24px; max-width: 800px; font-size: 84px; font-weight: 700; line-height: 1;
   letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; }
 .swatch { width: 72px; height: 72px; flex-shrink: 0; border-radius: 16px; border: 4px solid var(--muted); }
-.status { height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 48px;
+.status { height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; padding: 0 48px;
   border-top: 2px solid var(--line-soft); font-size: 28px; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); }
 .status .state { display: flex; align-items: center; gap: 12px; color: var(--text); }
 
@@ -128,7 +128,6 @@ const STRINGS = {
   en: {
     team: { yellow: 'Yellow', black: 'Black', white: 'White', blue: 'Blue' },
     running: 'CLOCK RUNNING', stopped: 'CLOCK STOPPED',
-    footer: '10:00 GAMES',
     back: 'BACK', undo: 'UNDO', cancel: 'CANCEL',
     timeUp: 'TIME UP', result: 'Yellow wins 62–58',
     nextGameBtn: 'NEXT GAME', resetBtn: 'RESET CLOCK · KEEP SCORE',
@@ -168,7 +167,6 @@ const STRINGS = {
   es: {
     team: { yellow: 'Amarillo', black: 'Negro', white: 'Blanco', blue: 'Azul' },
     running: 'RELOJ EN MARCHA', stopped: 'RELOJ DETENIDO',
-    footer: 'PARTIDOS DE 10:00',
     back: 'ATRÁS', undo: 'DESHACER', cancel: 'CANCELAR',
     timeUp: 'FIN DEL PARTIDO', result: 'Gana Amarillo 62–58',
     nextGameBtn: 'SIGUIENTE PARTIDO', resetBtn: 'REINICIAR RELOJ · MISMO PUNTAJE',
@@ -237,7 +235,7 @@ function scoreboard({ left = 'yellow', right = 'black', leftScore = '48', rightS
         <div class="led clock"><span class="ghost">${ghost(clock)}</span><span>${esc(clock)}</span></div>
       </div></div>
       <div class="teams">${team(left, leftScore)}<div></div>${team(right, rightScore)}</div>
-      <div class="status"><div>${esc(T.footer)}</div><div class="state">${state}</div></div>
+      <div class="status"><div class="state">${state}</div></div>
     </div>`;
 }
 

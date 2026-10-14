@@ -11,8 +11,7 @@
     <string name="team_purple">Morado</string>
     <string name="team_light_blue">Celeste</string>
 
-    <!-- Status bar. %1$s is the game length, e.g. 10:00. -->
-    <string name="status_game_length">PARTIDOS DE %1$s</string>
+    <!-- Status bar. -->
     <string name="status_clock_running">RELOJ EN MARCHA</string>
     <string name="status_clock_stopped">RELOJ DETENIDO</string>
 
