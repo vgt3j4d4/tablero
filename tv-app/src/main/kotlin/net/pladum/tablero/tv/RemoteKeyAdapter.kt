@@ -27,10 +27,15 @@ interface ClockAdjustKeys {
  * on it (Back must never finish the activity). Key repeats are ignored; the long press is reported once by the
  * framework, and the key-up that follows it arrives canceled.
  *
- * Quick clock adjust acts on key-down, so a key pressed there (or ↓, which opens it) is swallowed until it is
- * released: its key-up must not act again on the scoreboard once the overlay has closed (Back would undo).
+ * Quick clock adjust and the time-up bar act on key-down, so a key pressed there (or ↓, which opens quick adjust)
+ * is swallowed until it is released: its key-up must not act again on the scoreboard once the overlay has closed
+ * (Back would undo).
  */
-class RemoteKeyAdapter(private val dispatch: (Command) -> Unit, private val clockAdjust: ClockAdjustKeys) {
+class RemoteKeyAdapter(
+    private val dispatch: (Command) -> Unit,
+    private val clockAdjust: ClockAdjustKeys,
+    private val timeUp: TimeUpKeys,
+) {
     private val swallowed = mutableSetOf<Key>()
 
     /** Returns true when the key is ours; the caller then starts tracking it for a long press. */
@@ -41,6 +46,14 @@ class RemoteKeyAdapter(private val dispatch: (Command) -> Unit, private val cloc
             clockAdjust.isOpen -> {
                 swallowed += key
                 adjustKey(key)
+            }
+            timeUp.isOpen -> {
+                swallowed += key
+                timeUpKey(key)
+            }
+            key == Key.OK && timeUp.isClosed -> {
+                swallowed += key
+                timeUp.reopen() // The clock can't start at time up anyway.
             }
             key == Key.OK -> dispatch(Command.ToggleClock) // On key-down: no delay.
             key == Key.DOWN -> {
@@ -53,7 +66,7 @@ class RemoteKeyAdapter(private val dispatch: (Command) -> Unit, private val cloc
 
     fun onKeyLongPress(keyCode: Int): Boolean {
         val key = Key.of(keyCode) ?: return false
-        if (key in swallowed || clockAdjust.isOpen) return true
+        if (key in swallowed || clockAdjust.isOpen || timeUp.isOpen) return true
         return when (key) {
             Key.LEFT -> true.also { dispatch(Command.Score(Side.LEFT, -1)) }
             Key.RIGHT -> true.also { dispatch(Command.Score(Side.RIGHT, -1)) }
@@ -64,7 +77,7 @@ class RemoteKeyAdapter(private val dispatch: (Command) -> Unit, private val cloc
 
     fun onKeyUp(keyCode: Int, canceled: Boolean): Boolean {
         val key = Key.of(keyCode) ?: return false
-        if (swallowed.remove(key) || canceled || clockAdjust.isOpen) return true
+        if (swallowed.remove(key) || canceled || clockAdjust.isOpen || timeUp.isOpen) return true
         when (key) {
             Key.LEFT -> dispatch(Command.Score(Side.LEFT, 1))
             Key.RIGHT -> dispatch(Command.Score(Side.RIGHT, 1))
@@ -81,6 +94,14 @@ class RemoteKeyAdapter(private val dispatch: (Command) -> Unit, private val cloc
         Key.LEFT -> clockAdjust.adjust(-ADJUST_SECOND_MS)
         Key.OK -> clockAdjust.done()
         Key.BACK -> clockAdjust.cancel()
+    }
+
+    private fun timeUpKey(key: Key) = when (key) {
+        Key.LEFT -> timeUp.focus(TimeUpChoice.NEW_GAME)
+        Key.RIGHT -> timeUp.focus(TimeUpChoice.RESET_CLOCK)
+        Key.OK -> timeUp.pick()
+        Key.BACK -> timeUp.close()
+        Key.UP, Key.DOWN -> Unit
     }
 
     private enum class Key {

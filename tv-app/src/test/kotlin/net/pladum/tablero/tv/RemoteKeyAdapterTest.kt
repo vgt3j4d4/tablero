@@ -10,11 +10,14 @@ import android.view.KeyEvent.KEYCODE_ENTER
 import android.view.KeyEvent.KEYCODE_NUMPAD_ENTER
 import android.view.KeyEvent.KEYCODE_VOLUME_UP
 import net.pladum.tablero.shared.Command
+import net.pladum.tablero.shared.Command.NewGame
+import net.pladum.tablero.shared.Command.ResetGameClock
 import net.pladum.tablero.shared.Command.Score
 import net.pladum.tablero.shared.Command.ToggleClock
 import net.pladum.tablero.shared.Command.Undo
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -52,7 +55,8 @@ private class FakeClockAdjust : ClockAdjustKeys {
 class RemoteKeyAdapterTest {
     private val dispatched = mutableListOf<Command>()
     private val clockAdjust = FakeClockAdjust()
-    private val keys = RemoteKeyAdapter({ dispatched += it }, clockAdjust)
+    private val timeUp = TimeUpBar({ dispatched += it }, {})
+    private val keys = RemoteKeyAdapter({ dispatched += it }, clockAdjust, timeUp)
 
     private fun shortPress(keyCode: Int) {
         assertTrue(keys.onKeyDown(keyCode, repeatCount = 0))
@@ -173,6 +177,73 @@ class RemoteKeyAdapterTest {
             shortPress(KEYCODE_DPAD_LEFT)
             shortPress(KEYCODE_BACK)
             assertEquals(listOf<Command>(Score(LEFT, 1), Undo), dispatched)
+        }
+    }
+
+    @Nested
+    inner class TimeUp {
+        @BeforeEach
+        fun clockRanOut() = timeUp.onTimeUp(true)
+
+        @Test
+        fun `OK starts a new game, the focused choice when the bar opens`() {
+            shortPress(KEYCODE_DPAD_CENTER)
+            assertEquals(listOf<Command>(NewGame), dispatched)
+        }
+
+        @Test
+        fun `right then OK resets the clock, left goes back to new game`() {
+            shortPress(KEYCODE_DPAD_RIGHT)
+            shortPress(KEYCODE_DPAD_CENTER)
+            shortPress(KEYCODE_DPAD_LEFT)
+            shortPress(KEYCODE_DPAD_CENTER)
+            assertEquals(listOf<Command>(ResetGameClock, NewGame), dispatched)
+        }
+
+        @Test
+        fun `back closes the bar without undoing, then keys work on the scoreboard`() {
+            shortPress(KEYCODE_BACK)
+            assertFalse(timeUp.isOpen)
+            shortPress(KEYCODE_DPAD_LEFT)
+            shortPress(KEYCODE_BACK)
+            assertEquals(listOf<Command>(Score(LEFT, 1), Undo), dispatched)
+        }
+
+        @Test
+        fun `OK opens a closed bar again instead of toggling the clock`() {
+            shortPress(KEYCODE_BACK)
+            shortPress(KEYCODE_DPAD_CENTER)
+            assertTrue(timeUp.isOpen)
+            shortPress(KEYCODE_DPAD_CENTER)
+            assertEquals(listOf<Command>(NewGame), dispatched)
+        }
+
+        @Test
+        fun `held keys neither repeat nor long-press`() {
+            assertTrue(longPress(KEYCODE_DPAD_RIGHT))
+            assertTrue(longPress(KEYCODE_BACK))
+            assertEquals(emptyList(), dispatched)
+            assertFalse(timeUp.isOpen)
+        }
+
+        @Test
+        fun `up and down do nothing while the bar is open`() {
+            shortPress(KEYCODE_DPAD_UP)
+            shortPress(KEYCODE_DPAD_DOWN)
+            assertEquals(emptyList(), clockAdjust.calls)
+            assertEquals(emptyList(), dispatched)
+            assertTrue(timeUp.isOpen)
+        }
+
+        @Test
+        fun `quick clock adjust keeps the remote while open`() {
+            timeUp.onTimeUp(false)
+            shortPress(KEYCODE_DPAD_DOWN)
+            timeUp.onTimeUp(true) // The clock ran out with the overlay open.
+            shortPress(KEYCODE_DPAD_CENTER)
+            assertEquals(listOf("open", "done"), clockAdjust.calls)
+            shortPress(KEYCODE_DPAD_CENTER)
+            assertEquals(listOf<Command>(NewGame), dispatched)
         }
     }
 

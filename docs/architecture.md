@@ -103,8 +103,11 @@ its changes, after 5 s without a key.
 
 ## Events
 
-`GameClockExpired`, `ClockStarted`, `ClockStopped`. The sound player maps `GameClockExpired` to the buzzer; the UI
-shows the time-up bar.
+`GameClockExpired`, `ClockStarted`, `ClockStopped`. The sound player maps `GameClockExpired` to the buzzer.
+
+The time-up bar follows the snapshot's `timeUp`, not the event: it opens (NEW GAME focused) each time `timeUp`
+turns true, whether the clock ran out or an undo brought a finished game back, and goes away when it turns false.
+Whether Back has closed it is UI state only (`TimeUpBar` in `tv-app`), so after a restart the bar shows again.
 
 `CommandApplied(command, before, after)` and `CommandUndone(command, before, after)` report every change with the
 snapshots around it, whichever input sent the command (a toggle is reported as the start or stop it resolved to).
