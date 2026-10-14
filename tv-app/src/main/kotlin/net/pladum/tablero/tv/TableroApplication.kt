@@ -12,7 +12,8 @@ const val LOG_TAG = "tablero"
 
 /**
  * Owns the [GameEngine] for the whole process, so it outlives activity recreation. The engine is restored from
- * the last saved state on start and saved on every change.
+ * the last saved state on start and saved on every change. The [Buzzer] lives here too: the horn sounds at time up
+ * whatever the activity is doing, and loads once rather than on every recreation.
  */
 class TableroApplication : Application() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -32,5 +33,6 @@ class TableroApplication : Application() {
         }
         engine = GameEngine(timeSource, scope, restored = saved?.state, rebooted = saved?.rebooted ?: false)
         store.watch(engine, scope)
+        Buzzer(this).watch(engine, scope)
     }
 }

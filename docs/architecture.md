@@ -9,7 +9,7 @@
 | Protocol DTOs   | `shared/`               | Messages exchanged with controllers (Phase 2)                                        |
 | Scoreboard view | `tv-app/`               | Renders the latest `GameSnapshot` and confirmations with `Canvas`                   |
 | Overlays        | `tv-app/`               | Menu, quick clock adjust, set clock, time up, exit confirm                           |
-| Sound           | `tv-app/`               | Plays the buzzer in response to engine events (`SoundPool`)                          |
+| Buzzer          | `tv-app/`               | Plays the time-up horn in response to engine events (`SoundPool`)                    |
 | Persistence     | `tv-app/`               | Saves/restores engine state after every applied command                              |
 | Input adapters  | `tv-app/`               | Remote keys → `Command`; WebSocket messages → `Command` (Phase 2)                    |
 | Controller app  | `remote-app/`           | Sends commands, shows mirrored state, works while locked (Phase 2–3)                 |
@@ -19,7 +19,7 @@
  WebSocket  ──┼──▶ Command ──▶ GameEngine.dispatch() ──▶ GameSnapshot (StateFlow) ──▶ ScoreboardView
  keyboard   ──┘                     │                          │                 └──▶ WebSocket broadcast (Phase 2)
                                     │                          └──▶ StateStore (save after every command)
-                                    └──▶ GameEvent (SharedFlow) ──▶ SoundPlayer (buzzer), overlays
+                                    └──▶ GameEvent (SharedFlow) ──▶ Buzzer, confirmations
 ```
 
 ## Phase 1 scope
@@ -136,7 +136,15 @@ remote key adapter ignores key-ups whose key-down it never saw (a stray Back rel
 
 ## Events
 
-`GameClockExpired`, `ClockStarted`, `ClockStopped`. The sound player maps `GameClockExpired` to the buzzer.
+`GameClockExpired`, `ClockStarted`, `ClockStopped`. The buzzer (`Buzzer` in `tv-app`) plays its horn on
+`GameClockExpired` and nothing else. The engine emits it once, at the instant a running clock reaches 0 (run out or
+adjusted down to 0), so an undo that brings a finished game back shows the time-up bar again but stays silent. The
+buzzer belongs to the application, not the activity: it loads once, survives a language recreate, and sounds even
+when another app is in front, because the clock keeps running there. An expiry found while restoring after a
+restart is not replayed: the bar shows, the horn doesn't.
+
+The horn is `res/raw/buzzer.wav`, synthesized by `scripts/make-buzzer.py` (see `docs/hardware.md` → Audio). It
+plays as media, which is the stream that goes out over HDMI and follows the TV's volume.
 
 The time-up bar follows the snapshot's `timeUp`, not the event: it opens (NEW GAME focused) each time `timeUp`
 turns true, whether the clock ran out or an undo brought a finished game back, and goes away when it turns false.

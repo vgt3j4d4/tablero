@@ -422,6 +422,7 @@ class GameEngineTest {
             assertEquals(1, state.left.score)
             assertClock(0, running = false)
             assertTrue(state.timeUp)
+            assertEquals(1, clockEvents.count { it == GameClockExpired }, "the buzzer sounds once, not again on undo")
         }
 
         @Test

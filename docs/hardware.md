@@ -41,6 +41,12 @@ Monitors with speakers were considered and rejected: 2×1–3 W speakers and a s
 - Louder: wired powered speaker on the TV's 3.5 mm / optical output. If the TV has no audio output, insert an
   HDMI audio extractor between stick and TV.
 - Avoid Bluetooth speakers for the buzzer: 100–300 ms of added latency.
+- The horn is synthesized, not recorded, so it ships under the repo's MIT license: `scripts/make-buzzer.py`
+  (Python standard library only) writes `tv-app/src/main/res/raw/buzzer.wav`. Its pitch, length, rasp and level
+  are constants at the top of the script; tune them by ear on the TV and run it again. To use a recorded horn
+  instead, replace the WAV (keep it short, mono, 16-bit PCM) and check that its license allows redistribution.
+- It plays on the media stream at full app volume. On the Xiaomi stick the media volume over HDMI sits at its
+  maximum, so the TV's volume alone sets how loud the horn is.
 
 ## Network
 
