@@ -91,5 +91,8 @@ their license files:
 | DSEG7 Classic Bold | 0.46 | [keshikan/DSEG](https://github.com/keshikan/DSEG) | [`OFL-DSEG.txt`](tv-app/src/main/assets/licenses/OFL-DSEG.txt) |
 | Barlow Condensed 500–800 | 1.422 | [jpt/barlow](https://github.com/jpt/barlow) | [`OFL-BarlowCondensed.txt`](tv-app/src/main/assets/licenses/OFL-BarlowCondensed.txt) |
 
+The time-up buzzer (`tv-app/src/main/res/raw/buzzer.wav`) is synthesized by
+[`scripts/make-buzzer.py`](scripts/make-buzzer.py) and is covered by the MIT license like the code.
+
 The app's font files are in `tv-app/src/main/res/font/`. The design mockups use the same fonts as web fonts in
 `docs/design/fonts/`.

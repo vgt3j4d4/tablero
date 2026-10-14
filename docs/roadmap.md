@@ -23,7 +23,7 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
 - [x] `tv-app`: menu overlay (game clock, game length, scores, new game, language; exit comes with the guarded exit)
 - [ ] `tv-app`: `HOME` intent filter and guarded exit to Android TV (stopped clock only, hold OK 2 s)
 - [x] `tv-app`: persistence (`AtomicFile`, restore on start, reboot detection)
-- [ ] `tv-app`: buzzer sound via `SoundPool`
+- [x] `tv-app`: buzzer sound via `SoundPool` (synthesized horn, `scripts/make-buzzer.py`)
 - [ ] Test the full Phase 1 flow on the Xiaomi stick
 - [ ] `scripts/setup-stick.sh` / `restore-stick.sh`
 - [ ] Readability test on a real TV from the far corner of a court
