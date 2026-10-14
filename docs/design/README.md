@@ -39,3 +39,22 @@ docs/design/render.sh                 # CHROME=/path/to/chrome to override the m
 ```
 
 Edit `boards.html` (layout or the `STRINGS` table) and re-run the script when the design changes.
+
+## Launcher banner and icon
+
+[`icons.html`](icons.html) holds the concepts that were compared ([`icons.png`](icons.png)); **A** won, with the
+**A1** icon. The Android TV banner (320×180) is the red LED clock in its box over the `TABLERO` wordmark, on the
+panel grey so the tile keeps an edge against the launcher's black background. The adaptive icon is a seven-segment
+`t` over its unlit `8` on the board's black. Unlit segments use `led_red_unlit_icon`, a touch brighter than on the
+board, so they still show at launcher sizes.
+
+The shipped drawables (`drawable/banner.xml`, `ic_launcher_foreground.xml`, `ic_launcher_monochrome.xml`) are
+generated from the app's fonts, so change the constants in the script rather than the XML:
+
+```bash
+pip install fonttools uharfbuzz
+python3 scripts/make-icons.py
+```
+
+The stock launcher caches banners: after installing a new one, `adb shell am force-stop com.google.android.tvlauncher`
+and press Home to see it.

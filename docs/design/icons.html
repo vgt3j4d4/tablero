@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>tablero icon concepts</title>
+<!--
+  Launcher banner and icon concepts. Every mark is an SVG in the Android viewports: banner 320×180, adaptive icon
+  108×108 with its 66 safe zone centered. Open in a browser, or render with headless Chrome at 1920 wide.
+-->
+<style>
+@font-face { font-family: 'DSEG7 Classic'; src: url(fonts/DSEG7Classic-Bold.woff2) format('woff2'); font-weight: 700; font-display: block; }
+@font-face { font-family: 'Barlow Condensed'; src: url(fonts/barlow-condensed-latin-600-normal.woff2) format('woff2'); font-weight: 600; font-display: block; }
+@font-face { font-family: 'Barlow Condensed'; src: url(fonts/barlow-condensed-latin-700-normal.woff2) format('woff2'); font-weight: 700; font-display: block; }
+@font-face { font-family: 'Barlow Condensed'; src: url(fonts/barlow-condensed-latin-800-normal.woff2) format('woff2'); font-weight: 800; font-display: block; }
+
+:root {
+  --bg: #07080A;
+  --page: #0E1013;
+  --line: #262A31;
+  --text: #F5F2EA;
+  --muted: #8B919B;
+  --faint: #6B717A;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font-family: 'Barlow Condensed', sans-serif; }
+.page { width: 1920px; padding: 64px 96px 80px; }
+h1 { margin: 0 0 8px; font-size: 64px; font-weight: 800; letter-spacing: 0.03em; }
+.lede { margin: 0 0 48px; font-size: 30px; font-weight: 600; color: var(--muted); }
+.concept { display: grid; grid-template-columns: 340px 660px minmax(0, 1fr); gap: 48px; align-items: start;
+  padding: 44px 0; border-top: 2px solid var(--line); }
+.concept h2 { margin: 0 0 12px; font-size: 48px; font-weight: 800; letter-spacing: 0.02em; }
+.concept p { margin: 0; font-size: 28px; font-weight: 600; line-height: 1.3; color: var(--muted); }
+.label { margin-top: 12px; font-size: 22px; font-weight: 600; letter-spacing: 0.16em; color: var(--faint); }
+.banner-2x svg { display: block; width: 640px; height: 360px; outline: 2px solid var(--line); }
+.icons { display: flex; flex-wrap: wrap; gap: 36px; align-items: flex-end; }
+.icons svg { display: block; }
+.circle { border-radius: 50%; overflow: hidden; }
+.squircle { border-radius: 22%; overflow: hidden; }
+.small-row { display: flex; gap: 24px; align-items: flex-end; margin-top: 28px; }
+.small-row svg { display: block; outline: 1px solid var(--line); }
+
+/* Mock Android TV apps row: our banner focused among neutral placeholders. */
+.shelf { margin-top: 24px; padding: 48px 56px 56px; background: linear-gradient(#1B1E24, #121418); border-radius: 24px; }
+.shelf-title { font-size: 30px; font-weight: 700; color: var(--text); margin-bottom: 24px; }
+.shelf-row { display: flex; gap: 28px; align-items: center; }
+.tile { width: 320px; height: 180px; border-radius: 10px; overflow: hidden; flex-shrink: 0; }
+.tile.dummy { background: #2A2E35; }
+.tile.dummy:nth-child(2n) { background: #343841; }
+.tile.focused { transform: scale(1.12); margin: 0 22px; box-shadow: 0 0 0 4px #FFFFFF, 0 16px 40px rgba(0, 0, 0, 0.6); }
+.tile svg { display: block; width: 320px; height: 180px; }
+.shelf-name { margin-top: 30px; font-size: 26px; font-weight: 600; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="page" id="root"></div>
+<script>
+const C = {
+  bg: '#07080A', box: '#0B0C0E', boxLine: '#1A1D22', text: '#F5F2EA',
+  red: '#FF3B2F', amber: '#FFB21E',
+  // Unlit segments are a touch brighter than on the board so they survive launcher sizes.
+  redGhost: '#2A0B09', amberGhost: '#2A1D05',
+};
+const LED = `font-family="DSEG7 Classic" font-weight="700"`;
+const WORD = `font-family="Barlow Condensed" font-weight="800"`;
+
+// Lit LED text over its unlit "8" ghost; every DSEG digit has one width, so both strings line up.
+function led(x, y, size, lit, ghost, color, ghostColor, anchor = 'middle') {
+  return `<text x="${x}" y="${y}" font-size="${size}" ${LED} text-anchor="${anchor}" fill="${ghostColor}">${ghost}</text>
+          <text x="${x}" y="${y}" font-size="${size}" ${LED} text-anchor="${anchor}" fill="${color}">${lit}</text>`;
+}
+function wordmark(x, y, size, spacing, anchor = 'middle', fill = C.text) {
+  return `<text x="${x}" y="${y}" font-size="${size}" ${WORD} letter-spacing="${spacing}" text-anchor="${anchor}" fill="${fill}">TABLERO</text>`;
+}
+const banner = body => `<svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="180" fill="${C.bg}"/>${body}</svg>`;
+const icon = body => `<svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg"><rect width="108" height="108" fill="${C.bg}"/>${body}</svg>`;
+
+// A seven-segment bar with pointed ends, from (x1,y1) to (x2,y2), thickness t.
+function segment(x1, y1, x2, y2, t, fill) {
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy), ux = dx / len, uy = dy / len, nx = -uy * t / 2, ny = ux * t / 2;
+  const h = t / 2;
+  const pts = [
+    [x1, y1], [x1 + ux * h + nx, y1 + uy * h + ny], [x2 - ux * h + nx, y2 - uy * h + ny],
+    [x2, y2], [x2 - ux * h - nx, y2 - uy * h - ny], [x1 + ux * h - nx, y1 + uy * h - ny],
+  ];
+  return `<polygon points="${pts.map(p => p.map(v => v.toFixed(2)).join(',')).join(' ')}" fill="${fill}"/>`;
+}
+
+// Basketball whose seams are LED segments: unlit disc, lit ring and seams broken into bars.
+function ball(cx, cy, r, color = C.amber, ghost = C.amberGhost) {
+  const t = r * 0.13, g = t * 0.55, rr = r - t / 2;
+  // Side seams: one curve per side bowing toward the center, cut where it crosses the horizontal seam.
+  const ex = r * 0.62, ey = Math.sqrt(r * r - ex * ex);
+  const seam = side => `<path d="M${cx + side * ex},${cy - ey} Q${cx + side * r * 0.1},${cy} ${cx + side * ex},${cy + ey}" stroke="${color}" stroke-width="${t}" fill="none"/>`;
+  const cut = side => `<rect x="${cx + side * r * 0.36 - t}" y="${cy - t / 2 - g}" width="${2 * t}" height="${t + 2 * g}" fill="${ghost}"/>`;
+  return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${ghost}"/>
+    ${seam(-1)}${seam(1)}${cut(-1)}${cut(1)}
+    <circle cx="${cx}" cy="${cy}" r="${rr}" stroke="${color}" stroke-width="${t}" fill="none"/>
+    ${segment(cx, cy - rr + t / 2 + g, cx, cy - g, t, color)}
+    ${segment(cx, cy + g, cx, cy + rr - t / 2 - g, t, color)}
+    ${segment(cx - rr + t / 2 + g, cy, cx - g, cy, t, color)}
+    ${segment(cx + g, cy, cx + rr - t / 2 - g, cy, t, color)}`;
+}
+
+// Miniature of the board: clock box with the clock, two amber scores below.
+function miniBoard(x, y, w, h, { clock = '10:00', left = '48', right = '51' } = {}) {
+  const clockH = h * 0.5, cs = clockH * 0.56, ss = h * 0.3;
+  return `<rect x="${x + w * 0.1}" y="${y}" width="${w * 0.8}" height="${clockH}" rx="${clockH * 0.12}" fill="${C.box}" stroke="${C.boxLine}" stroke-width="${h * 0.012}"/>
+    ${led(x + w / 2, y + clockH / 2 + cs / 2, cs, clock, '88:88', C.red, C.redGhost)}
+    ${led(x + w * 0.27, y + h, ss, left, '88', C.amber, C.amberGhost)}
+    ${led(x + w * 0.73, y + h, ss, right, '88', C.amber, C.amberGhost)}`;
+}
+
+const CONCEPTS = [
+  {
+    id: 'A', name: 'LED clock + wordmark',
+    note: 'The game clock as it reads on the board, red with its unlit segments, over the name. The icon keeps one lit glyph: a seven-segment “t” (A1) or the clock’s “10” (A2).',
+    banner: banner(`
+      <rect x="44" y="20" width="232" height="92" rx="12" fill="${C.box}" stroke="${C.boxLine}" stroke-width="1.5"/>
+      ${led(160, 89, 50, '10:00', '88:88', C.red, C.redGhost)}
+      ${wordmark(160, 160, 40, 7)}`),
+    icons: [
+      ['A1', icon(led(54, 82, 56, 't', '8', C.red, C.redGhost))],
+      ['A2', icon(led(54, 70, 32, '10', '88', C.red, C.redGhost))],
+    ],
+  },
+  {
+    id: 'B', name: 'Mini scoreboard',
+    note: 'The whole board in miniature: clock box on top, HOME and AWAY scores below, the name where the status bar sits. The icon is the board alone.',
+    banner: banner(`
+      ${miniBoard(50, 12, 220, 108)}
+      <line x1="0" y1="138" x2="320" y2="138" stroke="${C.boxLine}" stroke-width="1.5"/>
+      ${wordmark(160, 171, 30, 6)}`),
+    icons: [
+      ['B', icon(miniBoard(21, 28, 66, 52, { clock: '10:00', left: '48', right: '51' }))],
+    ],
+  },
+  {
+    id: 'C', name: 'Ball in segments',
+    note: 'A basketball drawn the way an LED panel would: ring and seams as lit bars on an unlit disc. More of a logo, less of a board; ties the brand to basketball.',
+    banner: banner(`
+      ${ball(78, 90, 54)}
+      ${wordmark(150, 100, 44, 3, 'start')}
+      ${led(152, 132, 22, '10:00', '88:88', C.red, C.redGhost, 'start')}`),
+    icons: [
+      ['C', icon(ball(54, 54, 31))],
+    ],
+  },
+];
+
+function concept(c) {
+  const icons = c.icons.map(([label, svg]) => `
+    <div>
+      <div class="icons">
+        <div>${svg.replace('<svg', '<svg width="192" height="192" class="squircle"')}<div class="label">${label} · ROUNDED</div></div>
+        <div>${svg.replace('<svg', '<svg width="128" height="128" class="circle"')}<div class="label">CIRCLE</div></div>
+        <div>${svg.replace('<svg', '<svg width="48" height="48" class="squircle"')}<div class="label">48</div></div>
+      </div>
+    </div>`).join('');
+  return `<section class="concept">
+    <div><h2>${c.id} · ${c.name}</h2><p>${c.note}</p></div>
+    <div>
+      <div class="banner-2x">${c.banner}</div>
+      <div class="label">BANNER · 1080P SIZE (640×360)</div>
+      <div class="small-row">
+        <div>${c.banner.replace('<svg', '<svg width="213" height="120"')}<div class="label">STICK (720P)</div></div>
+        <div>${c.banner.replace('<svg', '<svg width="160" height="90"')}<div class="label">HALF</div></div>
+      </div>
+    </div>
+    <div class="icons">${icons}</div>
+  </section>`;
+}
+
+function shelf() {
+  const tiles = CONCEPTS.map(c => `
+    <div>
+      <div class="shelf-row">
+        <div class="tile dummy"></div>
+        <div class="tile focused">${c.banner}</div>
+        <div class="tile dummy"></div>
+        <div class="tile dummy"></div>
+      </div>
+      <div class="shelf-name">${c.id} · ${c.name}</div>
+    </div>`).join('<div style="height:40px"></div>');
+  return `<section class="concept" style="display:block">
+    <h2>In the apps row</h2>
+    <div class="shelf"><div class="shelf-title">Apps</div>${tiles}</div>
+  </section>`;
+}
+
+document.getElementById('root').innerHTML = `
+  <h1>tablero · icon concepts</h1>
+  <p class="lede">Android TV launcher banner (320×180) and adaptive icon (108×108, 66 safe zone). Chosen: A with the A1 icon, shipped as vector drawables by scripts/make-icons.py.</p>
+  ${CONCEPTS.map(concept).join('')}
+  ${shelf()}`;
+</script>
+</body>
+</html>
