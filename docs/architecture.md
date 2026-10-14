@@ -182,6 +182,9 @@ starts again at 0–0. The app does not track teams and never decides who plays 
 - The engine side lives in `shared`: `GameEngine.exportState()` → `EngineState.toJson()`, and
   `GameEngine(…, restored = EngineState.fromJson(json), rebooted = …)`. The JSON carries a `schemaVersion`;
   unknown keys are ignored, state from a newer schema is refused.
+- Nothing is backed up or moved to a new device: `allowBackup="false"` plus exclude-all rules
+  (`xml/backup_rules.xml` for Android 11 and lower, `xml/data_extraction_rules.xml` for 12+, which also covers
+  device-to-device transfer). A saved game belongs to the TV it was played on.
 
 ## Localization
 
