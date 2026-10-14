@@ -92,7 +92,9 @@ their license files:
 | Barlow Condensed 500–800 | 1.422 | [jpt/barlow](https://github.com/jpt/barlow) | [`OFL-BarlowCondensed.txt`](tv-app/src/main/assets/licenses/OFL-BarlowCondensed.txt) |
 
 The time-up buzzer (`tv-app/src/main/res/raw/buzzer.wav`) is synthesized by
-[`scripts/make-buzzer.py`](scripts/make-buzzer.py) and is covered by the MIT license like the code.
+[`scripts/make-buzzer.py`](scripts/make-buzzer.py) and is covered by the MIT license like the code. The launcher
+banner and icon are vector drawables that [`scripts/make-icons.py`](scripts/make-icons.py) draws from the bundled
+fonts' glyph outlines; the font files themselves are not modified.
 
 The app's font files are in `tv-app/src/main/res/font/`. The design mockups use the same fonts as web fonts in
 `docs/design/fonts/`.

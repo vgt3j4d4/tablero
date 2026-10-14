@@ -28,7 +28,7 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
   display rounding, persisted state) are done with unit tests. `tv-app`: one activity, the final scoreboard look
   (`ScoreboardView`: LED clock and scores, HOME / AWAY labels, status bar, action confirmations), quick clock adjust,
   time-up bar, menu (with the set game clock dialog), buzzer at time up (synthesized horn), remote key adapter,
-  persistence, fonts, localization (English + Spanish, in-app language via `AppLanguage`), `HOME` intent filter and
+  persistence, fonts, launcher banner and icon, localization (English + Spanish, in-app language via `AppLanguage`), `HOME` intent filter and
   guarded exit to Android TV (menu → hold OK 2 s → the stock launcher).
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
@@ -47,7 +47,7 @@ tablero/
 ├── shared/       # Pure Kotlin/JVM module: GameEngine, Command model, rules, protocol DTOs. No Android deps.
 ├── tv-app/       # Android TV app: scoreboard view, buzzer, input adapters (remote keys, later WebSocket server)
 ├── remote-app/   # Android phone controller (Phase 2+)
-├── scripts/      # make-buzzer.py (synthesizes the buzzer WAV); later adb helpers setup-stick.sh / restore-stick.sh
+├── scripts/      # make-buzzer.py (buzzer WAV), make-icons.py (banner + icon); later setup/restore-stick.sh
 └── docs/         # architecture.md, hardware.md, stick-setup.md, roadmap.md, design/ (screens)
 ```
 
