@@ -19,7 +19,7 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
 - [x] `tv-app`: remote key adapter (OK on key-down, short/long press mapping, see CLAUDE.md)
 - [x] `tv-app`: quick clock adjust overlay (↓)
 - [x] `shared`: teams named by side (HOME / AWAY), no team colors
-- [ ] `tv-app`: time-up bar (new game / reset clock)
+- [x] `tv-app`: time-up bar (new game / reset clock)
 - [ ] `tv-app`: menu overlay (game clock, game length, scores, new game, language, exit)
 - [ ] `tv-app`: `HOME` intent filter and guarded exit to Android TV (stopped clock only, hold OK 2 s)
 - [x] `tv-app`: persistence (`AtomicFile`, restore on start, reboot detection)

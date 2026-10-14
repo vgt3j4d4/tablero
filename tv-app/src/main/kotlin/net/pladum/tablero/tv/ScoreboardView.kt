@@ -50,8 +50,9 @@ private const val STATUS_ICON_SIZE = 18f
 private const val STATUS_ICON_GAP = 12f
 
 /**
- * The scoreboard surface: one Canvas view, no layout (design screens 01, 02, 05 and 07). Renders the latest
- * [GameSnapshot] given to [render], confirmations given to [show] and the quick clock adjust overlay.
+ * The scoreboard surface: one Canvas view, no layout (design screens 01, 02, 03, 05 and 07). Renders the latest
+ * [GameSnapshot] given to [render], confirmations given to [show], the time-up bar and the quick clock adjust
+ * overlay.
  *
  * Everything is laid out in design pixels and scaled to the view. Text is built and measured when the state
  * changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
@@ -110,6 +111,8 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         invalidateLayer()
     }
     private val clockAdjust = ClockAdjustOverlay(context, fonts)
+    private val timeUp = TimeUpOverlay(context, fonts)
+    private var timeUpFocus: TimeUpChoice? = null
 
     private var ticking = false
     private val tick = object : Runnable {
@@ -125,6 +128,7 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         var changed = left.update(next.left)
         changed = right.update(next.right) || changed
         changed = updateStatus(next) || changed
+        changed = updateTimeUp() || changed
         if (changed) invalidateLayer()
         refreshClock()
         updateTicker()
@@ -153,6 +157,19 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
             clockAdjust.show(session)
         }
         invalidateLayer()
+    }
+
+    /**
+     * Shows the time-up bar with [focused] highlighted, or hides it when null; the red frame follows the snapshot.
+     * Like quick clock adjust, the bar covers the status bar: a confirmation showing when it opens is dropped.
+     */
+    fun showTimeUpBar(focused: TimeUpChoice?) {
+        if (focused != null && timeUpFocus == null) {
+            removeCallbacks(hideToast)
+            toast.hide()
+        }
+        timeUpFocus = focused
+        if (updateTimeUp()) invalidateLayer()
     }
 
     private fun refreshClock() {
@@ -191,6 +208,11 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         pauseBarLeft.set(statusIconX + 2, top + 1, statusIconX + 7, top + 17)
         pauseBarRight.set(statusIconX + 11, top + 1, statusIconX + 16, top + 17)
         return true
+    }
+
+    private fun updateTimeUp(): Boolean {
+        val s = snapshot ?: return false
+        return timeUp.update(s.timeUp, s.left.score, s.right.score, timeUpFocus)
     }
 
     /** Runs the ticker only while the clock runs and the view is on a visible window. */
@@ -268,7 +290,11 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
             canvas.drawRoundRect(pauseBarRight, 1f, 1f, statusIconPaint)
         }
 
-        if (clockAdjust.visible) clockAdjust.draw(canvas) else toast.draw(canvas)
+        timeUp.draw(canvas)
+        when {
+            clockAdjust.visible -> clockAdjust.draw(canvas)
+            !timeUp.barVisible -> toast.draw(canvas)
+        }
         canvas.restoreToCount(saved)
     }
 

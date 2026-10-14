@@ -14,4 +14,10 @@
     <!-- Clock-editing modes (quick adjust): amber ring and bar, dark ink on the bar. -->
     <color name="adjust">#FFFFB21E</color>
     <color name="adjust_ink">#FF3A2A05</color>
+    <!-- Time up: red frame around the board, red bar with white text; the focused button is white with red ink. -->
+    <color name="time_up_frame">#FFFF3B2F</color>
+    <color name="time_up_bar">#FFD92D20</color>
+    <color name="time_up_text">#FFFFFFFF</color>
+    <color name="time_up_ink">#FFA3180E</color>
+    <color name="time_up_outline">#B3FFFFFF</color>
 </resources>

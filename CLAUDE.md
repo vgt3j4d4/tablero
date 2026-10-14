@@ -27,8 +27,8 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
 - Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
   display rounding, persisted state) are done with unit tests. `tv-app`: one activity, the final scoreboard look
   (`ScoreboardView`: LED clock and scores, HOME / AWAY labels, status bar, action confirmations), quick clock adjust,
-  remote key adapter, persistence, fonts, localization (English + Spanish, in-app language via `AppLanguage`).
-  Next: time-up bar, menu.
+  time-up bar, remote key adapter, persistence, fonts, localization (English + Spanish, in-app language via
+  `AppLanguage`). Next: menu.
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
@@ -119,8 +119,11 @@ via HDMI-CEC (verify with a key logger).
   still separate `Score` commands.
 - **Quick clock adjust (↓):** clock gets highlighted; ↑/↓ = ±1 min, ←/→ = ±1 s, OK = done, Back = cancel all
   changes made in this session. Auto-exits after ~5 s idle. Works while the clock runs (relative command).
+- **Game length:** the time on the clock at a game's first start (after `NEW GAME`) becomes the game length that
+  resets and new games use; set 7:00 before the game starts to play 7-minute games. The menu can set it too.
 - **Time up:** red frame + bar with `NEW GAME` (default: 0–0, clock at game length, stopped) /
-  `RESET CLOCK · KEEP SCORE`. Back closes the bar instead of undoing.
+  `RESET CLOCK · KEEP SCORE` (←/→ to choose, OK to apply). Back closes the bar instead of undoing (the frame stays,
+  so a score can still be fixed); OK opens it again.
 
 Menu overlay (Back long press; D-pad navigable): game clock (set exact time, stopped only), game length, left/right
 score, new game, language, exit to Android TV (only while stopped; confirm screen with Cancel focused; exit

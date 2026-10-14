@@ -27,7 +27,8 @@ class MainActivity : Activity() {
     private lateinit var timeSource: TimeSource
     private lateinit var scoreboard: ScoreboardView
     private val clockAdjust = ClockAdjustController()
-    private val keys = RemoteKeyAdapter({ dispatch(it) }, clockAdjust)
+    private val timeUp = TimeUpBar({ dispatch(it) }, { scoreboard.showTimeUpBar(it) })
+    private val keys = RemoteKeyAdapter({ dispatch(it) }, clockAdjust, timeUp)
     private val feedback = FeedbackGrouper()
     private var uiScope: CoroutineScope? = null
 
@@ -50,7 +51,12 @@ class MainActivity : Activity() {
     override fun onStart() {
         super.onStart()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        scope.launch { engine.snapshot.collect(scoreboard::render) }
+        scope.launch {
+            engine.snapshot.collect { snapshot ->
+                timeUp.onTimeUp(snapshot.timeUp)
+                scoreboard.render(snapshot)
+            }
+        }
         scope.launch {
             engine.events.collect { event -> feedback.onEvent(event, timeSource.nowNanos())?.let(scoreboard::show) }
         }

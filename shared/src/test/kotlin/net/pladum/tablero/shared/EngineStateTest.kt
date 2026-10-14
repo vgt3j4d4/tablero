@@ -15,6 +15,7 @@ import net.pladum.tablero.shared.Side.RIGHT
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class EngineStateTest {
@@ -85,6 +86,14 @@ class EngineStateTest {
     fun `unknown keys are ignored so older apps can read newer optional fields`() = engineTest {
         val json = engine.exportState().toJson().replaceFirst("{", """{"someFutureField":1,""")
         assertEquals(engine.exportState().snapshot, EngineState.fromJson(json).snapshot)
+    }
+
+    @Test
+    fun `a game saved before gameStarted existed reads as started`() = engineTest {
+        val json = engine.exportState().toJson()
+        val old = json.replace(""","gameStarted":false""", "")
+        assertNotEquals(json, old)
+        assertTrue(EngineState.fromJson(old).snapshot.gameStarted)
     }
 
     @Test

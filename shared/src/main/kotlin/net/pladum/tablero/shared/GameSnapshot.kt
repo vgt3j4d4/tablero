@@ -20,6 +20,13 @@ data class GameSnapshot(
     val right: TeamState,
     /** The clock reached 0; the UI shows the time-up bar until the clock gets time again. */
     val timeUp: Boolean,
+    /**
+     * The clock has been started since the last new game. That first start makes the time on the clock the game
+     * length, so a game set to 7:00 before it starts makes 7:00 the length for resets and new games, while a later
+     * start (a short overtime after a reset) leaves it alone. States saved before this field existed read as
+     * started, so a restored game never takes its length from a paused clock.
+     */
+    val gameStarted: Boolean = true,
 ) {
     fun team(side: Side): TeamState = when (side) {
         Side.LEFT -> left
@@ -40,6 +47,7 @@ data class GameSnapshot(
             left = TeamState(),
             right = TeamState(),
             timeUp = false,
+            gameStarted = false,
         )
     }
 }
