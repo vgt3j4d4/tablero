@@ -20,11 +20,6 @@ private const val SWATCH_BORDER = 3f
 private const val TITLE_SIZE = 40f
 private const val DETAIL_SIZE = 32f
 private const val HINT_SIZE = 28f
-private const val KEYCAP_BORDER = 2f
-private const val KEYCAP_RADIUS = 8f
-private const val KEYCAP_PADDING = 10f
-private const val KEYCAP_HEIGHT = 42f
-private const val KEYCAP_GAP = 10f
 
 /** Minimum space between the confirmation text and the Undo hint. */
 private const val HINT_GAP = 24f
@@ -61,17 +56,9 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
     private var hasHint = false
     private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, textOff, 0.06f)
     private val hintBaseline = CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
-    private val keyLabel = context.getString(R.string.key_back)
-    private val hintLabel = context.getString(R.string.hint_undo)
-    private val hintLabelX = RIGHT - PADDING - hintPaint.measureText(hintLabel)
-    private val keycap = RectF().apply {
-        right = hintLabelX - KEYCAP_GAP
-        left = right - hintPaint.measureText(keyLabel) - 2 * (KEYCAP_PADDING + KEYCAP_BORDER)
-        top = CENTER_Y - KEYCAP_HEIGHT / 2
-        bottom = CENTER_Y + KEYCAP_HEIGHT / 2
-        inset(KEYCAP_BORDER / 2, KEYCAP_BORDER / 2) // The stroke is centered on the outline.
-    }
-    private val keycapPaint = strokePaint(textOff, KEYCAP_BORDER)
+    private val keycapPaint = keycapPaint(textOff)
+    private val hint = KeyHint(context.getString(R.string.key_back), context.getString(R.string.hint_undo))
+    private val hintLeft = hint.layoutEndingAt(RIGHT - PADDING, CENTER_Y, hintPaint)
 
     fun show(feedback: Feedback) {
         val locale = context.resources.configuration.locales[0]
@@ -113,11 +100,7 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
         }
         canvas.drawText(title, titleX, titleBaseline, titlePaint)
         if (detail.isNotEmpty()) canvas.drawText(detail, detailX, detailBaseline, detailPaint)
-        if (hasHint) {
-            canvas.drawRoundRect(keycap, KEYCAP_RADIUS, KEYCAP_RADIUS, keycapPaint)
-            canvas.drawText(keyLabel, keycap.left + KEYCAP_PADDING + KEYCAP_BORDER / 2, hintBaseline, hintPaint)
-            canvas.drawText(hintLabel, hintLabelX, hintBaseline, hintPaint)
-        }
+        if (hasHint) hint.draw(canvas, hintBaseline, hintPaint, keycapPaint)
     }
 
     private fun layout(color: TeamColor?) {
@@ -130,7 +113,7 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
             swatchBorder.inset(SWATCH_BORDER / 2, SWATCH_BORDER / 2)
             x += SWATCH_SIZE + GAP
         }
-        val right = if (hasHint) keycap.left - HINT_GAP else RIGHT - PADDING
+        val right = if (hasHint) hintLeft - HINT_GAP else RIGHT - PADDING
         val detailWidth = if (detail.isEmpty()) 0f else GAP + detailPaint.measureText(detail)
         titleX = x
         val titleWidth = titlePaint.fitText(title, TITLE_SIZE, right - x - detailWidth)

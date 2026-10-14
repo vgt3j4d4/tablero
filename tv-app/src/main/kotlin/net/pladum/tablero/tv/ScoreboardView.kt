@@ -54,14 +54,14 @@ private const val STATUS_ICON_SIZE = 18f
 private const val STATUS_ICON_GAP = 12f
 
 /**
- * The scoreboard surface: one Canvas view, no layout (design screens 01, 02 and 05). Renders the latest
- * [GameSnapshot] given to [render] and confirmations given to [show].
+ * The scoreboard surface: one Canvas view, no layout (design screens 01, 02, 05 and 07). Renders the latest
+ * [GameSnapshot] given to [render], confirmations given to [show] and the quick clock adjust overlay.
  *
  * Everything is laid out in design pixels and scaled to the view. Text is built and measured when the state
  * changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
  * redraws only when the reading changes (1 Hz above the tenths threshold, 10 Hz below).
  *
- * Only the clock digits change at 10 Hz, so everything else (box, unlit segments, teams, status bar, confirmation)
+ * Only the clock digits change at 10 Hz, so everything else (box, unlit segments, teams, status bar, overlays)
  * is drawn into a screen-sized [layer] bitmap when it changes, and a tick draws that bitmap plus one text. On the
  * stick's slow CPU, recording and issuing the full scene on every tick missed about half the frame deadlines.
  */
@@ -118,6 +118,7 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         toast.hide()
         invalidateLayer()
     }
+    private val clockAdjust = ClockAdjustOverlay(context, fonts)
 
     private var ticking = false
     private val tick = object : Runnable {
@@ -143,6 +144,23 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         toast.show(feedback)
         removeCallbacks(hideToast)
         postDelayed(hideToast, FEEDBACK_VISIBLE_MS)
+        invalidateLayer()
+    }
+
+    /**
+     * Shows quick clock adjust for [session], or hides it when null. Its bar takes the status bar's place, so a
+     * confirmation showing when it opens is dropped, and one arriving while it is open waits for it to close.
+     */
+    fun showClockAdjust(session: ClockAdjustSession?) {
+        if (session == null) {
+            clockAdjust.hide()
+        } else {
+            if (!clockAdjust.visible) {
+                removeCallbacks(hideToast)
+                toast.hide()
+            }
+            clockAdjust.show(session)
+        }
         invalidateLayer()
     }
 
@@ -173,7 +191,7 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         var changed = false
         if (s.rules.gameLengthMs != gameLengthMs) {
             gameLengthMs = s.rules.gameLengthMs
-            gameLengthText = context.getString(R.string.status_game_length, gameLengthText(gameLengthMs))
+            gameLengthText = context.getString(R.string.status_game_length, durationText(gameLengthMs))
             changed = true
         }
         if (s.gameClock.running != running) {
@@ -268,7 +286,7 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
             canvas.drawRoundRect(pauseBarRight, 1f, 1f, statusIconPaint)
         }
 
-        toast.draw(canvas)
+        if (clockAdjust.visible) clockAdjust.draw(canvas) else toast.draw(canvas)
         canvas.restoreToCount(saved)
     }
 

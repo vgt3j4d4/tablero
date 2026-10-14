@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">tablero</string>
 
     <!-- Team colors (TeamColor). Shown next to the team's swatch; uppercased in the status bar. -->
@@ -38,4 +38,18 @@
     <!-- Key hints: the remote key's label in a keycap, then what it does. -->
     <string name="key_back">BACK</string>
     <string name="hint_undo">UNDO</string>
+
+    <!-- Quick clock adjust (↓): bar over the status bar. %1$s is the clock when the overlay opened. -->
+    <string name="adjust_title">ADJUST CLOCK</string>
+    <string name="adjust_was">was %1$s</string>
+    <string name="adjust_plus" translatable="false">+%1$s</string>
+    <string name="adjust_minus" translatable="false">−%1$s</string>
+    <string name="key_up_down" translatable="false">↑ ↓</string>
+    <string name="key_left_right" translatable="false">← →</string>
+    <string name="key_ok" translatable="false">OK</string>
+    <string name="hint_minute">±1 MIN</string>
+    <string name="hint_second">±1 SEC</string>
+    <string name="hint_done">DONE</string>
+    <!-- Uppercase like every scoreboard label; not a dialog button. -->
+    <string name="hint_cancel" tools:ignore="ButtonCase">CANCEL</string>
 </resources>

@@ -15,6 +15,7 @@ import net.pladum.tablero.shared.Command.ToggleClock
 import net.pladum.tablero.shared.Command.Undo
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -22,10 +23,36 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+/** Records what the keys asked of quick clock adjust. */
+private class FakeClockAdjust : ClockAdjustKeys {
+    val calls = mutableListOf<String>()
+    override var isOpen = false
+
+    override fun open() {
+        isOpen = true
+        calls += "open"
+    }
+
+    override fun adjust(deltaMs: Long) {
+        calls += "adjust $deltaMs"
+    }
+
+    override fun done() {
+        isOpen = false
+        calls += "done"
+    }
+
+    override fun cancel() {
+        isOpen = false
+        calls += "cancel"
+    }
+}
+
 /** Each helper replays what the framework delivers to the activity for one physical press. */
 class RemoteKeyAdapterTest {
     private val dispatched = mutableListOf<Command>()
-    private val keys = RemoteKeyAdapter { dispatched += it }
+    private val clockAdjust = FakeClockAdjust()
+    private val keys = RemoteKeyAdapter({ dispatched += it }, clockAdjust)
 
     private fun shortPress(keyCode: Int) {
         assertTrue(keys.onKeyDown(keyCode, repeatCount = 0))
@@ -77,12 +104,76 @@ class RemoteKeyAdapterTest {
         assertEquals(listOf<Command>(Undo), dispatched)
     }
 
-    @ParameterizedTest
-    @ValueSource(ints = [KEYCODE_DPAD_UP, KEYCODE_DPAD_DOWN])
-    fun `up and down are consumed but do nothing yet`(keyCode: Int) {
-        shortPress(keyCode)
-        assertFalse(longPress(keyCode))
+    @Test
+    fun `up is consumed but does nothing`() {
+        shortPress(KEYCODE_DPAD_UP)
+        assertFalse(longPress(KEYCODE_DPAD_UP))
         assertEquals(emptyList(), dispatched)
+        assertEquals(emptyList(), clockAdjust.calls)
+    }
+
+    @Nested
+    inner class QuickClockAdjust {
+        @Test
+        fun `down opens it on key-down, and its release does nothing more`() {
+            assertTrue(keys.onKeyDown(KEYCODE_DPAD_DOWN, repeatCount = 0))
+            assertEquals(listOf("open"), clockAdjust.calls)
+            assertTrue(keys.onKeyUp(KEYCODE_DPAD_DOWN, canceled = false))
+            assertEquals(listOf("open"), clockAdjust.calls)
+        }
+
+        @Test
+        fun `arrows adjust by a minute or a second and OK closes, all on key-down`() {
+            shortPress(KEYCODE_DPAD_DOWN)
+            listOf(KEYCODE_DPAD_UP, KEYCODE_DPAD_DOWN, KEYCODE_DPAD_RIGHT, KEYCODE_DPAD_LEFT, KEYCODE_DPAD_CENTER)
+                .forEach(::shortPress)
+            val expected = listOf("open", "adjust 60000", "adjust -60000", "adjust 1000", "adjust -1000", "done")
+            assertEquals(expected, clockAdjust.calls)
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `back cancels, and its release does not undo on the scoreboard`() {
+            shortPress(KEYCODE_DPAD_DOWN)
+            shortPress(KEYCODE_BACK)
+            assertEquals(listOf("open", "cancel"), clockAdjust.calls)
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `held keys neither repeat nor long-press`() {
+            shortPress(KEYCODE_DPAD_DOWN)
+            assertTrue(longPress(KEYCODE_DPAD_LEFT))
+            assertTrue(longPress(KEYCODE_BACK))
+            assertEquals(listOf("open", "adjust -1000", "cancel"), clockAdjust.calls)
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `a key released after the overlay closed on its own does not act`() {
+            shortPress(KEYCODE_DPAD_DOWN)
+            assertTrue(keys.onKeyDown(KEYCODE_DPAD_LEFT, repeatCount = 0))
+            clockAdjust.isOpen = false // Auto-close after a few idle seconds.
+            assertTrue(keys.onKeyUp(KEYCODE_DPAD_LEFT, canceled = false))
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `a key held since before the overlay opened does not act on release`() {
+            assertTrue(keys.onKeyDown(KEYCODE_DPAD_LEFT, repeatCount = 0))
+            shortPress(KEYCODE_DPAD_DOWN)
+            assertTrue(keys.onKeyUp(KEYCODE_DPAD_LEFT, canceled = false))
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `after closing, keys work on the scoreboard again`() {
+            shortPress(KEYCODE_DPAD_DOWN)
+            shortPress(KEYCODE_DPAD_CENTER)
+            shortPress(KEYCODE_DPAD_LEFT)
+            shortPress(KEYCODE_BACK)
+            assertEquals(listOf<Command>(Score(LEFT, 1), Undo), dispatched)
+        }
     }
 
     @Test

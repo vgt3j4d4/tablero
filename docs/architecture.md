@@ -96,7 +96,12 @@ Undo reverts the **effect** of the last command, not the passage of time:
 - `SetGameClock` / `ResetGameClock` → the previous clock (and time-up state) comes back.
 - `NewGame` → restores the previous game (teams and scores), clock stopped.
 
-The quick-adjust overlay's Back ("cancel") undoes every adjustment made since the overlay opened.
+The quick-adjust overlay's Back ("cancel") undoes every adjustment made since the overlay opened. Each key is its own
+`AdjustGameClock`, so Cancel sends one `Undo` per adjustment the session applied: they leave the history, and a later
+Back undoes whatever came before the overlay. Adjustments older than the undo history (a session of more than 20)
+are reverted with one opposite `AdjustGameClock` instead. Keys in the overlay act on key-down, ignore repeats, and
+are swallowed until released so that a key-up never acts on the scoreboard; the overlay closes on its own, keeping
+its changes, after 5 s without a key.
 
 ## Events
 

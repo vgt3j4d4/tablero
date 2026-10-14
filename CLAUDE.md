@@ -25,9 +25,9 @@ translation file (see `docs/architecture.md` → Localization).
 
 - Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
   display rounding, persisted state) are done with unit tests. `tv-app`: one activity, the final scoreboard look
-  (`ScoreboardView`: LED clock and scores, team swatches, status bar, action confirmations), remote key adapter,
-  persistence, fonts, localization (English + Spanish, in-app language via `AppLanguage`). Next: quick clock
-  adjust, time-up bar and next-game picker, menu.
+  (`ScoreboardView`: LED clock and scores, team swatches, status bar, action confirmations), quick clock adjust,
+  remote key adapter, persistence, fonts, localization (English + Spanish, in-app language via `AppLanguage`).
+  Next: time-up bar and next-game picker, menu.
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 

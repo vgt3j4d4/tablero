@@ -36,9 +36,10 @@ class LedTextTest {
     }
 
     @Test
-    fun `game length`() {
-        assertEquals("10:00", gameLengthText(10 * 60_000L))
-        assertEquals("5:00", gameLengthText(5 * 60_000L))
-        assertEquals("60:00", gameLengthText(60 * 60_000L))
+    fun `durations`() {
+        assertEquals("10:00", durationText(10 * 60_000L))
+        assertEquals("60:00", durationText(60 * 60_000L))
+        assertEquals("1:00", durationText(60_000L))
+        assertEquals("0:05", durationText(5_000L))
     }
 }

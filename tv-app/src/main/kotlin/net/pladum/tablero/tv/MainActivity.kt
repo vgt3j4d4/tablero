@@ -11,18 +11,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import net.pladum.tablero.shared.ClockReading
 import net.pladum.tablero.shared.Command
 import net.pladum.tablero.shared.DispatchResult
 import net.pladum.tablero.shared.GameEngine
 import net.pladum.tablero.shared.TeamColor
 import net.pladum.tablero.shared.TimeSource
 
+/** Quick clock adjust closes on its own, keeping its changes, after this long without a key. */
+private const val CLOCK_ADJUST_IDLE_MS = 5_000L
+
 /** The only screen: the scoreboard, rendered from the engine's snapshots. */
 class MainActivity : Activity() {
     private lateinit var engine: GameEngine
     private lateinit var timeSource: TimeSource
     private lateinit var scoreboard: ScoreboardView
-    private val keys = RemoteKeyAdapter(::dispatch)
+    private val clockAdjust = ClockAdjustController()
+    private val keys = RemoteKeyAdapter({ dispatch(it) }, clockAdjust)
     private val feedback = FeedbackGrouper()
     private var uiScope: CoroutineScope? = null
 
@@ -53,6 +58,7 @@ class MainActivity : Activity() {
     }
 
     override fun onStop() {
+        if (clockAdjust.isOpen) clockAdjust.done()
         uiScope?.cancel()
         uiScope = null
         super.onStop()
@@ -76,10 +82,54 @@ class MainActivity : Activity() {
         Log.i(LOG_TAG, "Language $locale ($source), e.g. ${getString(TeamColor.YELLOW.nameRes())}")
     }
 
-    private fun dispatch(command: Command) {
+    private fun dispatch(command: Command): DispatchResult {
         val result = engine.dispatch(command)
-        if (result !is DispatchResult.Rejected) return
-        Log.d(LOG_TAG, "$command rejected: ${result.reason}")
-        feedback.onRejected(command, result.reason)?.let(scoreboard::show)
+        if (result is DispatchResult.Rejected) {
+            Log.d(LOG_TAG, "$command rejected: ${result.reason}")
+            feedback.onRejected(command, result.reason)?.let(scoreboard::show)
+        }
+        return result
+    }
+
+    /** Runs quick clock adjust (↓) for the remote: one [ClockAdjustSession] per visit, closed after idle time. */
+    private inner class ClockAdjustController : ClockAdjustKeys {
+        private var session: ClockAdjustSession? = null
+        private val closeWhenIdle = Runnable { done() }
+
+        override val isOpen: Boolean get() = session != null
+
+        override fun open() {
+            val snapshot = engine.snapshot.value
+            val was = ClockReading.of(snapshot.gameClock.remainingAt(timeSource.nowNanos()), snapshot.rules)
+            show(ClockAdjustSession(was))
+        }
+
+        override fun adjust(deltaMs: Long) {
+            val session = session ?: return
+            val before = engine.snapshot.value
+            val result = dispatch(Command.AdjustGameClock(deltaMs))
+            session.onAdjusted(before, result, timeSource.nowNanos())
+            show(session)
+        }
+
+        override fun done() = close()
+
+        override fun cancel() {
+            session?.cancelCommands()?.forEach { dispatch(it) }
+            close()
+        }
+
+        private fun show(session: ClockAdjustSession) {
+            this.session = session
+            scoreboard.showClockAdjust(session)
+            scoreboard.removeCallbacks(closeWhenIdle)
+            scoreboard.postDelayed(closeWhenIdle, CLOCK_ADJUST_IDLE_MS)
+        }
+
+        private fun close() {
+            session = null
+            scoreboard.removeCallbacks(closeWhenIdle)
+            scoreboard.showClockAdjust(null)
+        }
     }
 }
