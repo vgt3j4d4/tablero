@@ -2,7 +2,7 @@
 
 ## Phase 1 — TV app + stick remote
 
-Scope: two color teams, scores, game clock, buzzer, undo, next-game team picker (see `CLAUDE.md` →
+Scope: two teams (HOME / AWAY), scores, game clock, buzzer, undo, new game (see `CLAUDE.md` →
 Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred.
 
 - [x] Gradle multi-module scaffold (`shared`, `tv-app`), version catalog, CI-friendly `./gradlew test`
@@ -15,11 +15,12 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
       lint `MissingTranslation` as error
 - [x] `tv-app`: bundle DSEG7 Classic (Bold) and Barlow Condensed (500–800) as **TTF** in `res/font/` with their
       OFL license files (in `assets/licenses/`)
-- [x] `tv-app`: `ScoreboardView` (Canvas) — clock + scores in DSEG7 with ghost segments, team swatches, status bar
+- [x] `tv-app`: `ScoreboardView` (Canvas) — clock + scores in DSEG7 with ghost segments, HOME / AWAY labels, status bar
 - [x] `tv-app`: remote key adapter (OK on key-down, short/long press mapping, see CLAUDE.md)
 - [x] `tv-app`: quick clock adjust overlay (↓)
-- [ ] `tv-app`: time-up bar + next-game picker
-- [ ] `tv-app`: menu overlay (game clock, game length, scores, teams, new game, language, exit)
+- [x] `shared`: teams named by side (HOME / AWAY), no team colors
+- [ ] `tv-app`: time-up bar (new game / reset clock)
+- [ ] `tv-app`: menu overlay (game clock, game length, scores, new game, language, exit)
 - [ ] `tv-app`: `HOME` intent filter and guarded exit to Android TV (stopped clock only, hold OK 2 s)
 - [x] `tv-app`: persistence (`AtomicFile`, restore on start, reboot detection)
 - [ ] `tv-app`: buzzer sound via `SoundPool`

@@ -2,16 +2,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">tablero</string>
 
-    <!-- Team colors (TeamColor). Shown next to the team's swatch; uppercased in the status bar. -->
-    <string name="team_yellow">Yellow</string>
-    <string name="team_black">Black</string>
-    <string name="team_white">White</string>
-    <string name="team_blue">Blue</string>
-    <string name="team_red">Red</string>
-    <string name="team_green">Green</string>
-    <string name="team_orange">Orange</string>
-    <string name="team_purple">Purple</string>
-    <string name="team_light_blue">Light blue</string>
+    <!-- Teams: home plays on the left, away on the right. Uppercased on the scoreboard. -->
+    <string name="team_home">Home</string>
+    <string name="team_away">Away</string>
 
     <!-- Status bar. -->
     <string name="status_clock_running">CLOCK RUNNING</string>
@@ -19,7 +12,7 @@
 
     <!-- Action confirmation over the status bar. %1$s is the team name, %2$s the change (+3, −1). -->
     <string name="feedback_score">%1$s %2$s</string>
-    <!-- %1$s says what was undone: a score change (YELLOW +1) or one of the actions below. -->
+    <!-- %1$s says what was undone: a score change (HOME +1) or one of the actions below. -->
     <string name="feedback_undone">UNDONE · %1$s</string>
     <string name="feedback_nothing_to_undo">NOTHING TO UNDO</string>
     <string name="feedback_plus" translatable="false">+%1$d</string>
@@ -32,7 +25,6 @@
     <string name="undone_reset_clock">RESET CLOCK</string>
     <string name="undone_new_game">NEW GAME</string>
     <string name="undone_game_length">GAME LENGTH</string>
-    <string name="undone_teams">TEAMS</string>
 
     <!-- Key hints: the remote key's label in a keycap, then what it does. -->
     <string name="key_back">BACK</string>

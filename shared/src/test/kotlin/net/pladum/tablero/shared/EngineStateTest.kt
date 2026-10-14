@@ -7,14 +7,11 @@ import net.pladum.tablero.shared.Command.ResetGameClock
 import net.pladum.tablero.shared.Command.Score
 import net.pladum.tablero.shared.Command.SetGameClock
 import net.pladum.tablero.shared.Command.SetGameLength
-import net.pladum.tablero.shared.Command.SetTeams
 import net.pladum.tablero.shared.Command.StartClock
 import net.pladum.tablero.shared.Command.StopClock
 import net.pladum.tablero.shared.Command.Undo
 import net.pladum.tablero.shared.Side.LEFT
-import net.pladum.tablero.shared.TeamColor.BLUE
-import net.pladum.tablero.shared.TeamColor.GREEN
-import net.pladum.tablero.shared.TeamColor.RED
+import net.pladum.tablero.shared.Side.RIGHT
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -23,9 +20,9 @@ import kotlin.test.assertTrue
 class EngineStateTest {
     @Test
     fun `JSON round trip keeps the snapshot and every kind of history entry`() = engineTest {
-        apply(SetTeams(listOf(RED, BLUE, GREEN)))
+        apply(Score(RIGHT, 1))
         apply(SetGameLength(8 * MINUTE_MS))
-        apply(NewGame(RED, BLUE))
+        apply(NewGame)
         apply(Score(LEFT, 1))
         apply(SetGameClock(MINUTE_MS))
         apply(AdjustGameClock(-SECOND_MS))

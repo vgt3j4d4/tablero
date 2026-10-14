@@ -3,7 +3,7 @@ package net.pladum.tablero.tv
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.RectF
-import net.pladum.tablero.shared.TeamColor
+import net.pladum.tablero.shared.Side
 import java.util.Locale
 
 // Design pixels, from docs/design/boards.html (.toast).
@@ -14,9 +14,6 @@ private const val CENTER_Y = 1048f
 private const val RADIUS = 16f
 private const val PADDING = 28f
 private const val GAP = 16f
-private const val SWATCH_SIZE = 32f
-private const val SWATCH_RADIUS = 8f
-private const val SWATCH_BORDER = 3f
 private const val TITLE_SIZE = 40f
 private const val DETAIL_SIZE = 32f
 private const val HINT_SIZE = 28f
@@ -25,7 +22,7 @@ private const val HINT_SIZE = 28f
 private const val HINT_GAP = 24f
 
 /**
- * The confirmation over the status bar (design 05: swatch, `YELLOW +3`, `48 → 51`, then the `BACK UNDO` hint).
+ * The confirmation over the status bar (design 05: `HOME +3`, `48 → 51`, then the `BACK UNDO` hint).
  * Text is built and measured in [show]; [draw] only draws. Coordinates are design pixels.
  */
 class FeedbackToast(private val context: Context, fonts: BoardFonts) {
@@ -35,12 +32,6 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
     private val textOff = context.getColor(R.color.text_off)
     private val panel = RectF(LEFT, TOP, RIGHT, DESIGN_HEIGHT + RADIUS) // Square bottom: its corners are off screen.
     private val panelPaint = fillPaint(context.getColor(R.color.text))
-
-    private var hasSwatch = false
-    private val swatch = RectF()
-    private val swatchBorder = RectF()
-    private val swatchPaint = fillPaint()
-    private val swatchBorderPaint = strokePaint(textOff, SWATCH_BORDER)
 
     private var title = ""
     private var titleX = 0f
@@ -62,19 +53,16 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
 
     fun show(feedback: Feedback) {
         val locale = context.resources.configuration.locales[0]
-        var color: TeamColor? = null
         detail = ""
         hasHint = true
         title = when (feedback) {
             is Feedback.Score -> {
-                color = feedback.color
                 detail = context.getString(R.string.feedback_score_change, feedback.from, feedback.to)
-                scoreTitle(feedback.color, feedback.delta, locale)
+                scoreTitle(feedback.side, feedback.delta, locale)
             }
             is Feedback.UndoneScore -> {
-                color = feedback.color
                 detail = context.getString(R.string.feedback_score_change, feedback.from, feedback.to)
-                context.getString(R.string.feedback_undone, scoreTitle(feedback.color, feedback.delta, locale))
+                context.getString(R.string.feedback_undone, scoreTitle(feedback.side, feedback.delta, locale))
             }
             is Feedback.Undone ->
                 context.getString(R.string.feedback_undone, context.getString(feedback.action.labelRes()))
@@ -83,7 +71,7 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
                 context.getString(R.string.feedback_nothing_to_undo)
             }
         }
-        layout(color)
+        layout()
         visible = true
     }
 
@@ -94,25 +82,13 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
     fun draw(canvas: Canvas) {
         if (!visible) return
         canvas.drawRoundRect(panel, RADIUS, RADIUS, panelPaint)
-        if (hasSwatch) {
-            canvas.drawRoundRect(swatch, SWATCH_RADIUS, SWATCH_RADIUS, swatchPaint)
-            canvas.drawRoundRect(swatchBorder, SWATCH_RADIUS, SWATCH_RADIUS, swatchBorderPaint)
-        }
         canvas.drawText(title, titleX, titleBaseline, titlePaint)
         if (detail.isNotEmpty()) canvas.drawText(detail, detailX, detailBaseline, detailPaint)
         if (hasHint) hint.draw(canvas, hintBaseline, hintPaint, keycapPaint)
     }
 
-    private fun layout(color: TeamColor?) {
-        var x = LEFT + PADDING
-        hasSwatch = color != null
-        if (color != null) {
-            swatchPaint.color = context.getColor(color.colorRes())
-            swatch.set(x, CENTER_Y - SWATCH_SIZE / 2, x + SWATCH_SIZE, CENTER_Y + SWATCH_SIZE / 2)
-            swatchBorder.set(swatch)
-            swatchBorder.inset(SWATCH_BORDER / 2, SWATCH_BORDER / 2)
-            x += SWATCH_SIZE + GAP
-        }
+    private fun layout() {
+        val x = LEFT + PADDING
         val right = if (hasHint) hintLeft - HINT_GAP else RIGHT - PADDING
         val detailWidth = if (detail.isEmpty()) 0f else GAP + detailPaint.measureText(detail)
         titleX = x
@@ -121,14 +97,14 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
         detailX = x + titleWidth + GAP
     }
 
-    /** `YELLOW +3`, `AMARILLO −1`. */
-    private fun scoreTitle(color: TeamColor, delta: Int, locale: Locale): String {
+    /** `HOME +3`, `LOCAL −1`. */
+    private fun scoreTitle(side: Side, delta: Int, locale: Locale): String {
         val change = if (delta >= 0) {
             context.getString(R.string.feedback_plus, delta)
         } else {
             context.getString(R.string.feedback_minus, -delta)
         }
-        return context.getString(R.string.feedback_score, context.getString(color.nameRes()).uppercase(locale), change)
+        return context.getString(R.string.feedback_score, context.getString(side.teamNameRes()).uppercase(locale), change)
     }
 
     private fun UndoneAction.labelRes(): Int = when (this) {
@@ -139,6 +115,5 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
         UndoneAction.RESET_CLOCK -> R.string.undone_reset_clock
         UndoneAction.NEW_GAME -> R.string.undone_new_game
         UndoneAction.GAME_LENGTH -> R.string.undone_game_length
-        UndoneAction.TEAMS -> R.string.undone_teams
     }
 }

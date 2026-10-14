@@ -1,15 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Team colors (TeamColor). Shown next to the team's swatch; uppercased in the status bar. -->
-    <string name="team_yellow">Amarillo</string>
-    <string name="team_black">Negro</string>
-    <string name="team_white">Blanco</string>
-    <string name="team_blue">Azul</string>
-    <string name="team_red">Rojo</string>
-    <string name="team_green">Verde</string>
-    <string name="team_orange">Naranja</string>
-    <string name="team_purple">Morado</string>
-    <string name="team_light_blue">Celeste</string>
+    <!-- Teams: home plays on the left, away on the right. Uppercased on the scoreboard. -->
+    <string name="team_home">Local</string>
+    <string name="team_away">Visita</string>
 
     <!-- Status bar. -->
     <string name="status_clock_running">RELOJ EN MARCHA</string>
@@ -17,7 +10,7 @@
 
     <!-- Action confirmation over the status bar. %1$s is the team name, %2$s the change (+3, −1). -->
     <string name="feedback_score">%1$s %2$s</string>
-    <!-- %1$s says what was undone: a score change (AMARILLO +1) or one of the actions below. -->
+    <!-- %1$s says what was undone: a score change (LOCAL +1) or one of the actions below. -->
     <string name="feedback_undone">DESHECHO · %1$s</string>
     <string name="feedback_nothing_to_undo">NADA QUE DESHACER</string>
     <string name="undone_start_clock">INICIAR RELOJ</string>
@@ -27,7 +20,6 @@
     <string name="undone_reset_clock">REINICIAR RELOJ</string>
     <string name="undone_new_game">NUEVO PARTIDO</string>
     <string name="undone_game_length">DURACIÓN DEL PARTIDO</string>
-    <string name="undone_teams">EQUIPOS</string>
 
     <!-- Key hints: the remote key's label in a keycap, then what it does. -->
     <string name="key_back">ATRÁS</string>

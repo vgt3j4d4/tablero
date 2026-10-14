@@ -6,26 +6,24 @@ and [`architecture.md`](../architecture.md); these images show how it looks.
 
 | # | Screen | What it shows |
 |---|---|---|
-| 01 | [Live game](en/01-live-game.png) | The scoreboard: game clock on top, the two color teams and their scores, status bar showing whether the clock is running |
+| 01 | [Live game](en/01-live-game.png) | The scoreboard: game clock on top, HOME and AWAY with their scores, status bar showing whether the clock is running |
 | 02 | [Final minute](en/02-final-minute.png) | Below 1:00 the clock shows tenths (`38.4`) |
-| 03 | [Time up](en/03-time-up.png) | Buzzer state: red frame, result, and the choice between *Next game* (default) and *Reset clock · keep score* |
-| 04 | [Next game](en/04-next-game.png) | Team picker: the last game's teams pre-selected; ←/→ side, ↑/↓ team |
-| 05 | [Action feedback](en/05-action-feedback.png) | Confirmation after each action (`YELLOW +3 · 48 → 51`) with the Undo hint |
-| 06 | [Menu](en/06-menu.png) | Long-press Back: game clock, game length, scores, teams, new game, language, exit |
+| 03 | [Time up](en/03-time-up.png) | Buzzer state: red frame, result, and the choice between *New game* (default: 0–0) and *Reset clock · keep score* |
+| 05 | [Action feedback](en/05-action-feedback.png) | Confirmation after each action (`HOME +3 · 48 → 51`) with the Undo hint |
+| 06 | [Menu](en/06-menu.png) | Long-press Back: game clock, game length, scores, new game, language, exit |
 | 07 | [Quick clock adjust](en/07-quick-clock-adjust.png) | ↓ opens it: ↑/↓ ±1 min, ←/→ ±1 s, OK done, Back cancel; works while the clock runs |
 | 08 | [Set game clock](en/08-set-game-clock.png) | Exact time entry from the menu, only while the clock is stopped |
 | 09 | [Exit confirm](en/09-exit-confirm.png) | Guarded exit to Android TV: Cancel focused by default, exit needs OK held for 2 s |
 | 10 | [Remote mapping](en/10-remote-mapping.png) | Key mapping for the Xiaomi Mi TV Stick remote |
 
-Spanish versions use the same file names under [`es/`](es/).
+Spanish versions use the same file names under [`es/`](es/). Numbers are fixed because issues link to the files;
+04 (a next-game team picker) was dropped.
 
 ## Visual language
 
 - Black background; digits mimic LED scoreboards using **DSEG7 Classic** (seven-segment) with dim "unlit 8"
   segments behind them. Game clock LED red `#FF3B2F`, scores LED amber `#FFB21E`.
-- Teams are jersey colors: a color swatch plus the color name in white. Palette: yellow `#FFD60A`,
-  black `#111214` (swatch outlined so it shows on black), white `#F5F5F5`, blue `#2F6BFF`, red `#E5372B`,
-  green `#1FB85A`, orange `#FF7A00`, purple `#8B5CF6`, light blue `#5BC8F5`.
+- Teams are named by side, in white: `HOME` (left) and `AWAY` (right), `LOCAL` / `VISITA` in Spanish.
 - UI text in **Barlow Condensed**; key hints drawn as outlined keycaps.
 - Highlight / focus: inverted rows (light background, dark text) or a thick light outline; amber marks the
   clock-editing modes; red is reserved for time up and destructive actions.

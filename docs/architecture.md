@@ -8,7 +8,7 @@
 | Rules           | `shared/`               | Data: game length, tenths threshold                                                  |
 | Protocol DTOs   | `shared/`               | Messages exchanged with controllers (Phase 2)                                        |
 | Scoreboard view | `tv-app/`               | Renders the latest `GameSnapshot` and confirmations with `Canvas`                   |
-| Overlays        | `tv-app/`               | Menu, quick clock adjust, set clock, time up, next game, exit confirm                |
+| Overlays        | `tv-app/`               | Menu, quick clock adjust, set clock, time up, exit confirm                           |
 | Sound           | `tv-app/`               | Plays the buzzer in response to engine events (`SoundPool`)                          |
 | Persistence     | `tv-app/`               | Saves/restores engine state after every applied command                              |
 | Input adapters  | `tv-app/`               | Remote keys → `Command`; WebSocket messages → `Command` (Phase 2)                    |
@@ -24,9 +24,9 @@
 
 ## Phase 1 scope
 
-Two teams (left/right) identified by color, scores, one game clock, buzzer, undo, next-game picker. Shot clock, fouls,
-timeouts, periods and the possession arrow are **out of scope for now** (see "Later" at the end); keep the model
-open to them but don't implement them.
+Two teams, HOME (left) and AWAY (right), scores, one game clock, buzzer, undo, new game. Shot clock, fouls, timeouts,
+periods and the possession arrow are **out of scope for now** (see "Later" at the end); keep the model open to them
+but don't implement them.
 
 ## Time model
 
@@ -55,10 +55,9 @@ data class GameSnapshot(
     val left: TeamState,
     val right: TeamState,
     val timeUp: Boolean,               // clock reached 0; UI shows the time-up bar
-    val teams: List<TeamColor>,        // the session's team colors, offered in the next-game picker
 )
-data class TeamState(val color: TeamColor, val score: Int)
-enum class TeamColor { YELLOW, BLACK, WHITE, BLUE, RED, GREEN, ORANGE, PURPLE, LIGHT_BLUE } // names localized in tv-app
+data class TeamState(val score: Int)       // room for team fouls, timeouts later
+enum class Side { LEFT, RIGHT }            // LEFT = home, RIGHT = away; names localized in tv-app
 ```
 
 ## Commands
@@ -70,9 +69,8 @@ enum class TeamColor { YELLOW, BLACK, WHITE, BLUE, RED, GREEN, ORANGE, PURPLE, L
 | `AdjustGameClock(deltaMs)`                 | Relative; allowed running or stopped; result clamped to 0–60:00            |
 | `SetGameClock(ms)`                         | Absolute correction (0–60:00), only while stopped                          |
 | `ResetGameClock`                           | Back to the game length, stopped, scores kept                              |
-| `NewGame(left, right)`                     | The two teams for the next game; scores 0–0; clock at game length, stopped |
+| `NewGame`                                  | Scores 0–0, clock at game length, stopped                                  |
 | `SetGameLength(ms)`                        | 1–60 min; applies from the next reset / new game                           |
-| `SetTeams(colors)`                         | Session team colors offered in the next-game picker (≥ 2, distinct)        |
 | `Undo`                                     | Reverts the last applied command (history of 20)                           |
 
 - Giving the clock time while `timeUp` (adjust or set to > 0) clears `timeUp`, so a scorer can add back seconds
@@ -80,7 +78,7 @@ enum class TeamColor { YELLOW, BLACK, WHITE, BLUE, RED, GREEN, ORANGE, PURPLE, L
 - `dispatch` returns `Applied(snapshot)` or `Rejected(reason)`. A rejected command changes nothing, is not
   recorded for undo and does not bump the version; a command that would leave the state as it is is rejected
   as `NO_CHANGE`. Phase 2 acks reuse the reason.
-- First launch: every color in the roster, Yellow (left) vs Black (right), 0–0, 10:00 stopped.
+- First launch: 0–0, 10:00 stopped.
 
 Each command carries metadata for Phase 2: `clientId`, `cmdId` (idempotency), `baseVersion` (for `Set…`).
 
@@ -94,7 +92,7 @@ Undo reverts the **effect** of the last command, not the passage of time:
 - `AdjustGameClock` → applies the opposite of the delta actually applied (after clamping); a running clock
   keeps running.
 - `SetGameClock` / `ResetGameClock` → the previous clock (and time-up state) comes back.
-- `NewGame` → restores the previous game (teams and scores), clock stopped.
+- `NewGame` → restores the previous game's scores and clock (stopped), and the time-up state.
 
 The quick-adjust overlay's Back ("cancel") undoes every adjustment made since the overlay opened. Each key is its own
 `AdjustGameClock`, so Cancel sends one `Undo` per adjustment the session applied: they leave the history, and a later
@@ -110,14 +108,15 @@ shows the time-up bar.
 
 `CommandApplied(command, before, after)` and `CommandUndone(command, before, after)` report every change with the
 snapshots around it, whichever input sent the command (a toggle is reported as the start or stop it resolved to).
-`tv-app` turns them into the confirmation over the status bar (`YELLOW +3 · 48 → 51`, `UNDONE · START CLOCK`):
+`tv-app` turns them into the confirmation over the status bar (`HOME +3 · 48 → 51`, `UNDONE · START CLOCK`):
 consecutive score presses on one side and in one direction, each within 1.5 s of the previous one, add up into one
 confirmation, while staying separate commands. A command event comes before the clock events it causes.
 
-## Next game
+## Teams and new games
 
-The next-game picker pre-selects the last game's two teams; the scorer changes either side (a team can't be on
-both sides) and confirms, which dispatches `NewGame(left, right)`. The app does not decide who plays next.
+The two teams are named by side, the common scoreboard pattern: HOME on the left, AWAY on the right (LOCAL /
+VISITA in Spanish), whoever is actually playing. Sides are fixed. `NewGame` (from the time-up bar or the menu)
+starts again at 0–0. The app does not track teams and never decides who plays next.
 
 ## Persistence
 
@@ -142,7 +141,7 @@ Goal: the app ships English + Spanish, and adding a language is a translation-on
 - The engine emits values, enums and events only — never display text.
 - `tv-app` string resources: English is the default (`res/values/strings.xml`), Spanish in
   `res/values-es/strings.xml` (generic Spanish; region overrides such as `values-es-rPE` only if ever needed).
-  Team color names come from resources (`TeamColor.YELLOW` → "Yellow" / "Amarillo").
+  Team names come from resources (`Side.LEFT` → "Home" / "Local", `Side.RIGHT` → "Away" / "Visita").
 - `res/xml/locales_config.xml` is the single list of bundled languages. The menu's _Language_ option is built
   from it (each language shown by its own name, e.g. "English", "Español"). Android 13+ also reads this file
   for the system per-app language setting.
