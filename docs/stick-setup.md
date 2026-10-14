@@ -77,10 +77,9 @@ home app, "Open tablero from the apps row" when it isn't.
 **Recovery needs ADB.** With the launcher disabled, tablero is the only home app, so Android has nothing to fall
 back to: if tablero ever failed on every start, the stick would keep showing it (or Settings, if it was open
 underneath). Two crashes in a row (`adb shell am crash <package>`) simply restarted tablero on HOME with the game
-restored. Before disabling the launcher, make sure network debugging comes back after a reboot
-(`adb shell getprop persist.adb.tcp.port`; on this stick it was empty, so check by rebooting with the launcher still
-enabled), or keep a way to plug in USB. The way out is then `pm enable com.google.android.tvlauncher` or
-`pm uninstall <tablero package>`.
+restored. Before disabling the launcher, make sure network debugging comes back after a reboot, or keep a way to
+plug in USB. On this stick it does (`persist.adb.tcp.port` is empty, yet `adb connect` worked again right after a
+power cycle). The way out is then `pm enable com.google.android.tvlauncher` or `pm uninstall <tablero package>`.
 
 A full lock-task kiosk (also blocks HOME) needs a device owner, which requires removing the Google account — only
 worth it if accidental exits turn out to be a real problem.
@@ -120,7 +119,7 @@ adb shell dumpsys gfxinfo <tv-app package>
 - [ ] `scripts/setup-stick.sh` and `scripts/restore-stick.sh` automating steps 2–4.
 - [ ] Record the final package list for this stick's firmware here.
 - [x] Confirm `cmd package set-home-activity` works on this firmware: it doesn't (see step 3); disable the launcher.
-- [ ] Check that network debugging survives a reboot, then reboot with the launcher disabled: boots into tablero?
+- [x] With the launcher disabled, a power cycle boots into tablero and network debugging comes back.
 - [ ] With the remote: hold OK 2 s on EXIT, with the launcher enabled (opens it) and disabled (opens Settings);
   record how Settings → Apps opens an app and re-enables the launcher.
 - [ ] Record what the Assistant / Netflix / Prime buttons do after debloat.
