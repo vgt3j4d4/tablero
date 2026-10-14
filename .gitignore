@@ -11,6 +11,9 @@ captures/
 *.keystore
 *.jks
 
+# Python (scripts/)
+__pycache__/
+
 # IDE
 .idea/
 *.iml
