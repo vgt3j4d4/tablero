@@ -12,6 +12,9 @@
     <color name="text">#FFF5F2EA</color>
     <color name="text_muted">#FF8B919B</color>
     <color name="text_off">#FF3A3F47</color>
+    <!-- Clock-editing modes (quick adjust): amber ring and bar, dark ink on the bar. -->
+    <color name="adjust">#FFFFB21E</color>
+    <color name="adjust_ink">#FF3A2A05</color>
 
     <!-- Team (jersey) colors, one per TeamColor. -->
     <color name="team_yellow">#FFFFD60A</color>

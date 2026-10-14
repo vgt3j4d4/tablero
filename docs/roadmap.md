@@ -17,7 +17,7 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
       OFL license files (in `assets/licenses/`)
 - [x] `tv-app`: `ScoreboardView` (Canvas) — clock + scores in DSEG7 with ghost segments, team swatches, status bar
 - [x] `tv-app`: remote key adapter (OK on key-down, short/long press mapping, see CLAUDE.md)
-- [ ] `tv-app`: quick clock adjust overlay (↓)
+- [x] `tv-app`: quick clock adjust overlay (↓)
 - [ ] `tv-app`: time-up bar + next-game picker
 - [ ] `tv-app`: menu overlay (game clock, game length, scores, teams, new game, language, exit)
 - [ ] `tv-app`: `HOME` intent filter and guarded exit to Android TV (stopped clock only, hold OK 2 s)

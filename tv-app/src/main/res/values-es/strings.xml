@@ -33,4 +33,12 @@
     <!-- Key hints: the remote key's label in a keycap, then what it does. -->
     <string name="key_back">ATRÁS</string>
     <string name="hint_undo">DESHACER</string>
+
+    <!-- Quick clock adjust (↓): bar over the status bar. %1$s is the clock when the overlay opened. -->
+    <string name="adjust_title">AJUSTAR RELOJ</string>
+    <string name="adjust_was">antes %1$s</string>
+    <string name="hint_minute">±1 MIN</string>
+    <string name="hint_second">±1 SEG</string>
+    <string name="hint_done">LISTO</string>
+    <string name="hint_cancel">CANCELAR</string>
 </resources>

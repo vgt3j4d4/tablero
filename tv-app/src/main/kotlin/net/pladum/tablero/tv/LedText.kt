@@ -31,8 +31,8 @@ fun ClockReading.ghost(): String = when (this) {
 /** The unlit segments behind a score: two digits, more from 100 up. */
 fun scoreGhost(score: String): String = "8".repeat(maxOf(MIN_SCORE_DIGITS, score.length))
 
-/** The game length as the status bar shows it: `10:00`. */
-fun gameLengthText(gameLengthMs: Long): String {
-    val seconds = gameLengthMs / 1_000
+/** A duration in whole seconds as `M:SS` (`10:00`, `0:05`): the game length, a clock adjustment. */
+fun durationText(durationMs: Long): String {
+    val seconds = durationMs / 1_000
     return ClockReading.MinutesSeconds((seconds / 60).toInt(), (seconds % 60).toInt()).format()
 }
