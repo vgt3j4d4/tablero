@@ -3,9 +3,9 @@
     <!-- Scoreboard palette, see docs/design/README.md → Visual language. -->
     <color name="board_background">#FF07080A</color>
     <color name="led_red">#FFFF3B2F</color>
-    <color name="led_red_unlit">#FF240807</color>
+    <color name="led_red_unlit">#FF160505</color>
     <color name="led_amber">#FFFFB21E</color>
-    <color name="led_amber_unlit">#FF241904</color>
+    <color name="led_amber_unlit">#FF161002</color>
     <color name="clock_box">#FF0B0C0E</color>
     <color name="clock_box_border">#FF1A1D22</color>
     <color name="status_line">#FF16191D</color>
