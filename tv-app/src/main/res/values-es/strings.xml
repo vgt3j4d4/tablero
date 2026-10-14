@@ -40,4 +40,24 @@
     <string name="hint_second">±1 SEG</string>
     <string name="hint_done">LISTO</string>
     <string name="hint_cancel">CANCELAR</string>
+
+    <!-- Menu (Back long press): a panel of rows in sentence case. %1$s is the team name (Local, Visita). -->
+    <string name="menu_title">Menú</string>
+    <string name="menu_game_clock">Reloj de juego</string>
+    <string name="menu_game_length">Duración del partido</string>
+    <string name="menu_score">Puntos %1$s</string>
+    <string name="menu_new_game">Nuevo partido</string>
+    <string name="menu_language">Idioma</string>
+    <string name="hint_move">MOVER</string>
+    <string name="hint_change">CAMBIAR</string>
+    <string name="hint_open">ABRIR</string>
+    <string name="hint_close">CERRAR</string>
+
+    <!-- Set game clock dialog (menu → Game clock), only while the clock is stopped. %1$s is the clock before. -->
+    <string name="set_clock_title">FIJAR RELOJ DE JUEGO</string>
+    <string name="set_clock_was">Antes %1$s · reloj detenido</string>
+    <string name="set_clock_minutes">MIN</string>
+    <string name="set_clock_seconds">SEG</string>
+    <string name="hint_field">CAMPO</string>
+    <string name="hint_save">GUARDAR</string>
 </resources>

@@ -27,8 +27,8 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
 - Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
   display rounding, persisted state) are done with unit tests. `tv-app`: one activity, the final scoreboard look
   (`ScoreboardView`: LED clock and scores, HOME / AWAY labels, status bar, action confirmations), quick clock adjust,
-  time-up bar, remote key adapter, persistence, fonts, localization (English + Spanish, in-app language via
-  `AppLanguage`). Next: menu.
+  time-up bar, menu (with the set game clock dialog), remote key adapter, persistence, fonts, localization
+  (English + Spanish, in-app language via `AppLanguage`). Next: guarded exit to Android TV (default HOME app).
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
@@ -127,7 +127,8 @@ via HDMI-CEC (verify with a key logger).
 
 Menu overlay (Back long press; D-pad navigable): game clock (set exact time, stopped only), game length, left/right
 score, new game, language, exit to Android TV (only while stopped; confirm screen with Cancel focused; exit
-requires holding OK 2 s).
+requires holding OK 2 s). Open until Back. Scores change with every ←/→ press; game length and language apply when
+focus leaves their row or the menu closes (one undo for game length, one activity recreate for language).
 
 ## Tech stack
 

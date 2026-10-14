@@ -51,12 +51,49 @@ private class FakeClockAdjust : ClockAdjustKeys {
     }
 }
 
+/** Records what the keys asked of the menu. */
+private class FakeMenu : MenuKeys {
+    val calls = mutableListOf<String>()
+    override var isOpen = false
+
+    override fun open() {
+        isOpen = true
+        calls += "open"
+    }
+
+    override fun up() {
+        calls += "up"
+    }
+
+    override fun down() {
+        calls += "down"
+    }
+
+    override fun left() {
+        calls += "left"
+    }
+
+    override fun right() {
+        calls += "right"
+    }
+
+    override fun ok() {
+        calls += "ok"
+    }
+
+    override fun back() {
+        isOpen = false
+        calls += "back"
+    }
+}
+
 /** Each helper replays what the framework delivers to the activity for one physical press. */
 class RemoteKeyAdapterTest {
     private val dispatched = mutableListOf<Command>()
     private val clockAdjust = FakeClockAdjust()
     private val timeUp = TimeUpBar({ dispatched += it }, {})
-    private val keys = RemoteKeyAdapter({ dispatched += it }, clockAdjust, timeUp)
+    private val menu = FakeMenu()
+    private val keys = RemoteKeyAdapter({ dispatched += it }, clockAdjust, timeUp, menu)
 
     private fun shortPress(keyCode: Int) {
         assertTrue(keys.onKeyDown(keyCode, repeatCount = 0))
@@ -101,11 +138,20 @@ class RemoteKeyAdapterTest {
     }
 
     @Test
-    fun `back short press undoes, long press is consumed without undoing`() {
+    fun `back short press undoes, long press opens the menu without undoing`() {
         shortPress(KEYCODE_BACK)
         assertEquals(listOf<Command>(Undo), dispatched)
         assertTrue(longPress(KEYCODE_BACK))
         assertEquals(listOf<Command>(Undo), dispatched)
+        assertEquals(listOf("open"), menu.calls)
+    }
+
+    @Test
+    fun `a key-up without its key-down is ignored`() {
+        // The activity was recreated (language change) while the key was held.
+        assertTrue(keys.onKeyUp(KEYCODE_BACK, canceled = false))
+        assertTrue(keys.onKeyUp(KEYCODE_DPAD_LEFT, canceled = false))
+        assertEquals(emptyList(), dispatched)
     }
 
     @Test
@@ -245,6 +291,68 @@ class RemoteKeyAdapterTest {
             shortPress(KEYCODE_DPAD_CENTER)
             assertEquals(listOf<Command>(NewGame), dispatched)
         }
+    }
+
+    @Nested
+    inner class MenuOpen {
+        @BeforeEach
+        fun openMenu() {
+            longPress(KEYCODE_BACK)
+            menu.calls.clear()
+        }
+
+        @Test
+        fun `keys drive the menu on key-down and never reach the scoreboard`() {
+            listOf(KEYCODE_DPAD_UP, KEYCODE_DPAD_DOWN, KEYCODE_DPAD_LEFT, KEYCODE_DPAD_RIGHT, KEYCODE_DPAD_CENTER)
+                .forEach(::shortPress)
+            assertEquals(listOf("up", "down", "left", "right", "ok"), menu.calls)
+            assertEquals(emptyList(), dispatched)
+            assertEquals(emptyList(), clockAdjust.calls)
+        }
+
+        @Test
+        fun `back closes it, and its release does not undo`() {
+            shortPress(KEYCODE_BACK)
+            assertEquals(listOf("back"), menu.calls)
+            assertEquals(emptyList(), dispatched)
+            shortPress(KEYCODE_BACK)
+            assertEquals(listOf<Command>(Undo), dispatched)
+        }
+
+        @Test
+        fun `held keys neither repeat nor long-press`() {
+            assertTrue(longPress(KEYCODE_DPAD_LEFT))
+            assertTrue(longPress(KEYCODE_BACK))
+            assertEquals(listOf("left", "back"), menu.calls)
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `it keeps the remote when time runs out`() {
+            timeUp.onTimeUp(true)
+            shortPress(KEYCODE_DPAD_CENTER)
+            assertEquals(listOf("ok"), menu.calls)
+            assertEquals(emptyList(), dispatched)
+        }
+    }
+
+    @Test
+    fun `back long press does not open the menu over quick clock adjust`() {
+        shortPress(KEYCODE_DPAD_DOWN)
+        assertTrue(longPress(KEYCODE_BACK))
+        assertEquals(listOf("open", "cancel"), clockAdjust.calls)
+        assertEquals(emptyList(), menu.calls)
+    }
+
+    @Test
+    fun `at time up, back closes the bar and a second long press opens the menu`() {
+        timeUp.onTimeUp(true)
+        assertTrue(longPress(KEYCODE_BACK))
+        assertFalse(timeUp.isOpen)
+        assertEquals(emptyList(), menu.calls)
+        assertTrue(longPress(KEYCODE_BACK))
+        assertEquals(listOf("open"), menu.calls)
+        assertEquals(emptyList(), dispatched)
     }
 
     @Test

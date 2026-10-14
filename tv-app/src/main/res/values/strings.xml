@@ -51,4 +51,24 @@
     <string name="hint_done">DONE</string>
     <!-- Uppercase like every scoreboard label; not a dialog button. -->
     <string name="hint_cancel" tools:ignore="ButtonCase">CANCEL</string>
+
+    <!-- Menu (Back long press): a panel of rows in sentence case. %1$s is the team name (Home, Away). -->
+    <string name="menu_title">Menu</string>
+    <string name="menu_game_clock">Game clock</string>
+    <string name="menu_game_length">Game length</string>
+    <string name="menu_score">%1$s score</string>
+    <string name="menu_new_game">New game</string>
+    <string name="menu_language">Language</string>
+    <string name="hint_move">MOVE</string>
+    <string name="hint_change">CHANGE</string>
+    <string name="hint_open">OPEN</string>
+    <string name="hint_close">CLOSE</string>
+
+    <!-- Set game clock dialog (menu → Game clock), only while the clock is stopped. %1$s is the clock before. -->
+    <string name="set_clock_title">SET GAME CLOCK</string>
+    <string name="set_clock_was">Was %1$s · clock stopped</string>
+    <string name="set_clock_minutes">MIN</string>
+    <string name="set_clock_seconds">SEC</string>
+    <string name="hint_field">FIELD</string>
+    <string name="hint_save">SAVE</string>
 </resources>

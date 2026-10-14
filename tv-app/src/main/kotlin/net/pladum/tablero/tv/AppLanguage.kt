@@ -36,6 +36,10 @@ object AppLanguage {
     fun chosen(context: Context): Locale? =
         resolveChosen(prefs(context).getString(PREF_LANGUAGE, null), available(context))
 
+    /** The bundled language [activity] shows, as the menu names it. */
+    fun inUse(activity: Activity): Locale =
+        bundledMatch(activity.resources.configuration.locales[0], available(activity))
+
     /** Saves [locale] (null = follow the device) and recreates [activity] so it shows the new language. */
     fun set(activity: Activity, locale: Locale?) {
         val edit = prefs(activity).edit()
@@ -59,6 +63,13 @@ object AppLanguage {
 /** The saved language [tag] if it is still bundled, else null (follow the device). */
 internal fun resolveChosen(tag: String?, bundled: List<Locale>): Locale? =
     tag?.let { saved -> bundled.firstOrNull { it.toLanguageTag() == saved } }
+
+/**
+ * The bundled language that shows for [locale]: the same one, else the same language in another region (the device
+ * may be set to `es-PE`), else the first bundled one, English, which Android's resource fallback shows.
+ */
+internal fun bundledMatch(locale: Locale, bundled: List<Locale>): Locale =
+    bundled.firstOrNull { it == locale } ?: bundled.firstOrNull { it.language == locale.language } ?: bundled.first()
 
 /** A language's name in that language, as the menu lists it: "English", "Español". */
 fun Locale.nativeName(): String = getDisplayName(this).replaceFirstChar { it.titlecase(this) }

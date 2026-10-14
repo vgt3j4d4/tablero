@@ -24,6 +24,14 @@ class AppLanguageTest {
     }
 
     @Test
+    fun `the language in use matches a bundled one by tag, then by language, else English`() {
+        assertEquals(Locale.forLanguageTag("es"), bundledMatch(Locale.forLanguageTag("es"), bundled))
+        assertEquals(Locale.forLanguageTag("es"), bundledMatch(Locale.forLanguageTag("es-PE"), bundled))
+        assertEquals(Locale.forLanguageTag("en"), bundledMatch(Locale.forLanguageTag("en-US"), bundled))
+        assertEquals(Locale.forLanguageTag("en"), bundledMatch(Locale.forLanguageTag("pt-BR"), bundled))
+    }
+
+    @Test
     fun `languages are named in their own language, capitalized`() {
         assertEquals("English", Locale.forLanguageTag("en").nativeName())
         assertEquals("Español", Locale.forLanguageTag("es").nativeName())

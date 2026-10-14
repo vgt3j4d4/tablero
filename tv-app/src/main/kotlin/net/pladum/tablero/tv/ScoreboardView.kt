@@ -50,9 +50,9 @@ private const val STATUS_ICON_SIZE = 18f
 private const val STATUS_ICON_GAP = 12f
 
 /**
- * The scoreboard surface: one Canvas view, no layout (design screens 01, 02, 03, 05 and 07). Renders the latest
- * [GameSnapshot] given to [render], confirmations given to [show], the time-up bar and the quick clock adjust
- * overlay.
+ * The scoreboard surface: one Canvas view, no layout (design screens 01, 02, 03 and 05 to 08). Renders the latest
+ * [GameSnapshot] given to [render], confirmations given to [show], the time-up bar, the quick clock adjust overlay,
+ * the menu and its set game clock dialog.
  *
  * Everything is laid out in design pixels and scaled to the view. Text is built and measured when the state
  * changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
@@ -61,6 +61,9 @@ private const val STATUS_ICON_GAP = 12f
  * Only the clock digits change at 10 Hz, so everything else (box, unlit segments, teams, status bar, overlays)
  * is drawn into a screen-sized [layer] bitmap when it changes, and a tick draws that bitmap plus one text. On the
  * stick's slow CPU, recording and issuing the full scene on every tick missed about half the frame deadlines.
+ * With the menu open, the board is dimmed in the layer and a tick draws the digits in a dimmed color, clipped to the
+ * left of the panel, and the menu's Game clock value; the set game clock dialog only opens while the clock is
+ * stopped, so it goes into the layer with the clock digits under it.
  */
 @SuppressLint("ViewConstructor") // Built in code by MainActivity, never inflated from XML.
 class ScoreboardView(context: Context, private val timeSource: TimeSource) : View(context) {
@@ -113,6 +116,10 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
     private val clockAdjust = ClockAdjustOverlay(context, fonts)
     private val timeUp = TimeUpOverlay(context, fonts)
     private var timeUpFocus: TimeUpChoice? = null
+    private val menu = MenuOverlay(context, fonts)
+    private val clockDimPaint = ledPaint(R.color.led_red, Paint.Align.RIGHT).apply { color = menu.dimmed(color) }
+    private val setClock = SetClockOverlay(context, fonts)
+    private var menuState: MenuState? = null
 
     private var ticking = false
     private val tick = object : Runnable {
@@ -129,13 +136,18 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         changed = right.update(next.right) || changed
         changed = updateStatus(next) || changed
         changed = updateTimeUp() || changed
+        changed = updateMenu() || changed
         if (changed) invalidateLayer()
         refreshClock()
         updateTicker()
     }
 
-    /** Shows a confirmation over the status bar; it hides [FEEDBACK_VISIBLE_MS] after the last one. */
+    /**
+     * Shows a confirmation over the status bar; it hides [FEEDBACK_VISIBLE_MS] after the last one. None shows while
+     * the menu is open: the menu shows the values it changes.
+     */
     fun show(feedback: Feedback) {
+        if (menuState != null) return
         toast.show(feedback)
         removeCallbacks(hideToast)
         postDelayed(hideToast, FEEDBACK_VISIBLE_MS)
@@ -172,6 +184,16 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         if (updateTimeUp()) invalidateLayer()
     }
 
+    /** Shows the menu, or its set game clock dialog, for [state]; hides it when null. */
+    fun showMenu(state: MenuState?) {
+        if (state != null && menuState == null) {
+            removeCallbacks(hideToast)
+            toast.hide()
+        }
+        menuState = state
+        if (updateMenu()) invalidateLayer()
+    }
+
     private fun refreshClock() {
         val s = snapshot ?: return
         val now = ClockReading.of(s.gameClock.remainingAt(timeSource.nowNanos()), s.rules)
@@ -186,6 +208,7 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
             clockRight = clockGhostX + width
             layerDirty = true
         }
+        if (setClock.visible) layerDirty = true // The digits are in the layer, under the dialog.
         invalidate()
     }
 
@@ -213,6 +236,12 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
     private fun updateTimeUp(): Boolean {
         val s = snapshot ?: return false
         return timeUp.update(s.timeUp, s.left.score, s.right.score, timeUpFocus)
+    }
+
+    private fun updateMenu(): Boolean {
+        val s = snapshot ?: return false
+        val panel = menu.update(menuState, s)
+        return setClock.update(menuState?.setClock) || panel
     }
 
     /** Runs the ticker only while the clock runs and the view is on a visible window. */
@@ -263,9 +292,18 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
             layerDirty = false
         }
         canvas.drawBitmap(layer, 0f, 0f, null)
+        if (setClock.visible) return
         val saved = canvas.save()
         toDesignPixels(canvas)
-        canvas.drawText(clockText, clockRight, clockBaseline, clockPaint)
+        if (menu.visible) {
+            val board = canvas.save()
+            canvas.clipRect(0f, 0f, MENU_LEFT, DESIGN_HEIGHT)
+            canvas.drawText(clockText, clockRight, clockBaseline, clockDimPaint)
+            canvas.restoreToCount(board)
+            menu.drawLive(canvas, clockText)
+        } else {
+            canvas.drawText(clockText, clockRight, clockBaseline, clockPaint)
+        }
         canvas.restoreToCount(saved)
     }
 
@@ -294,6 +332,11 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         when {
             clockAdjust.visible -> clockAdjust.draw(canvas)
             !timeUp.barVisible -> toast.draw(canvas)
+        }
+        menu.draw(canvas)
+        if (setClock.visible) {
+            canvas.drawText(clockText, clockRight, clockBaseline, clockPaint)
+            setClock.draw(canvas)
         }
         canvas.restoreToCount(saved)
     }
