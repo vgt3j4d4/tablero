@@ -29,7 +29,7 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
   (`ScoreboardView`: LED clock and scores, HOME / AWAY labels, status bar, action confirmations), quick clock adjust,
   time-up bar, menu (with the set game clock dialog), buzzer at time up (synthesized horn), remote key adapter,
   persistence, fonts, localization (English + Spanish, in-app language via `AppLanguage`), `HOME` intent filter and
-  guarded exit to Android TV (menu → hold OK 2 s; opens the stock launcher, or Settings when it is disabled).
+  guarded exit to Android TV (menu → hold OK 2 s → the stock launcher).
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
@@ -84,9 +84,9 @@ tablero/
   a clock runs, only on change otherwise. Everything but the lit clock digits is cached in a bitmap layer redrawn
   on change: the stick's CPU can't re-record the whole scene at 10 Hz without missing frames. Preload buzzer
   sounds with `SoundPool`.
-- Keep screen awake with `FLAG_KEEP_SCREEN_ON`. The app is the **HOME app** on the stick (activity has a `HOME`
-  intent filter). The stock launcher's filter outranks it, so the stick's launcher is disabled, not uninstalled;
-  the menu's exit opens Settings then — see `docs/stick-setup.md`.
+- Keep screen awake with `FLAG_KEEP_SCREEN_ON`. The stock launcher stays the stick's home screen and tablero is
+  opened from its apps row. The activity also has a `HOME` intent filter for an optional kiosk, which on the stick
+  only works by disabling the launcher (it outranks any other app) — see `docs/stick-setup.md`.
 
 ## Scoreboard look
 
@@ -169,8 +169,7 @@ On-device testing happens **on the stick only**, installed over adb; there is no
 - `adb shell input keyevent` can take several seconds on the stick, so judge clock timing from screenshots and
   `logcat` timestamps, not from host-side timing.
 - Right after a fresh install the stock launcher may jump back in front; launch the app again with
-  `adb shell am start -n net.pladum.tablero.tv.debug/net.pladum.tablero.tv.MainActivity`. Once tablero is the home
-  app, use `adb shell input keyevent KEYCODE_HOME` instead: `am start -n` starts a second copy next to the home one.
+  `adb shell am start -n net.pladum.tablero.tv.debug/net.pladum.tablero.tv.MainActivity`.
 - `input keyevent --longpress` holds a key for about 0.5 s and `sendevent` is denied, so the 2 s hold on EXIT can
   only be tested with the remote.
 

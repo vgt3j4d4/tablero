@@ -132,7 +132,7 @@ value, OK opens the focused row.
 - **Exit to Android TV** (design 09) opens only while the clock is stopped (muted while it runs, like Game clock):
   a confirm screen with CANCEL focused. ←/→ move between CANCEL and EXIT, OK on CANCEL or Back returns to the menu.
   OK held on EXIT for 2 s fills the button in red and then closes the menu and opens the stock launcher (Android TV
-  Settings when the launcher is disabled, see `stick-setup.md`); releasing OK sooner, moving the focus or the
+  Settings if it was disabled for the optional kiosk, see `stick-setup.md`); releasing OK sooner, moving the focus or the
   activity pausing cancels the hold. The remote key adapter passes OK's release to the menu for this, the only
   key-up an overlay gets. The screen says how to come back depending on whether HOME opens tablero.
 
