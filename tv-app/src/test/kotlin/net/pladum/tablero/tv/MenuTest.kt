@@ -24,6 +24,12 @@ class MenuTest {
     private var snapshot = GameSnapshot.initial()
     private val dispatched = mutableListOf<Command>()
     private val applied = mutableListOf<Locale>()
+    private var nowNanos = 0L
+
+    /** The action the menu posted (the end of a hold on EXIT) and when it is due, until removed. */
+    private var posted: Runnable? = null
+    private var postedDelayMs = 0L
+    private var exits = 0
 
     /** What the scoreboard was last told to show; null = closed. */
     private var shown: MenuState? = null
@@ -33,6 +39,13 @@ class MenuTest {
         languages = listOf(ENGLISH, SPANISH),
         language = ENGLISH,
         applyLanguage = { applied += it },
+        now = { nowNanos },
+        postDelayed = { action, delayMs ->
+            posted = action
+            postedDelayMs = delayMs
+        },
+        removeCallbacks = { if (it === posted) posted = null },
+        exitToAndroidTv = { exits++ },
         onChange = { shown = it },
     )
 
@@ -241,6 +254,134 @@ class MenuTest {
             assertEquals(emptyList(), dispatched)
             assertTrue(menu.isOpen)
             assertNull(shown?.setClock)
+        }
+    }
+
+    @Nested
+    inner class ExitToAndroidTv {
+        private val running = ClockState(10 * MINUTE_MS * NANOS_PER_MS, startedAtNanos = 0)
+
+        private fun openConfirm() {
+            menu.open()
+            focus(MenuRow.EXIT)
+            menu.ok()
+        }
+
+        /** OK held on EXIT for [ms]: the posted end of the hold runs when it is due. */
+        private fun holdOk(ms: Long) {
+            menu.ok()
+            nowNanos += ms * NANOS_PER_MS
+            val action = posted
+            if (action != null && ms >= postedDelayMs) {
+                posted = null
+                action.run()
+            }
+        }
+
+        @Test
+        fun `OK on exit opens the confirm screen with cancel focused`() {
+            openConfirm()
+            assertEquals(ExitConfirm(ExitChoice.CANCEL), shown?.exitConfirm)
+            assertEquals(MenuRow.EXIT, shown?.focused)
+        }
+
+        @Test
+        fun `the confirm screen does not open while the clock runs`() {
+            snapshot = snapshot.copy(gameClock = running)
+            openConfirm()
+            assertNull(shown?.exitConfirm)
+            assertTrue(menu.isOpen)
+        }
+
+        @Test
+        fun `OK on cancel and back both return to the menu`() {
+            openConfirm()
+            menu.ok()
+            assertNull(shown?.exitConfirm)
+            assertTrue(menu.isOpen)
+            menu.ok()
+            menu.right()
+            menu.back()
+            assertNull(shown?.exitConfirm)
+            assertTrue(menu.isOpen)
+            assertEquals(0, exits)
+        }
+
+        @Test
+        fun `left and right move between the buttons, up and down do nothing`() {
+            openConfirm()
+            menu.right()
+            assertEquals(ExitChoice.EXIT, shown?.exitConfirm?.focused)
+            menu.up()
+            menu.down()
+            assertEquals(ExitChoice.EXIT, shown?.exitConfirm?.focused)
+            assertEquals(MenuRow.EXIT, shown?.focused)
+            menu.left()
+            assertEquals(ExitChoice.CANCEL, shown?.exitConfirm?.focused)
+        }
+
+        @Test
+        fun `holding OK on exit for two seconds closes the menu and exits`() {
+            openConfirm()
+            menu.right()
+            nowNanos = 5_000 * NANOS_PER_MS
+            menu.ok()
+            assertEquals(5_000 * NANOS_PER_MS, shown?.exitConfirm?.holdStartedNanos)
+            assertEquals(EXIT_HOLD_MS, postedDelayMs)
+            assertEquals(0, exits)
+            nowNanos += EXIT_HOLD_MS * NANOS_PER_MS
+            assertNotNull(posted).run()
+            assertEquals(1, exits)
+            assertFalse(menu.isOpen)
+            assertNull(shown)
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `releasing OK sooner cancels the hold, and the next one starts over`() {
+            openConfirm()
+            menu.right()
+            holdOk(1_500)
+            menu.okReleased()
+            assertNull(posted)
+            assertEquals(ExitConfirm(ExitChoice.EXIT), shown?.exitConfirm)
+            holdOk(1_500)
+            assertEquals(0, exits)
+            assertNotNull(posted)
+            menu.okReleased()
+            holdOk(EXIT_HOLD_MS)
+            assertEquals(1, exits)
+        }
+
+        @Test
+        fun `moving the focus, back or a pause cancel the hold`() {
+            openConfirm()
+            menu.right()
+            menu.ok()
+            menu.left()
+            assertNull(posted)
+            menu.right()
+            menu.ok()
+            menu.cancelExitHold()
+            assertNull(posted)
+            assertEquals(ExitConfirm(ExitChoice.EXIT), shown?.exitConfirm)
+            menu.ok()
+            menu.back()
+            assertNull(posted)
+            assertNull(shown?.exitConfirm)
+            assertEquals(0, exits)
+        }
+
+        @Test
+        fun `a clock started during the hold keeps the scoreboard`() {
+            openConfirm()
+            menu.right()
+            menu.ok()
+            snapshot = snapshot.copy(gameClock = running)
+            assertNotNull(posted).run()
+            assertEquals(0, exits)
+            assertTrue(menu.isOpen)
+            assertNull(shown?.exitConfirm)
         }
     }
 

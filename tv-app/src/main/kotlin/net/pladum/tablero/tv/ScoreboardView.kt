@@ -9,6 +9,7 @@ import android.graphics.RectF
 import android.view.View
 import net.pladum.tablero.shared.ClockReading
 import net.pladum.tablero.shared.GameSnapshot
+import net.pladum.tablero.shared.NANOS_PER_MS
 import net.pladum.tablero.shared.Side
 import net.pladum.tablero.shared.TeamState
 import net.pladum.tablero.shared.TimeSource
@@ -50,9 +51,9 @@ private const val STATUS_ICON_SIZE = 18f
 private const val STATUS_ICON_GAP = 12f
 
 /**
- * The scoreboard surface: one Canvas view, no layout (design screens 01, 02, 03 and 05 to 08). Renders the latest
+ * The scoreboard surface: one Canvas view, no layout (design screens 01, 02, 03 and 05 to 09). Renders the latest
  * [GameSnapshot] given to [render], confirmations given to [show], the time-up bar, the quick clock adjust overlay,
- * the menu and its set game clock dialog.
+ * the menu, its set game clock dialog and its exit confirm screen.
  *
  * Everything is laid out in design pixels and scaled to the view. Text is built and measured when the state
  * changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
@@ -62,8 +63,9 @@ private const val STATUS_ICON_GAP = 12f
  * is drawn into a screen-sized [layer] bitmap when it changes, and a tick draws that bitmap plus one text. On the
  * stick's slow CPU, recording and issuing the full scene on every tick missed about half the frame deadlines.
  * With the menu open, the board is dimmed in the layer and a tick draws the digits in a dimmed color, clipped to the
- * left of the panel, and the menu's Game clock value; the set game clock dialog only opens while the clock is
- * stopped, so it goes into the layer with the clock digits under it.
+ * left of the panel, and the menu's Game clock value; the set game clock dialog and the exit confirm screen only
+ * open while the clock is stopped, so they go into the layer with the clock digits under them. Holding OK on EXIT
+ * redraws on every frame while it lasts, but only the button's fill and labels over the layer.
  */
 @SuppressLint("ViewConstructor") // Built in code by MainActivity, never inflated from XML.
 class ScoreboardView(context: Context, private val timeSource: TimeSource) : View(context) {
@@ -119,6 +121,7 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
     private val menu = MenuOverlay(context, fonts)
     private val clockDimPaint = ledPaint(R.color.led_red, Paint.Align.RIGHT).apply { color = menu.dimmed(color) }
     private val setClock = SetClockOverlay(context, fonts)
+    private val exitConfirm = ExitConfirmOverlay(context, fonts)
     private var menuState: MenuState? = null
 
     private var ticking = false
@@ -184,14 +187,14 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         if (updateTimeUp()) invalidateLayer()
     }
 
-    /** Shows the menu, or its set game clock dialog, for [state]; hides it when null. */
+    /** Shows the menu, or one of its dialogs, for [state]; hides it when null. */
     fun showMenu(state: MenuState?) {
         if (state != null && menuState == null) {
             removeCallbacks(hideToast)
             toast.hide()
         }
         menuState = state
-        if (updateMenu()) invalidateLayer()
+        if (updateMenu()) invalidateLayer() else invalidate() // A hold on EXIT starting or ending.
     }
 
     private fun refreshClock() {
@@ -208,7 +211,7 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
             clockRight = clockGhostX + width
             layerDirty = true
         }
-        if (setClock.visible) layerDirty = true // The digits are in the layer, under the dialog.
+        if (setClock.visible || exitConfirm.visible) layerDirty = true // The digits are in the layer, under the dialog.
         invalidate()
     }
 
@@ -241,7 +244,8 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
     private fun updateMenu(): Boolean {
         val s = snapshot ?: return false
         val panel = menu.update(menuState, s)
-        return setClock.update(menuState?.setClock) || panel
+        val exit = exitConfirm.update(menuState?.exitConfirm)
+        return setClock.update(menuState?.setClock) || exit || panel
     }
 
     /** Runs the ticker only while the clock runs and the view is on a visible window. */
@@ -292,7 +296,8 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
             layerDirty = false
         }
         canvas.drawBitmap(layer, 0f, 0f, null)
-        if (setClock.visible) return
+        if (exitConfirm.visible) drawExitHold(canvas)
+        if (setClock.visible || exitConfirm.visible) return
         val saved = canvas.save()
         toDesignPixels(canvas)
         if (menu.visible) {
@@ -334,11 +339,24 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
             !timeUp.barVisible -> toast.draw(canvas)
         }
         menu.draw(canvas)
-        if (setClock.visible) {
+        if (setClock.visible || exitConfirm.visible) {
             canvas.drawText(clockText, clockRight, clockBaseline, clockPaint)
             setClock.draw(canvas)
+            exitConfirm.draw(canvas)
         }
         canvas.restoreToCount(saved)
+    }
+
+    /** While OK is held on EXIT: its fill, by the time held, and the next frame until it is full. */
+    private fun drawExitHold(canvas: Canvas) {
+        val started = exitConfirm.holdStartedNanos ?: return
+        val held = (timeSource.nowNanos() - started).toFloat() / (EXIT_HOLD_MS * NANOS_PER_MS)
+        val progress = held.coerceIn(0f, 1f)
+        val saved = canvas.save()
+        toDesignPixels(canvas)
+        exitConfirm.drawHold(canvas, progress)
+        canvas.restoreToCount(saved)
+        if (progress < 1f) postInvalidateOnAnimation()
     }
 
     private fun toDesignPixels(canvas: Canvas) {

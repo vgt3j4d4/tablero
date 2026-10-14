@@ -28,8 +28,8 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
   display rounding, persisted state) are done with unit tests. `tv-app`: one activity, the final scoreboard look
   (`ScoreboardView`: LED clock and scores, HOME / AWAY labels, status bar, action confirmations), quick clock adjust,
   time-up bar, menu (with the set game clock dialog), buzzer at time up (synthesized horn), remote key adapter,
-  persistence, fonts, localization (English + Spanish, in-app language via `AppLanguage`). Next: guarded exit to
-  Android TV (default HOME app).
+  persistence, fonts, localization (English + Spanish, in-app language via `AppLanguage`), `HOME` intent filter and
+  guarded exit to Android TV (menu → hold OK 2 s → the stock launcher).
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
@@ -84,8 +84,9 @@ tablero/
   a clock runs, only on change otherwise. Everything but the lit clock digits is cached in a bitmap layer redrawn
   on change: the stick's CPU can't re-record the whole scene at 10 Hz without missing frames. Preload buzzer
   sounds with `SoundPool`.
-- Keep screen awake with `FLAG_KEEP_SCREEN_ON`. The app is the **default HOME** on the stick (activity has a
-  `HOME` intent filter; the stock launcher stays installed so admins can exit — see `docs/stick-setup.md`).
+- Keep screen awake with `FLAG_KEEP_SCREEN_ON`. The stock launcher stays the stick's home screen and tablero is
+  opened from its apps row. The activity also has a `HOME` intent filter for an optional kiosk, which on the stick
+  only works by disabling the launcher (it outranks any other app) — see `docs/stick-setup.md`.
 
 ## Scoreboard look
 
@@ -169,6 +170,8 @@ On-device testing happens **on the stick only**, installed over adb; there is no
   `logcat` timestamps, not from host-side timing.
 - Right after a fresh install the stock launcher may jump back in front; launch the app again with
   `adb shell am start -n net.pladum.tablero.tv.debug/net.pladum.tablero.tv.MainActivity`.
+- `input keyevent --longpress` holds a key for about 0.5 s and `sendevent` is denied, so the 2 s hold on EXIT can
+  only be tested with the remote.
 
 ## Conventions
 

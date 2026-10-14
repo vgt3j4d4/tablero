@@ -81,6 +81,10 @@ private class FakeMenu : MenuKeys {
         calls += "ok"
     }
 
+    override fun okReleased() {
+        calls += "ok released"
+    }
+
     override fun back() {
         isOpen = false
         calls += "back"
@@ -305,7 +309,7 @@ class RemoteKeyAdapterTest {
         fun `keys drive the menu on key-down and never reach the scoreboard`() {
             listOf(KEYCODE_DPAD_UP, KEYCODE_DPAD_DOWN, KEYCODE_DPAD_LEFT, KEYCODE_DPAD_RIGHT, KEYCODE_DPAD_CENTER)
                 .forEach(::shortPress)
-            assertEquals(listOf("up", "down", "left", "right", "ok"), menu.calls)
+            assertEquals(listOf("up", "down", "left", "right", "ok", "ok released"), menu.calls)
             assertEquals(emptyList(), dispatched)
             assertEquals(emptyList(), clockAdjust.calls)
         }
@@ -328,10 +332,24 @@ class RemoteKeyAdapterTest {
         }
 
         @Test
+        fun `OK held is one press, and its release reaches the menu even after a long press`() {
+            assertTrue(longPress(KEYCODE_DPAD_CENTER))
+            assertEquals(listOf("ok", "ok released"), menu.calls)
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `only OK's release reaches the menu`() {
+            shortPress(KEYCODE_DPAD_LEFT)
+            shortPress(KEYCODE_BACK)
+            assertEquals(listOf("left", "back"), menu.calls)
+        }
+
+        @Test
         fun `it keeps the remote when time runs out`() {
             timeUp.onTimeUp(true)
             shortPress(KEYCODE_DPAD_CENTER)
-            assertEquals(listOf("ok"), menu.calls)
+            assertEquals(listOf("ok", "ok released"), menu.calls)
             assertEquals(emptyList(), dispatched)
         }
     }

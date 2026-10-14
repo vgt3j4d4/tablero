@@ -10,6 +10,14 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
+    <!-- Exit to Android TV starts the stock launcher by name; API 30+ only lists home apps declared here. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+    </queries>
+
     <!--
       enableOnBackInvokedCallback=false: with targetSdk 36+ on Android 16+, predictive back stops delivering
       KEYCODE_BACK and Back would finish the activity. Back is a scoreboard key here (undo / menu). Older
@@ -26,14 +34,24 @@
         android:theme="@style/Theme.Tablero"
         tools:ignore="UnusedAttribute">
 
+        <!--
+          A home app (docs/stick-setup.md): made the default, the stick boots into the scoreboard and HOME always
+          returns to it. singleTask, like launchers, so HOME brings back the running activity instead of a new one.
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:screenOrientation="landscape"
             tools:ignore="DiscouragedApi">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
     </application>

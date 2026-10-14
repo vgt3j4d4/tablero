@@ -24,7 +24,10 @@ private const val CLOCK_ADJUST_IDLE_MS = 5_000L
 /** Saved instance state: the focused menu row, when the menu was open (a language change recreates the activity). */
 private const val STATE_MENU_ROW = "menuRow"
 
-/** The only screen: the scoreboard, rendered from the engine's snapshots. */
+/**
+ * The only screen: the scoreboard, rendered from the engine's snapshots. It is also a home app (see the manifest), so
+ * HOME brings this same activity back; the menu's Exit to Android TV opens the stock launcher.
+ */
 class MainActivity : Activity() {
     private lateinit var engine: GameEngine
     private lateinit var timeSource: TimeSource
@@ -56,6 +59,10 @@ class MainActivity : Activity() {
             languages = AppLanguage.available(this),
             language = AppLanguage.inUse(this),
             applyLanguage = { AppLanguage.set(this, it) },
+            now = { timeSource.nowNanos() },
+            postDelayed = { action, delayMs -> scoreboard.postDelayed(action, delayMs) },
+            removeCallbacks = { scoreboard.removeCallbacks(it) },
+            exitToAndroidTv = { AndroidTv.open(this) },
             onChange = { scoreboard.showMenu(it) },
         )
         keys = RemoteKeyAdapter({ dispatch(it) }, clockAdjust, timeUp, menu)
@@ -82,6 +89,11 @@ class MainActivity : Activity() {
             engine.events.collect { event -> feedback.onEvent(event, timeSource.nowNanos())?.let(scoreboard::show) }
         }
         uiScope = scope
+    }
+
+    override fun onPause() {
+        menu.cancelExitHold() // OK's release may never come; a hold must not complete with the activity paused.
+        super.onPause()
     }
 
     override fun onStop() {
