@@ -55,6 +55,7 @@ data class GameSnapshot(
     val left: TeamState,
     val right: TeamState,
     val timeUp: Boolean,               // clock reached 0; UI shows the time-up bar
+    val gameStarted: Boolean,          // the clock ran since the last new game (see Game length)
 )
 data class TeamState(val score: Int)       // room for team fouls, timeouts later
 enum class Side { LEFT, RIGHT }            // LEFT = home, RIGHT = away; names localized in tv-app
@@ -64,7 +65,7 @@ enum class Side { LEFT, RIGHT }            // LEFT = home, RIGHT = away; names l
 
 | Command                                    | Notes                                                                      |
 | ------------------------------------------ | -------------------------------------------------------------------------- |
-| `ToggleClock` / `StartClock` / `StopClock` | Start is rejected while `timeUp` or with 0 on the clock                    |
+| `ToggleClock` / `StartClock` / `StopClock` | Start rejected at time up or at 0; a game's first start sets its length    |
 | `Score(side, delta)`                       | delta ±1; score never goes below 0                                         |
 | `AdjustGameClock(deltaMs)`                 | Relative; allowed running or stopped; result clamped to 0–60:00            |
 | `SetGameClock(ms)`                         | Absolute correction (0–60:00), only while stopped                          |
@@ -80,6 +81,15 @@ enum class Side { LEFT, RIGHT }            // LEFT = home, RIGHT = away; names l
   as `NO_CHANGE`. Phase 2 acks reuse the reason.
 - First launch: 0–0, 10:00 stopped.
 
+### Game length
+
+`ResetGameClock` and `NewGame` put the game length on the clock. Besides `SetGameLength` (menu), a game's **first
+start** (the first `StartClock` since the last `NewGame`) makes the time on the clock the game length, when it is a
+valid one (1–60 min). Players who want 7-minute games set 7:00 before the first game starts, and every reset and
+new game after that is 7:00 too. Later starts in the same game don't count, so a short overtime set after a reset
+leaves the length alone. Saved states without `gameStarted` read as started, so a restored game never takes its
+length from a paused clock.
+
 Each command carries metadata for Phase 2: `clientId`, `cmdId` (idempotency), `baseVersion` (for `Set…`).
 
 ### Undo semantics
@@ -88,11 +98,12 @@ Undo reverts the **effect** of the last command, not the passage of time:
 
 - `Score` → only the score changes back.
 - `StartClock` → stops the clock and restores the remaining time it had when started (an accidental start costs
-  no time). `StopClock` → resumes as if it had never stopped.
+  no time); undoing a game's first start also restores the game length it set. `StopClock` → resumes as if it had never stopped.
 - `AdjustGameClock` → applies the opposite of the delta actually applied (after clamping); a running clock
   keeps running.
 - `SetGameClock` / `ResetGameClock` → the previous clock (and time-up state) comes back.
-- `NewGame` → restores the previous game's scores and clock (stopped), and the time-up state.
+- `NewGame` → restores the previous game's scores and clock (stopped), the time-up state, and whether it had
+  started.
 
 The quick-adjust overlay's Back ("cancel") undoes every adjustment made since the overlay opened. Each key is its own
 `AdjustGameClock`, so Cancel sends one `Undo` per adjustment the session applied: they leave the history, and a later

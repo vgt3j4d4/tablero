@@ -260,6 +260,52 @@ class GameEngineTest {
         }
 
         @Test
+        fun `a game's first start makes the time on the clock the game length`() = engineTest {
+            apply(AdjustGameClock(-3 * MINUTE_MS))
+            apply(StartClock)
+            assertEquals(7 * MINUTE_MS, state.rules.gameLengthMs)
+            advance(7 * MINUTE_MS)
+            apply(ResetGameClock)
+            assertClock(7 * MINUTE_MS, running = false)
+            apply(NewGame)
+            assertClock(7 * MINUTE_MS, running = false)
+        }
+
+        @Test
+        fun `later starts in the same game leave the length alone`() = engineTest {
+            apply(StartClock)
+            advance(GAME_MS)
+            apply(ResetGameClock)
+            apply(SetGameClock(2 * MINUTE_MS)) // A short overtime.
+            apply(StartClock)
+            advance(SECOND_MS)
+            apply(StopClock)
+            apply(AdjustGameClock(MINUTE_MS))
+            apply(StartClock)
+            apply(NewGame)
+            assertClock(GAME_MS, running = false)
+        }
+
+        @Test
+        fun `every new game learns its length again from its first start`() = engineTest {
+            apply(StartClock)
+            apply(NewGame)
+            apply(SetGameClock(8 * MINUTE_MS))
+            apply(StartClock)
+            apply(NewGame)
+            assertClock(8 * MINUTE_MS, running = false)
+        }
+
+        @Test
+        fun `a first start from an invalid game length leaves the length alone`() = engineTest {
+            apply(SetGameClock(30 * SECOND_MS))
+            apply(StartClock)
+            advance(30 * SECOND_MS)
+            apply(NewGame)
+            assertClock(GAME_MS, running = false)
+        }
+
+        @Test
         fun `game length is between one and sixty minutes`() = engineTest {
             apply(SetGameLength(GameRules.MIN_GAME_LENGTH_MS))
             apply(SetGameLength(GameRules.MAX_GAME_LENGTH_MS))
@@ -376,6 +422,30 @@ class GameEngineTest {
             assertEquals(1, state.left.score)
             assertClock(0, running = false)
             assertTrue(state.timeUp)
+        }
+
+        @Test
+        fun `undoing a game's first start brings back the previous length`() = engineTest {
+            apply(SetGameClock(7 * MINUTE_MS))
+            apply(StartClock)
+            apply(Undo)
+            assertEquals(GameRules(), state.rules)
+            assertFalse(state.gameStarted)
+            apply(AdjustGameClock(-MINUTE_MS))
+            apply(StartClock) // Still the game's first start.
+            assertEquals(6 * MINUTE_MS, state.rules.gameLengthMs)
+        }
+
+        @Test
+        fun `undoing a new game brings back a started game, which keeps its length`() = engineTest {
+            apply(StartClock)
+            apply(StopClock)
+            apply(NewGame)
+            apply(Undo)
+            assertTrue(state.gameStarted)
+            apply(AdjustGameClock(-MINUTE_MS))
+            apply(StartClock)
+            assertEquals(GAME_MS, state.rules.gameLengthMs)
         }
 
         @Test

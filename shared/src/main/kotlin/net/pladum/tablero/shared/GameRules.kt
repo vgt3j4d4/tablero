@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 /** Rules are data: everything that varies between game formats lives here, not in `if` branches. */
 @Serializable
 data class GameRules(
-    /** Clock value for a reset or a new game. */
+    /** Clock value for a reset or a new game: set from the menu, or by a game's first start ([GameSnapshot.gameStarted]). */
     val gameLengthMs: Long = DEFAULT_GAME_LENGTH_MS,
     /** Below this remaining time the clock is read with tenths (`SS.t`) instead of `MM:SS`. */
     val tenthsBelowMs: Long = DEFAULT_TENTHS_BELOW_MS,

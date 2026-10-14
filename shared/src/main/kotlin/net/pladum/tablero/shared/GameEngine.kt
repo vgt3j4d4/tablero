@@ -93,7 +93,7 @@ class GameEngine(
                 s.timeUp -> return Step.Reject(RejectReason.TIME_UP)
                 s.gameClock.running -> return Step.Reject(RejectReason.CLOCK_RUNNING)
                 s.gameClock.remainingNanos == 0L -> return Step.Reject(RejectReason.CLOCK_AT_ZERO)
-                else -> s.copy(gameClock = s.gameClock.startAt(now))
+                else -> s.copy(gameClock = s.gameClock.startAt(now), rules = s.rulesAtStart(), gameStarted = true)
             }
             Command.StopClock -> {
                 if (!s.gameClock.running) return Step.Reject(RejectReason.CLOCK_STOPPED)
@@ -122,6 +122,7 @@ class GameEngine(
                 left = TeamState(),
                 right = TeamState(),
                 timeUp = false,
+                gameStarted = false,
             )
             is Command.SetGameLength -> {
                 val range = GameRules.MIN_GAME_LENGTH_MS..GameRules.MAX_GAME_LENGTH_MS
@@ -139,7 +140,12 @@ class GameEngine(
         val before = entry.before
         val command = entry.command
         val next = when (command) {
-            Command.StartClock,
+            Command.StartClock -> s.copy(
+                gameClock = before.gameClock,
+                rules = before.rules,
+                timeUp = before.timeUp,
+                gameStarted = before.gameStarted,
+            )
             Command.StopClock,
             is Command.SetGameClock,
             Command.ResetGameClock,
@@ -154,6 +160,7 @@ class GameEngine(
                 left = before.left,
                 right = before.right,
                 timeUp = before.timeUp,
+                gameStarted = before.gameStarted,
             )
             is Command.SetGameLength -> s.copy(rules = before.rules)
             Command.ToggleClock, Command.Undo -> error("$command is never recorded")
@@ -171,6 +178,14 @@ class GameEngine(
         if (next == s) return Step.Reject(RejectReason.NO_CHANGE)
         val entry = HistoryEntry(command, before = s, appliedAtNanos = now, appliedDeltaNanos = appliedDeltaNanos)
         return Step.Change(next, entry)
+    }
+
+    /** A game's first start makes the time on the clock its length, when that is a valid length. */
+    private fun GameSnapshot.rulesAtStart(): GameRules {
+        if (gameStarted) return rules
+        val clockMs = gameClock.remainingNanos / NANOS_PER_MS
+        val valid = clockMs in GameRules.MIN_GAME_LENGTH_MS..GameRules.MAX_GAME_LENGTH_MS
+        return if (valid) rules.copy(gameLengthMs = clockMs) else rules
     }
 
     /** Shifts the clock by [deltaNanos], clamped to `0..MAX_CLOCK_MS`; returns the clock and the delta applied. */

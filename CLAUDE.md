@@ -119,6 +119,8 @@ via HDMI-CEC (verify with a key logger).
   still separate `Score` commands.
 - **Quick clock adjust (↓):** clock gets highlighted; ↑/↓ = ±1 min, ←/→ = ±1 s, OK = done, Back = cancel all
   changes made in this session. Auto-exits after ~5 s idle. Works while the clock runs (relative command).
+- **Game length:** the time on the clock at a game's first start (after `NEW GAME`) becomes the game length that
+  resets and new games use; set 7:00 before the game starts to play 7-minute games. The menu can set it too.
 - **Time up:** red frame + bar with `NEW GAME` (default: 0–0, clock at game length, stopped) /
   `RESET CLOCK · KEEP SCORE` (←/→ to choose, OK to apply). Back closes the bar instead of undoing (the frame stays,
   so a score can still be fixed); OK opens it again.
