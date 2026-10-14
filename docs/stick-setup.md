@@ -44,22 +44,50 @@ Keep the Play Store (`com.android.vending`) but turn auto-updates off.
 
 ## 3. Boot into tablero (kiosk)
 
-tv-app declares a `HOME` intent filter. Make it the **default** HOME but **keep the stock launcher installed**,
-so the scorer can still reach Android TV through tablero's menu (*Exit to Android TV*, which launches the stock
-launcher explicitly). Pressing HOME on the remote then always returns to tablero.
+tv-app declares a `HOME` intent filter, so it can be the stick's home app: the stick boots into the scoreboard and
+HOME on the remote always returns to it.
+
+**Making it the default doesn't work on this stick.** The stock launcher (`com.google.android.tvlauncher`, a system
+app) declares its `HOME` filter with priority 2, and Android only looks at the chosen default when the best
+candidates tie; an app that isn't a system app can't go above priority 0. So
+`adb shell cmd package set-home-activity …` reports `Success`, `dumpsys package preferred` lists tablero, and HOME
+still opens the stock launcher (checked on firmware `Xiaomi/aquaman:10/QT/2514`, Android 10).
+
+What works is **disabling the stock launcher** (not uninstalling it). Install tablero **first**: the other way
+round leaves the stick with no home screen but Settings' boot placeholder.
 
 ```bash
-./gradlew :tv-app:installDebug
-adb shell cmd package set-home-activity <tablero package>/<MainActivity class>   # verify on this firmware
-adb shell am start -a android.intent.action.MAIN -c android.intent.category.HOME  # should open tablero
-# Rollback:
-adb shell cmd package set-home-activity com.google.android.tvlauncher/<its HOME activity>
+./gradlew :tv-app:installDebug                    # or the release APK
+adb shell pm disable-user --user 0 com.google.android.tvlauncher
+adb shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME
+#   → net.pladum.tablero.tv[.debug]/net.pladum.tablero.tv.MainActivity
+adb shell input keyevent KEYCODE_HOME            # should show the scoreboard
+
+# Rollback (the stock launcher is home again at once):
+adb shell pm enable com.google.android.tvlauncher
 ```
 
-Stricter alternative (no way out without ADB): install tablero **first**, then
-`adb shell pm disable-user --user 0 com.google.android.tvlauncher` (doing it the other way round leaves a black
-screen; rollback with `pm enable`). A full lock-task kiosk (also blocks HOME) needs a device owner, which requires
-removing the Google account — only worth it if accidental exits turn out to be a real problem.
+**Exit to Android TV** (tablero's menu, clock stopped, hold OK 2 s on EXIT) opens the stock launcher when it is
+enabled. With it disabled there is no launcher to open, so it opens **Android TV Settings** instead (the side
+panel); its *Apps* section is where installed apps, and the disabled launcher, can be reached (exact entries vary by
+firmware: record them in the TODO below). Re-enabling the launcher there makes HOME open it again until it is
+disabled over ADB. HOME from Settings returns to tablero. The exit screen's text follows what HOME will actually do: "Press HOME to come back" when tablero is the
+home app, "Open tablero from the apps row" when it isn't.
+
+**Recovery needs ADB.** With the launcher disabled, tablero is the only home app, so Android has nothing to fall
+back to: if tablero ever failed on every start, the stick would keep showing it (or Settings, if it was open
+underneath). Two crashes in a row (`adb shell am crash <package>`) simply restarted tablero on HOME with the game
+restored. Before disabling the launcher, make sure network debugging comes back after a reboot
+(`adb shell getprop persist.adb.tcp.port`; on this stick it was empty, so check by rebooting with the launcher still
+enabled), or keep a way to plug in USB. The way out is then `pm enable com.google.android.tvlauncher` or
+`pm uninstall <tablero package>`.
+
+A full lock-task kiosk (also blocks HOME) needs a device owner, which requires removing the Google account — only
+worth it if accidental exits turn out to be a real problem.
+
+**Development:** `adb shell am start -n …/MainActivity` starts a second, ordinary copy of the activity next to the
+home one (Android keeps home activities in their own task). Once tablero is the home app, open it with
+`adb shell am start -a android.intent.action.MAIN -c android.intent.category.HOME` or `input keyevent KEYCODE_HOME`.
 
 Accidental exits to check on the stick:
 
@@ -91,5 +119,8 @@ adb shell dumpsys gfxinfo <tv-app package>
 
 - [ ] `scripts/setup-stick.sh` and `scripts/restore-stick.sh` automating steps 2–4.
 - [ ] Record the final package list for this stick's firmware here.
-- [ ] Confirm `cmd package set-home-activity` works on this firmware and record the exact command.
+- [x] Confirm `cmd package set-home-activity` works on this firmware: it doesn't (see step 3); disable the launcher.
+- [ ] Check that network debugging survives a reboot, then reboot with the launcher disabled: boots into tablero?
+- [ ] With the remote: hold OK 2 s on EXIT, with the launcher enabled (opens it) and disabled (opens Settings);
+  record how Settings → Apps opens an app and re-enables the launcher.
 - [ ] Record what the Assistant / Netflix / Prime buttons do after debloat.

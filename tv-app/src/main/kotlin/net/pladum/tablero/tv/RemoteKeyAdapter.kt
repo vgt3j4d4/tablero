@@ -32,6 +32,9 @@ interface ClockAdjustKeys {
  * again on the scoreboard once the overlay has closed (Back would undo). A key-up whose key-down this adapter never
  * saw is ignored too: changing the language in the menu recreates the activity, and the new one may get the
  * release of the key that applied it.
+ *
+ * The one release an overlay gets is OK's while the menu is open: holding OK on its exit confirm screen is what
+ * confirms the exit, so the menu learns when OK goes up, canceled or not.
  */
 class RemoteKeyAdapter(
     private val dispatch: (Command) -> Unit,
@@ -90,6 +93,7 @@ class RemoteKeyAdapter(
     fun onKeyUp(keyCode: Int, canceled: Boolean): Boolean {
         val key = Key.of(keyCode) ?: return false
         val wasHeld = held.remove(key)
+        if (key == Key.OK && wasHeld && menu.isOpen) menu.okReleased()
         if (swallowed.remove(key) || !wasHeld || canceled || menu.isOpen || clockAdjust.isOpen || timeUp.isOpen) {
             return true
         }

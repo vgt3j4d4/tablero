@@ -133,7 +133,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
         left = s.left.score
         right = s.right.score
         gameLengthMs = gameLength
-        visible = state != null && state.setClock == null
+        visible = state != null && state.setClock == null && state.exitConfirm == null
         if (state != null) layout(state)
         return true
     }
@@ -195,6 +195,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
             MenuRow.AWAY_SCORE -> context.getString(R.string.menu_score, context.getString(Side.RIGHT.teamNameRes()))
             MenuRow.NEW_GAME -> context.getString(R.string.menu_new_game)
             MenuRow.LANGUAGE -> context.getString(R.string.menu_language)
+            MenuRow.EXIT -> context.getString(R.string.menu_exit)
         }
 
         /** Empty for rows without a value, and for Game clock, whose value [drawLive] draws. */
@@ -207,13 +208,14 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
 
         fun layout(state: MenuState) {
             focused = state.focused == row
-            enabled = row != MenuRow.GAME_CLOCK || running != true // Set only while the clock is stopped.
+            // Set the clock and exit only while it is stopped.
+            enabled = row !in STOPPED_ONLY || running != true
             value = when (row) {
                 MenuRow.GAME_LENGTH -> durationText(gameLengthMs)
                 MenuRow.HOME_SCORE -> left.toString()
                 MenuRow.AWAY_SCORE -> right.toString()
                 MenuRow.LANGUAGE -> state.language.nativeName()
-                MenuRow.GAME_CLOCK, MenuRow.NEW_GAME -> ""
+                MenuRow.GAME_CLOCK, MenuRow.NEW_GAME, MenuRow.EXIT -> ""
             }
             hasLeftChevron = row in CHANGEABLE
             hasRightChevron = enabled
@@ -254,5 +256,8 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
     private companion object {
         /** Rows whose value ←/→ change; they show both chevrons. */
         val CHANGEABLE = setOf(MenuRow.GAME_LENGTH, MenuRow.HOME_SCORE, MenuRow.AWAY_SCORE, MenuRow.LANGUAGE)
+
+        /** Rows that only open while the clock is stopped; muted, without a chevron, while it runs. */
+        val STOPPED_ONLY = setOf(MenuRow.GAME_CLOCK, MenuRow.EXIT)
     }
 }
