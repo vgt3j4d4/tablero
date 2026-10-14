@@ -27,7 +27,7 @@ FREQUENCIES_HZ = (400.0, 404.0)
 # Harmonics stop below this so nothing aliases, and small TV speakers can't play much above it anyway.
 MAX_HARMONIC_HZ = 9_000.0
 # How hard the soft clipper (tanh) is driven: higher is louder and harsher.
-DRIVE = 2.5
+DRIVE = 5.0
 PEAK_DBFS = -1.0
 
 BITS_PER_SAMPLE = 16
