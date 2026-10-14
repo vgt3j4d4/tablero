@@ -42,7 +42,7 @@ setup can grow into a proper 24/14 shot clock and phone control.
 
 | Part           | Example                                                                   | Approx. cost (Lima, Oct 2026) |
 | -------------- | ------------------------------------------------------------------------- | ----------------------------- |
-| Display device | Xiaomi Mi TV Stick (MDZ-24-AA, Android TV 9) — or any Google TV set       | already owned                 |
+| Display device | Xiaomi Mi TV Stick (MDZ-24-AA, Android TV 9/10) — or any Google TV set   | already owned                 |
 | TV             | 32" HD, e.g. Miray MS32-E2000GBT (Google TV, 16 W speakers)               | ~S/ 399                       |
 | Optional       | Wired powered speaker (+ HDMI audio extractor if the TV has no audio out) | ~S/ 100–170                   |
 | Controller     | Android phone (hotspot + remote app)                                      | owned                         |

@@ -76,7 +76,8 @@ tablero/
 ## Target devices & constraints
 
 - **Primary display device:** Xiaomi Mi TV Stick (model MDZ-24-AA), Amlogic S805Y, **1 GB RAM**,
-  **Android TV 9 (API 28)**, 1080p over HDMI. → `tv-app` **minSdk 28**.
+  ships with **Android TV 9 (API 28)**; ours runs **Android TV 10 (API 29)** after an OTA update (firmware
+  `Xiaomi/aquaman:10/QT/2514`), 1080p over HDMI. → `tv-app` **minSdk 28**, so sticks still on 9 work too.
 - Should also run on cheap Google TV sets (e.g. Miray MS32-E2000GBT, Android 14).
 - Amazon Fire TV Stick 2nd gen (Fire OS 5 / API 22) is **not** a target.
 - **Performance budget:** 1 GB RAM device. For the scoreboard surface use a single custom `View` drawn with

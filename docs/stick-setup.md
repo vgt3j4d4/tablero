@@ -17,7 +17,7 @@ adb shell dumpsys meminfo | head -60
 ## 2. Remove unused apps (per-user uninstall)
 
 ```bash
-# Typical candidates on Android TV 9 — confirm names with `pm list packages` first.
+# Typical candidates on Android TV 9/10 — confirm names with `pm list packages` first.
 for p in \
   com.google.android.youtube.tv \
   com.netflix.ninja \

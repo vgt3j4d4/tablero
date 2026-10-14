@@ -85,7 +85,10 @@ class MenuTest {
         menu.right()
         menu.down()
         menu.left()
-        assertEquals(listOf<Command>(Command.Score(LEFT, 1), Command.Score(LEFT, 1), Command.Score(RIGHT, -1)), dispatched)
+        assertEquals(
+            listOf<Command>(Command.Score(LEFT, 1), Command.Score(LEFT, 1), Command.Score(RIGHT, -1)),
+            dispatched,
+        )
     }
 
     @Test
