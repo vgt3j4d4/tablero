@@ -48,7 +48,7 @@
     <string name="menu_score">Puntos %1$s</string>
     <string name="menu_new_game">Nuevo partido</string>
     <string name="menu_language">Idioma</string>
-    <string name="menu_exit">Salir a Android TV</string>
+    <string name="menu_exit">Salir</string>
     <string name="hint_move">MOVER</string>
     <string name="hint_change">CAMBIAR</string>
     <string name="hint_open">ABRIR</string>
@@ -62,10 +62,10 @@
     <string name="hint_field">CAMPO</string>
     <string name="hint_save">GUARDAR</string>
 
-    <!-- Exit confirm (menu → Exit to Android TV), only while the clock is stopped. The body depends on whether HOME
+    <!-- Exit confirm (menu → Exit), only while the clock is stopped. The body depends on whether HOME
          returns to the scoreboard (tablero is the default home app) or not. %1$d is how many seconds to hold OK. -->
     <string name="exit_eyebrow">ADMINISTRACIÓN</string>
-    <string name="exit_title">¿Salir a Android TV?</string>
+    <string name="exit_title">¿Salir del marcador?</string>
     <string name="exit_body_home">El puntaje y el reloj quedan guardados. Presiona INICIO en el control para volver al marcador.</string>
     <string name="exit_body_apps">El puntaje y el reloj quedan guardados. Abre tablero desde la fila de apps para volver al marcador.</string>
     <string name="exit_cancel">CANCELAR</string>

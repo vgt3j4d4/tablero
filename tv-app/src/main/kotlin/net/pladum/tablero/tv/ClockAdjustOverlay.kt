@@ -29,15 +29,15 @@ class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
     var visible = false
         private set
 
-    private val adjustColor = context.getColor(R.color.adjust)
-    private val ink = context.getColor(R.color.adjust_ink)
+    private val adjustColor = context.color(R.color.adjust)
+    private val ink = context.color(R.color.adjust_ink)
     private val ring = RectF(RING).apply { inset(RING_WIDTH / 2, RING_WIDTH / 2) }
     private val ringPaint = strokePaint(adjustColor, RING_WIDTH)
     private val barPaint = fillPaint(adjustColor)
 
     private val title = context.getString(R.string.adjust_title)
-    private val titlePaint = textPaint(fonts.barlow(800), TITLE_SIZE, context.getColor(R.color.board_background), 0.06f)
-    private val netPaint = textPaint(fonts.barlow(800), TITLE_SIZE, context.getColor(R.color.board_background))
+    private val titlePaint = textPaint(fonts.barlow(800), TITLE_SIZE, context.color(R.color.board_background), 0.06f)
+    private val netPaint = textPaint(fonts.barlow(800), TITLE_SIZE, context.color(R.color.board_background))
     private val wasPaint = textPaint(fonts.barlow(600), WAS_SIZE, ink)
     private val titleCenter = titlePaint.centerToBaselinePerPx("H")
     private var net = ""

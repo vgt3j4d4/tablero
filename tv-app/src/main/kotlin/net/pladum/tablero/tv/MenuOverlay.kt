@@ -57,16 +57,16 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
     private var right = -1
     private var gameLengthMs = -1L
 
-    private val text = context.getColor(R.color.text)
-    private val ink = context.getColor(R.color.board_background)
-    private val soft = context.getColor(R.color.text_soft)
-    private val muted = context.getColor(R.color.text_muted)
+    private val text = context.color(R.color.text)
+    private val ink = context.color(R.color.board_background)
+    private val soft = context.color(R.color.text_soft)
+    private val muted = context.color(R.color.text_muted)
 
-    private val scrim = context.getColor(R.color.menu_scrim)
+    private val scrim = context.color(R.color.menu_scrim)
     private val scrimPaint = fillPaint(scrim)
-    private val panelPaint = fillPaint(context.getColor(R.color.panel))
-    private val linePaint = fillPaint(context.getColor(R.color.panel_line))
-    private val groupLinePaint = fillPaint(context.getColor(R.color.menu_group_line))
+    private val panelPaint = fillPaint(context.color(R.color.panel))
+    private val linePaint = fillPaint(context.color(R.color.panel_line))
+    private val groupLinePaint = fillPaint(context.color(R.color.menu_group_line))
     private val focusPaint = fillPaint(text)
 
     private val title = context.getString(R.string.menu_title)

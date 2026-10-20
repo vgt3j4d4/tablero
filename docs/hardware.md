@@ -9,7 +9,7 @@ change often.
 |---|---|
 | **Xiaomi Mi TV Stick, MDZ-24-AA** (owned) | Amlogic S805Y, 1 GB RAM, Android TV 9 (API 28) out of the box, 10 (API 29) after an OTA update, dual-band Wi-Fi, Bluetooth remote. **Primary target.** |
 | Google TV set (e.g. Miray MS32-E2000GBT, Android 14) | The TV itself can run tablero; the stick becomes a spare. |
-| Amazon Fire TV Stick 2nd gen, LY73PR (owned) | Fire OS 5 = Android 5.1 (API 22). Not targeted (too old for current AndroidX). Spare only. |
+| Amazon Fire TV Stick 2nd gen, LY73PR (owned) | Model AFTT, Fire OS 5.2 = Android 5.1 (API 22), ~0.9 GB RAM, renders at 1920×1080. Supported (`minSdk 22`); ADB setup in `docs/stick-setup.md`. |
 
 Power the stick from a wall adapter (5 V / 1 A), not the TV's USB port — some TVs cut USB power on standby.
 Use the HDMI extender so the stick's antenna isn't flush behind the TV.

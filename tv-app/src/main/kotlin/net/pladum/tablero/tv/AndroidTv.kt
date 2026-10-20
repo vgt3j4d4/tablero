@@ -9,7 +9,7 @@ import android.provider.Settings
 import android.util.Log
 
 /**
- * The way out to Android TV (menu → Exit to Android TV). tablero is meant to be the default home app with the stock
+ * The way out to Android TV (menu → Exit). tablero is meant to be the default home app with the stock
  * launcher still installed (docs/stick-setup.md), so HOME always brings the scoreboard back and leaving means
  * starting that launcher by name.
  */
@@ -41,9 +41,9 @@ object AndroidTv {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         try {
             context.startActivity(intent)
-            Log.i(LOG_TAG, "Exit to Android TV: ${intent.component ?: intent.action}")
+            Log.i(LOG_TAG, "Exit: ${intent.component ?: intent.action}")
         } catch (e: ActivityNotFoundException) {
-            Log.e(LOG_TAG, "Exit to Android TV: nothing to open", e)
+            Log.e(LOG_TAG, "Exit: nothing to open", e)
         }
     }
 

@@ -129,7 +129,7 @@ value, OK opens the focused row.
   field (minutes stop at 0 and 60, seconds wrap without carrying), ←/→ switch field, OK sends one `SetGameClock`
   (nothing when the time wasn't changed), Back cancels; both return to the menu.
 - **New game** sends `NewGame` and closes the menu; Back on the scoreboard undoes it.
-- **Exit to Android TV** (design 09) opens only while the clock is stopped (muted while it runs, like Game clock):
+- **Exit** (design 09) opens only while the clock is stopped (muted while it runs, like Game clock):
   a confirm screen with CANCEL focused. ←/→ move between CANCEL and EXIT, OK on CANCEL or Back returns to the menu.
   OK held on EXIT for 2 s fills the button in red and then closes the menu and opens the stock launcher (Android TV
   Settings if it was disabled for the optional kiosk, see `stick-setup.md`); releasing OK sooner, moving the focus or the
@@ -173,9 +173,10 @@ starts again at 0–0. The app does not track teams and never decides who plays 
   as JSON with `AtomicFile` in the app's files dir; on start it restores it. While the clock runs it also saves
   every ~5 s.
 - Running-clock timestamps are `elapsedRealtime` based: valid across process death, not across a reboot. After
-  a reboot (detected via `Settings.Global.BOOT_COUNT`), restore the clock **stopped** at the last saved remaining
+  a reboot (detected via `Settings.Global.BOOT_COUNT`, or before API 24 the kernel's
+  `/proc/sys/kernel/random/boot_id`), restore the clock **stopped** at the last saved remaining
   time and drop the undo history (its timestamps belong to the previous boot).
-- The boot count each save belongs to is kept in preferences and written **after** the state file, so a crash
+- The boot each save belongs to is kept in preferences and written **after** the state file, so a crash
   between the two writes makes the next start assume a reboot (clock stopped, at most ~5 s lost) rather than
   apply the previous boot's timestamps. The app also saves once at start, which records the current boot.
   An unreadable state file, or one from a newer schema, is ignored and replaced by the next save.
@@ -197,7 +198,7 @@ Goal: the app ships English + Spanish, and adding a language is a translation-on
 - `res/xml/locales_config.xml` is the single list of bundled languages. The menu's _Language_ option is built
   from it (each language shown by its own name, e.g. "English", "Español"). Android 13+ also reads this file
   for the system per-app language setting.
-- API 28 has no per-app language setting, so the language chosen in the app's menu is stored in preferences
+- Android before 13 has no per-app language setting, so the language chosen in the app's menu is stored in preferences
   (`AppLanguage`) and applied to the activity as an override configuration (`applyOverrideConfiguration` in
   `attachBaseContext`). With nothing chosen, the app follows the device language (on Android 13+ also the system
   per-app setting, which `locales_config.xml` enables) and falls back to English. When both exist, the in-app choice

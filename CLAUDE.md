@@ -77,9 +77,10 @@ tablero/
 
 - **Primary display device:** Xiaomi Mi TV Stick (model MDZ-24-AA), Amlogic S805Y, **1 GB RAM**,
   ships with **Android TV 9 (API 28)**; ours runs **Android TV 10 (API 29)** after an OTA update (firmware
-  `Xiaomi/aquaman:10/QT/2514`), 1080p over HDMI. → `tv-app` **minSdk 28**, so sticks still on 9 work too.
+  `Xiaomi/aquaman:10/QT/2514`), 1080p over HDMI.
+- Also runs on the **Amazon Fire TV Stick 2nd gen** (AFTT, Fire OS 5.2 = **Android 5.1, API 22**, ~0.9 GB RAM,
+  renders at 1920×1080) → `tv-app` **minSdk 22**. Calls newer than API 22 go through `Compat.kt` or an SDK check.
 - Should also run on cheap Google TV sets (e.g. Miray MS32-E2000GBT, Android 14).
-- Amazon Fire TV Stick 2nd gen (Fire OS 5 / API 22) is **not** a target.
 - **Performance budget:** 1 GB RAM device. For the scoreboard surface use a single custom `View` drawn with
   `Canvas` (hardware accelerated). **No WebView.** No object allocation inside `onDraw`. Redraw at ~10 Hz while
   a clock runs, only on change otherwise. Everything but the lit clock digits is cached in a bitmap layer redrawn
@@ -94,9 +95,10 @@ tablero/
 - Black background; digits mimic LED scoreboards: **DSEG7 Classic** (seven-segment, SIL OFL) with dim "unlit 8"
   ghost segments drawn behind the digits. All digits share one width, and `.` is zero-width (it lights the
   decimal point of the digit before it), so `88.8` lines up under any reading.
-- Fonts ship unmodified as TTF in `tv-app/src/main/res/font/` (`dseg7_classic_bold`, `barlow_condensed` family
-  500–800); their OFL license files live in `tv-app/src/main/assets/licenses/` (`res/font` only accepts font and
-  XML files). DSEG has the Reserved Font Name "DSEG": never subset or modify that file.
+- Fonts ship unmodified as TTF in `tv-app/src/main/assets/fonts/` (`DSEG7Classic-Bold`, `BarlowCondensed-*` one
+  file per weight, 500–800), loaded with `Typeface.createFromAsset` (font resources need API 26); their OFL license
+  files live in `tv-app/src/main/assets/licenses/`. DSEG has the Reserved Font Name "DSEG": never subset or modify
+  that file.
 - Game clock LED red, scores LED amber. Each team column is labelled `HOME` / `AWAY` (white text). UI text in
   Barlow Condensed (OFL).
 - Layout (1920×1080): clock across the top; left/right team columns below; a thin status bar at the bottom
@@ -129,9 +131,9 @@ via HDMI-CEC (verify with a key logger).
   so a score can still be fixed); OK opens it again.
 
 Menu overlay (Back long press; D-pad navigable): game clock (set exact time, stopped only), game length, left/right
-score, new game, language, exit to Android TV (only while stopped; confirm screen with Cancel focused; exit
-requires holding OK 2 s). Open until Back. Scores change with every ←/→ press; game length and language apply when
-focus leaves their row or the menu closes (one undo for game length, one activity recreate for language).
+score, new game, language, exit (only while stopped; confirm screen with Cancel focused; exit requires holding OK
+2 s). Open until Back. Scores change with every ←/→ press; game length and language apply when focus leaves their
+row or the menu closes (one undo for game length, one activity recreate for language).
 
 ## Tech stack
 
@@ -144,8 +146,8 @@ focus leaves their row or the menu closes (one undo for game length, one activit
 - JSON: kotlinx.serialization (no reflection) for persisted state and, later, the Phase 2 protocol.
 - `tv-app`: Android Views + Leanback-free custom UI; Kotlin coroutines/Flow for state.
 - Localization: Android string resources. **English is the default** (`res/values/`), Spanish in
-  `res/values-es/`. The list of languages lives in one place (`res/xml/locales_config.xml`). API 28 has no
-  per-app language setting, so the app applies the language chosen in its own menu (stored in preferences) via
+  `res/values-es/`. The list of languages lives in one place (`res/xml/locales_config.xml`). Android before 13 has
+  no per-app language setting, so the app applies the language chosen in its own menu (stored in preferences) via
   an override configuration on the activity; with nothing chosen it follows the device language.
 - Phase 2 networking: WebSocket server on the TV (Ktor server or Java-WebSocket — decide when Phase 2 starts),
   service discovery via Android NSD (`_tablero._tcp`), QR-code fallback with `ws://ip:port`. JSON messages.

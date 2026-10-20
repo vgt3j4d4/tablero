@@ -2,6 +2,7 @@ package net.pladum.tablero.tv
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
 import android.provider.Settings
 import android.util.AtomicFile
 import android.util.Log
@@ -15,24 +16,47 @@ import net.pladum.tablero.shared.EngineState
 import net.pladum.tablero.shared.GameEngine
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 
 private const val STATE_FILE = "engine-state.json"
 private const val PREFS = "state-store"
-private const val PREF_BOOT_COUNT = "boot_count"
+private const val PREF_BOOT = "boot"
 private const val RUNNING_SAVE_INTERVAL_MS = 5_000L
+
+/** The kernel's random id for the current boot; the boot count setting only exists from API 24. */
+private const val BOOT_ID_FILE = "/proc/sys/kernel/random/boot_id"
 
 /**
  * Persists the engine state (see docs/architecture.md → Persistence) as `EngineState` JSON in an [AtomicFile].
  *
- * Running-clock instants are only valid within one boot, so the boot count each save belongs to is kept in
- * preferences, written *after* the file: a crash in between makes the next start assume a reboot (clock restored
- * stopped, at most one save interval lost), never the reverse.
+ * Running-clock instants are only valid within one boot, so the boot each save belongs to is kept in preferences,
+ * written *after* the file: a crash in between makes the next start assume a reboot (clock restored stopped, at most
+ * one save interval lost), never the reverse.
  */
 class StateStore(private val context: Context) {
     class Loaded(val state: EngineState, val rebooted: Boolean)
 
     private val file = AtomicFile(File(context.filesDir, STATE_FILE))
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    /**
+     * Identifies the current boot: the boot count from API 24, the kernel's boot id before it. Null when neither can
+     * be read; then nothing is recorded and every start counts as a reboot.
+     */
+    private val boot: String? by lazy {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT, -1)
+                .takeIf { it >= 0 }
+                ?.let { "count:$it" }
+        } else {
+            try {
+                File(BOOT_ID_FILE).readText().trim().takeIf { it.isNotEmpty() }?.let { "id:$it" }
+            } catch (e: IOException) {
+                Log.w(LOG_TAG, "Could not read the boot id", e)
+                null
+            }
+        }
+    }
 
     /** The saved state, or null on first launch or when the file can't be used (the next save replaces it). */
     fun load(): Loaded? {
@@ -48,8 +72,8 @@ class StateStore(private val context: Context) {
             Log.w(LOG_TAG, "Ignoring unreadable saved state", e)
             return null
         }
-        val savedBoot = prefs.getInt(PREF_BOOT_COUNT, -1)
-        return Loaded(state, rebooted = savedBoot == -1 || savedBoot != bootCount())
+        val savedBoot = prefs.getString(PREF_BOOT, null)
+        return Loaded(state, rebooted = savedBoot == null || savedBoot != boot)
     }
 
     /**
@@ -69,7 +93,7 @@ class StateStore(private val context: Context) {
         }
     }
 
-    @SuppressLint("ApplySharedPref") // commit(): the boot count must be stored after the file, synchronously.
+    @SuppressLint("ApplySharedPref") // commit(): the boot must be stored after the file, synchronously.
     private fun save(state: EngineState) {
         val out = try {
             file.startWrite()
@@ -85,10 +109,10 @@ class StateStore(private val context: Context) {
             Log.e(LOG_TAG, "Could not save state", e)
             return
         }
-        val boot = bootCount()
-        if (prefs.getInt(PREF_BOOT_COUNT, -1) != boot) prefs.edit().putInt(PREF_BOOT_COUNT, boot).commit()
+        val current = boot // A lazy property doesn't smart-cast.
+        if (current != null && prefs.getString(PREF_BOOT, null) != current) {
+            prefs.edit().putString(PREF_BOOT, current).commit()
+        }
         Log.d(LOG_TAG, "Saved state v${state.snapshot.version}")
     }
-
-    private fun bootCount(): Int = Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT, -1)
 }

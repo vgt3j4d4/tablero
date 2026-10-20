@@ -10,7 +10,7 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
-    <!-- Exit to Android TV starts the stock launcher by name; API 30+ only lists home apps declared here. -->
+    <!-- The menu's Exit starts the stock launcher by name; API 30+ only lists home apps declared here. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />

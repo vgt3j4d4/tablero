@@ -26,7 +26,7 @@ private const val STATE_MENU_ROW = "menuRow"
 
 /**
  * The only screen: the scoreboard, rendered from the engine's snapshots. It is also a home app (see the manifest), so
- * HOME brings this same activity back; the menu's Exit to Android TV opens the stock launcher.
+ * HOME brings this same activity back; the menu's Exit opens the stock launcher.
  */
 class MainActivity : Activity() {
     private lateinit var engine: GameEngine
@@ -118,7 +118,7 @@ class MainActivity : Activity() {
 
     private fun logLanguage() {
         val source = if (AppLanguage.chosen(this) != null) "chosen in the app" else "from the device"
-        val locale = resources.configuration.locales[0].toLanguageTag()
+        val locale = resources.configuration.primaryLocale.toLanguageTag()
         Log.i(LOG_TAG, "Language $locale ($source), e.g. ${getString(Side.LEFT.teamNameRes())}")
     }
 

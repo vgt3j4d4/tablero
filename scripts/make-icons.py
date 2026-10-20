@@ -22,8 +22,9 @@ from fontTools.ttLib import TTFont
 
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "tv-app/src/main/res"
-LED_FONT = RES / "font/dseg7_classic_bold.ttf"
-WORDMARK_FONT = RES / "font/barlow_condensed_extrabold.ttf"
+FONTS = ROOT / "tv-app/src/main/assets/fonts"
+LED_FONT = FONTS / "DSEG7Classic-Bold.ttf"
+WORDMARK_FONT = FONTS / "BarlowCondensed-ExtraBold.ttf"
 BANNER_OUTPUT = RES / "drawable/banner.xml"
 ICON_OUTPUT = RES / "drawable/ic_launcher_foreground.xml"
 MONOCHROME_OUTPUT = RES / "drawable/ic_launcher_monochrome.xml"

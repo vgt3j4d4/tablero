@@ -59,7 +59,7 @@
     <string name="menu_score">%1$s score</string>
     <string name="menu_new_game">New game</string>
     <string name="menu_language">Language</string>
-    <string name="menu_exit">Exit to Android TV</string>
+    <string name="menu_exit">Exit</string>
     <string name="hint_move">MOVE</string>
     <string name="hint_change">CHANGE</string>
     <string name="hint_open">OPEN</string>
@@ -73,10 +73,10 @@
     <string name="hint_field">FIELD</string>
     <string name="hint_save">SAVE</string>
 
-    <!-- Exit confirm (menu → Exit to Android TV), only while the clock is stopped. The body depends on whether HOME
+    <!-- Exit confirm (menu → Exit), only while the clock is stopped. The body depends on whether HOME
          returns to the scoreboard (tablero is the default home app) or not. %1$d is how many seconds to hold OK. -->
     <string name="exit_eyebrow">ADMIN</string>
-    <string name="exit_title">Exit to Android TV?</string>
+    <string name="exit_title">Exit the scoreboard?</string>
     <string name="exit_body_home">Score and clock are saved. Press HOME on the remote to come back to the scoreboard.</string>
     <string name="exit_body_apps">Score and clock are saved. Open tablero from the apps row to come back to the scoreboard.</string>
     <string name="exit_cancel" tools:ignore="ButtonCase">CANCEL</string>

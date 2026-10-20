@@ -54,23 +54,23 @@ class ExitConfirmOverlay(private val context: Context, fonts: BoardFonts) {
 
     private var confirm: ExitConfirm? = null
 
-    private val text = context.getColor(R.color.text)
-    private val off = context.getColor(R.color.text_off)
+    private val text = context.color(R.color.text)
+    private val off = context.color(R.color.text_off)
 
-    private val scrimPaint = fillPaint(context.getColor(R.color.modal_scrim))
-    private val modalPaint = fillPaint(context.getColor(R.color.panel))
+    private val scrimPaint = fillPaint(context.color(R.color.modal_scrim))
+    private val modalPaint = fillPaint(context.color(R.color.panel))
     private val modalBorder = RectF(MODAL).apply { inset(BORDER / 2, BORDER / 2) }
-    private val modalBorderPaint = strokePaint(context.getColor(R.color.panel_line), BORDER)
+    private val modalBorderPaint = strokePaint(context.color(R.color.panel_line), BORDER)
 
     private val eyebrow = context.getString(R.string.exit_eyebrow)
-    private val eyebrowPaint = textPaint(fonts.barlow(600), EYEBROW_SIZE, context.getColor(R.color.text_muted), 0.24f)
+    private val eyebrowPaint = textPaint(fonts.barlow(600), EYEBROW_SIZE, context.color(R.color.text_muted), 0.24f)
     private val eyebrowBaseline = EYEBROW_CENTER_Y + eyebrowPaint.centerToBaselinePerPx("H") * EYEBROW_SIZE
     private val title = context.getString(R.string.exit_title)
     private val titlePaint = textPaint(fonts.barlow(700), TITLE_SIZE, text).apply {
         fitText(title, TITLE_SIZE, CONTENT_WIDTH)
     }
     private val titleBaseline = TITLE_CENTER_Y + titlePaint.centerToBaselinePerPx("H") * titlePaint.textSize
-    private val bodyPaint = textPaint(fonts.barlow(500), BODY_SIZE, context.getColor(R.color.text_soft))
+    private val bodyPaint = textPaint(fonts.barlow(500), BODY_SIZE, context.color(R.color.text_soft))
     private val bodyBaseline = BODY_FIRST_CENTER_Y + bodyPaint.centerToBaselinePerPx("H") * BODY_SIZE
     private var bodyLines = emptyList<String>()
 
@@ -83,10 +83,10 @@ class ExitConfirmOverlay(private val context: Context, fonts: BoardFonts) {
     private val hold = context.getString(R.string.exit_hold, EXIT_HOLD_MS / 1_000)
     private val holdPaint = textPaint(fonts.barlow(600), HOLD_SIZE, text, 0.12f, Paint.Align.CENTER)
     private val holdBaseline = HOLD_CENTER_Y + holdPaint.centerToBaselinePerPx("H") * HOLD_SIZE
-    private val focusedFill = fillPaint(context.getColor(R.color.panel_raised))
+    private val focusedFill = fillPaint(context.color(R.color.panel_raised))
     private val focusedOutline = strokePaint(text, FOCUSED_BORDER)
     private val unfocusedOutline = strokePaint(off, UNFOCUSED_BORDER)
-    private val holdFill = fillPaint(context.getColor(R.color.destructive))
+    private val holdFill = fillPaint(context.color(R.color.destructive))
 
     /**
      * Takes the screen's state (null = closed); returns true when what the cached layer shows changed. A hold

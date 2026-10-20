@@ -79,7 +79,7 @@ interface MenuKeys {
  * one [Command.SetGameLength], so stepping through minutes takes a single undo, and language once, because applying
  * it recreates the activity.
  *
- * Exit to Android TV (design 09) only opens while the clock is stopped, on a confirm screen with CANCEL focused;
+ * Exit (design 09) only opens while the clock is stopped, on a confirm screen with CANCEL focused;
  * leaving takes OK held on EXIT for [EXIT_HOLD_MS]. Releasing OK sooner, moving the focus or Back cancels the hold.
  *
  * @param languages the bundled languages, in menu order; [language] is the one in use.

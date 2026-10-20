@@ -47,7 +47,7 @@ Keep the Play Store (`com.android.vending`) but turn auto-updates off.
 **Setup in use:** the stock launcher (`com.google.android.tvlauncher`) stays the home screen, and tablero is an
 ordinary app opened from its apps row. HOME on the remote goes to the launcher; the game keeps going meanwhile (the
 engine and the buzzer live in the app process, and the state is saved on every change), and opening tablero again
-shows it as it is. tablero's menu has **Exit to Android TV** (clock stopped, hold OK 2 s on EXIT), which opens the
+shows it as it is. tablero's menu has **Exit** (clock stopped, hold OK 2 s on EXIT), which opens the
 launcher; its screen tells the scorer to open tablero from the apps row to come back.
 
 ### Optional: tablero as the home app (kiosk)
@@ -78,7 +78,7 @@ Checked on the stick with the launcher disabled:
   `adb connect` worked right after it).
 - HOME returns to tablero, from Settings too. Two crashes in a row (`adb shell am crash <package>`) just restarted
   tablero on HOME with the game restored.
-- Exit to Android TV has no launcher to open, so it opens **Android TV Settings** (the side panel), which can't open
+- Exit has no launcher to open, so it opens **Android TV Settings** (the side panel), which can't open
   other apps. The launcher's page (*Apps → See all apps → system apps → Pantalla principal de Android TV*) offers
   **Enable**, which turns the kiosk off; Settings offers no Disable for the home app, so turning it back on needs
   `pm disable-user` over ADB.
@@ -118,6 +118,22 @@ adb shell top -m 10
 adb shell dumpsys gfxinfo <tv-app package>
 ```
 
+## Fire TV Stick 2nd gen
+
+The spare Amazon stick (AFTT, Fire OS 5.2 = Android 5.1) runs tablero too. Debloating and the kiosk above are only
+written for the Xiaomi; on the Fire TV, open tablero from **Your Apps & Games**.
+
+1. Settings → **My Fire TV** (called **Device** on older software) → **Developer options**. If it isn't listed,
+   open **About** and select the stick's name 7 times.
+2. Turn on **ADB debugging** and **Apps from Unknown Sources**.
+3. Settings → My Fire TV → About → **Network** shows the stick's IP. It is not the router's address (often `.1`);
+   if unsure, look for the device with port 5555 open.
+4. `adb connect <fire-ip>:5555` and accept **Allow USB debugging?** on the TV ("Always allow from this computer").
+
+Checked on Fire OS 5.2.9.5: install and launch, fonts, 10 Hz clock (~3 ms per frame), restore after a kill with
+the clock running, buzzer, menu on Back long press (via `input keyevent --longpress`), and HOME going straight to
+the Fire launcher (no home-app chooser).
+
 ## TODO
 
 - [ ] `scripts/setup-stick.sh` and `scripts/restore-stick.sh` automating steps 2–4.
@@ -126,3 +142,4 @@ adb shell dumpsys gfxinfo <tv-app package>
 - [x] Hold OK 2 s on EXIT with the remote (checked with the launcher disabled: opens Settings).
 - [ ] Hold OK 2 s on EXIT with the launcher enabled: opens the launcher.
 - [ ] Record what the Assistant / Netflix / Prime buttons do after debloat.
+- [ ] Fire TV: Back long press and hold OK 2 s on EXIT with the Fire TV remote; EXIT should open the Fire launcher.
