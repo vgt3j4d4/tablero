@@ -52,30 +52,30 @@ class SetClockOverlay(private val context: Context, fonts: BoardFonts) {
 
     private var editor: SetClockEditor? = null
 
-    private val text = context.getColor(R.color.text)
-    private val muted = context.getColor(R.color.text_muted)
-    private val adjust = context.getColor(R.color.adjust)
+    private val text = context.color(R.color.text)
+    private val muted = context.color(R.color.text_muted)
+    private val adjust = context.color(R.color.adjust)
 
-    private val scrimPaint = fillPaint(context.getColor(R.color.modal_scrim))
-    private val modalPaint = fillPaint(context.getColor(R.color.panel))
+    private val scrimPaint = fillPaint(context.color(R.color.modal_scrim))
+    private val modalPaint = fillPaint(context.color(R.color.panel))
     private val modalBorder = RectF(MODAL).apply { inset(BORDER / 2, BORDER / 2) }
-    private val modalBorderPaint = strokePaint(context.getColor(R.color.panel_line), BORDER)
-    private val linePaint = fillPaint(context.getColor(R.color.panel_line))
+    private val modalBorderPaint = strokePaint(context.color(R.color.panel_line), BORDER)
+    private val linePaint = fillPaint(context.color(R.color.panel_line))
 
     private val eyebrow = context.getString(R.string.set_clock_title)
     private val eyebrowPaint = textPaint(fonts.barlow(600), EYEBROW_SIZE, muted, 0.24f, Paint.Align.CENTER)
     private val eyebrowBaseline = EYEBROW_CENTER_Y + eyebrowPaint.centerToBaselinePerPx("H") * EYEBROW_SIZE
     private var was = ""
-    private val wasPaint = textPaint(fonts.barlow(500), WAS_SIZE, context.getColor(R.color.text_soft), align = Paint.Align.CENTER)
+    private val wasPaint = textPaint(fonts.barlow(500), WAS_SIZE, context.color(R.color.text_soft), align = Paint.Align.CENTER)
     private val wasBaseline = WAS_CENTER_Y + wasPaint.centerToBaselinePerPx("H") * WAS_SIZE
 
     private val digitPaint = textPaint(fonts.led, DIGIT_SIZE, text, align = Paint.Align.CENTER)
     private val digitBaseline = FIELD_CENTER_Y + digitPaint.centerToBaselinePerPx("8") * DIGIT_SIZE
     private val labelPaint = textPaint(fonts.barlow(600), LABEL_SIZE, muted, 0.2f, Paint.Align.CENTER)
     private val labelBaseline = LABEL_CENTER_Y + labelPaint.centerToBaselinePerPx("H") * LABEL_SIZE
-    private val focusedFill = fillPaint(context.getColor(R.color.panel_raised))
+    private val focusedFill = fillPaint(context.color(R.color.panel_raised))
     private val focusedOutline = strokePaint(adjust, FOCUSED_BORDER)
-    private val unfocusedOutline = strokePaint(context.getColor(R.color.field_outline), UNFOCUSED_BORDER)
+    private val unfocusedOutline = strokePaint(context.color(R.color.field_outline), UNFOCUSED_BORDER)
     private val arrowPaint = strokePaint(adjust, ARROW_STROKE).apply {
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND

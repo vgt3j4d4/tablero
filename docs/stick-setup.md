@@ -118,6 +118,22 @@ adb shell top -m 10
 adb shell dumpsys gfxinfo <tv-app package>
 ```
 
+## Fire TV Stick 2nd gen
+
+The spare Amazon stick (AFTT, Fire OS 5.2 = Android 5.1) runs tablero too. Debloating and the kiosk above are only
+written for the Xiaomi; on the Fire TV, open tablero from **Your Apps & Games**.
+
+1. Settings → **My Fire TV** (called **Device** on older software) → **Developer options**. If it isn't listed,
+   open **About** and select the stick's name 7 times.
+2. Turn on **ADB debugging** and **Apps from Unknown Sources**.
+3. Settings → My Fire TV → About → **Network** shows the stick's IP. It is not the router's address (often `.1`);
+   if unsure, look for the device with port 5555 open.
+4. `adb connect <fire-ip>:5555` and accept **Allow USB debugging?** on the TV ("Always allow from this computer").
+
+Checked on Fire OS 5.2.9.5: install and launch, fonts, 10 Hz clock (~3 ms per frame), restore after a kill with
+the clock running, buzzer, menu on Back long press (via `input keyevent --longpress`), and HOME going straight to
+the Fire launcher (no home-app chooser).
+
 ## TODO
 
 - [ ] `scripts/setup-stick.sh` and `scripts/restore-stick.sh` automating steps 2–4.
@@ -126,3 +142,4 @@ adb shell dumpsys gfxinfo <tv-app package>
 - [x] Hold OK 2 s on EXIT with the remote (checked with the launcher disabled: opens Settings).
 - [ ] Hold OK 2 s on EXIT with the launcher enabled: opens the launcher.
 - [ ] Record what the Assistant / Netflix / Prime buttons do after debloat.
+- [ ] Fire TV: Back long press and hold OK 2 s on EXIT with the Fire TV remote; EXIT should open the Fire launcher.

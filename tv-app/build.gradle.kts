@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId = "net.pladum.tablero.tv"
-        minSdk = 28
+        minSdk = 22
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"

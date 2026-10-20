@@ -13,7 +13,7 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
       system font)
 - [x] `tv-app`: string resources — English default + Spanish, `locales_config.xml`, in-app language setting,
       lint `MissingTranslation` as error
-- [x] `tv-app`: bundle DSEG7 Classic (Bold) and Barlow Condensed (500–800) as **TTF** in `res/font/` with their
+- [x] `tv-app`: bundle DSEG7 Classic (Bold) and Barlow Condensed (500–800) as **TTF** in `assets/fonts/` with their
       OFL license files (in `assets/licenses/`)
 - [x] `tv-app`: `ScoreboardView` (Canvas) — clock + scores in DSEG7 with ghost segments, HOME / AWAY labels, status bar
 - [x] `tv-app`: remote key adapter (OK on key-down, short/long press mapping, see CLAUDE.md)
@@ -26,6 +26,7 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
 - [x] `tv-app`: buzzer sound via `SoundPool` (synthesized horn, `scripts/make-buzzer.py`)
 - [x] `tv-app`: launcher banner and adaptive icon (vector drawables from `scripts/make-icons.py`, concepts in
       `docs/design/icons.html`)
+- [x] `tv-app`: run on the Fire TV Stick 2nd gen (`minSdk 22`, fonts as assets, pre-24 boot detection)
 - [ ] Test the full Phase 1 flow on the Xiaomi stick
 - [ ] `scripts/setup-stick.sh` / `restore-stick.sh`
 - [ ] Readability test on a real TV from the far corner of a court

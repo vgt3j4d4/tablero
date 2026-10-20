@@ -12,12 +12,25 @@ import android.graphics.Typeface
 const val DESIGN_WIDTH = 1920f
 const val DESIGN_HEIGHT = 1080f
 
-/** The bundled fonts: DSEG7 Classic Bold for digits, Barlow Condensed (weights 500–800) for text. */
-class BoardFonts(context: Context) {
-    val led: Typeface = context.resources.getFont(R.font.dseg7_classic_bold)
-    private val barlow: Typeface = context.resources.getFont(R.font.barlow_condensed)
+private const val LED_FONT = "fonts/DSEG7Classic-Bold.ttf"
+private val BARLOW_FONTS = mapOf(
+    500 to "fonts/BarlowCondensed-Medium.ttf",
+    600 to "fonts/BarlowCondensed-SemiBold.ttf",
+    700 to "fonts/BarlowCondensed-Bold.ttf",
+    800 to "fonts/BarlowCondensed-ExtraBold.ttf",
+)
 
-    fun barlow(weight: Int): Typeface = Typeface.create(barlow, weight, false)
+/**
+ * The bundled fonts, unmodified TTFs in `assets/fonts/` (licenses in `assets/licenses/`): DSEG7 Classic Bold for
+ * digits, Barlow Condensed 1.422 (weights 500–800) for text. They are assets rather than font resources because
+ * `Resources.getFont` and weighted `Typeface.create` need API 26 and 28; one file per weight works on every API.
+ */
+class BoardFonts(context: Context) {
+    val led: Typeface = Typeface.createFromAsset(context.assets, LED_FONT)
+    private val barlow = BARLOW_FONTS.mapValues { (_, path) -> Typeface.createFromAsset(context.assets, path) }
+
+    /** Barlow Condensed in [weight] 500, 600, 700 or 800. */
+    fun barlow(weight: Int): Typeface = barlow.getValue(weight)
 }
 
 fun textPaint(

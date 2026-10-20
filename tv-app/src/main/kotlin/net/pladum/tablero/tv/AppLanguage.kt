@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.XmlResourceParser
-import android.os.LocaleList
 import java.util.Locale
 
 private const val PREFS = "settings"
@@ -12,9 +11,9 @@ private const val PREF_LANGUAGE = "language"
 private const val ANDROID_NS = "http://schemas.android.com/apk/res/android"
 
 /**
- * The language chosen in the app's menu (see docs/architecture.md → Localization). API 28 has no per-app language,
- * so the choice is kept in preferences and applied to each activity as an override configuration. With nothing
- * chosen the app follows the device language (on Android 13+ also the system per-app setting), and Android's
+ * The language chosen in the app's menu (see docs/architecture.md → Localization). Android before 13 has no per-app
+ * language, so the choice is kept in preferences and applied to each activity as an override configuration. With
+ * nothing chosen the app follows the device language (on Android 13+ also the system per-app setting), and Android's
  * resource fallback shows English for a language that isn't bundled.
  *
  * Only activity contexts carry the choice: resolve user-visible strings from the activity, never from the
@@ -38,7 +37,7 @@ object AppLanguage {
 
     /** The bundled language [activity] shows, as the menu names it. */
     fun inUse(activity: Activity): Locale =
-        bundledMatch(activity.resources.configuration.locales[0], available(activity))
+        bundledMatch(activity.resources.configuration.primaryLocale, available(activity))
 
     /** Saves [locale] (null = follow the device) and recreates [activity] so it shows the new language. */
     fun set(activity: Activity, locale: Locale?) {
@@ -54,7 +53,7 @@ object AppLanguage {
      */
     fun overrideConfiguration(base: Context): Configuration? {
         val locale = chosen(base) ?: return null
-        return Configuration().apply { setLocales(LocaleList(locale)) }
+        return Configuration().apply { setLocale(locale) }
     }
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)

@@ -29,14 +29,14 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
     var visible = false
         private set
 
-    private val textOff = context.getColor(R.color.text_off)
+    private val textOff = context.color(R.color.text_off)
     private val panel = RectF(LEFT, TOP, RIGHT, DESIGN_HEIGHT + RADIUS) // Square bottom: its corners are off screen.
-    private val panelPaint = fillPaint(context.getColor(R.color.text))
+    private val panelPaint = fillPaint(context.color(R.color.text))
 
     private var title = ""
     private var titleX = 0f
     private var titleBaseline = 0f
-    private val titlePaint = textPaint(fonts.barlow(800), TITLE_SIZE, context.getColor(R.color.board_background), 0.04f)
+    private val titlePaint = textPaint(fonts.barlow(800), TITLE_SIZE, context.color(R.color.board_background), 0.04f)
     private val titleCenter = titlePaint.centerToBaselinePerPx("H")
 
     private var detail = ""
@@ -52,7 +52,7 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
     private val hintLeft = hint.layoutEndingAt(RIGHT - PADDING, CENTER_Y, hintPaint)
 
     fun show(feedback: Feedback) {
-        val locale = context.resources.configuration.locales[0]
+        val locale = context.resources.configuration.primaryLocale
         detail = ""
         hasHint = true
         title = when (feedback) {

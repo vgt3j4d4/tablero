@@ -42,7 +42,7 @@ setup can grow into a proper 24/14 shot clock and phone control.
 
 | Part           | Example                                                                   | Approx. cost (Lima, Oct 2026) |
 | -------------- | ------------------------------------------------------------------------- | ----------------------------- |
-| Display device | Xiaomi Mi TV Stick (MDZ-24-AA, Android TV 9/10) — or any Google TV set   | already owned                 |
+| Display device | Xiaomi Mi TV Stick (MDZ-24-AA), Fire TV Stick 2nd gen — or a Google TV set | already owned                 |
 | TV             | 32" HD, e.g. Miray MS32-E2000GBT (Google TV, 16 W speakers)               | ~S/ 399                       |
 | Optional       | Wired powered speaker (+ HDMI audio extractor if the TV has no audio out) | ~S/ 100–170                   |
 | Controller     | Android phone (hotspot + remote app)                                      | owned                         |
@@ -96,5 +96,5 @@ The time-up buzzer (`tv-app/src/main/res/raw/buzzer.wav`) is synthesized by
 banner and icon are vector drawables that [`scripts/make-icons.py`](scripts/make-icons.py) draws from the bundled
 fonts' glyph outlines; the font files themselves are not modified.
 
-The app's font files are in `tv-app/src/main/res/font/`. The design mockups use the same fonts as web fonts in
+The app's font files are in `tv-app/src/main/assets/fonts/`. The design mockups use the same fonts as web fonts in
 `docs/design/fonts/`.

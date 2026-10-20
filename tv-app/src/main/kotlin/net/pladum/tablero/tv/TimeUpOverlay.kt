@@ -40,9 +40,9 @@ class TimeUpOverlay(private val context: Context, fonts: BoardFonts) {
     private var focused: TimeUpChoice? = null
 
     private val frame = RectF(0f, 0f, DESIGN_WIDTH, DESIGN_HEIGHT).apply { inset(FRAME_WIDTH / 2, FRAME_WIDTH / 2) }
-    private val framePaint = strokePaint(context.getColor(R.color.time_up_frame), FRAME_WIDTH)
-    private val barPaint = fillPaint(context.getColor(R.color.time_up_bar))
-    private val white = context.getColor(R.color.time_up_text)
+    private val framePaint = strokePaint(context.color(R.color.time_up_frame), FRAME_WIDTH)
+    private val barPaint = fillPaint(context.color(R.color.time_up_bar))
+    private val white = context.color(R.color.time_up_text)
 
     private val title = context.getString(R.string.time_up_title)
     private val titlePaint = textPaint(fonts.barlow(800), TITLE_SIZE, white, 0.06f)
@@ -53,9 +53,9 @@ class TimeUpOverlay(private val context: Context, fonts: BoardFonts) {
     private var baseline = 0f
 
     private val focusedFill = fillPaint(white)
-    private val unfocusedOutline = strokePaint(context.getColor(R.color.time_up_outline), UNFOCUSED_BORDER)
+    private val unfocusedOutline = strokePaint(context.color(R.color.time_up_outline), UNFOCUSED_BORDER)
     private val focusedText =
-        textPaint(fonts.barlow(800), FOCUSED_SIZE, context.getColor(R.color.time_up_ink), 0.04f, Paint.Align.CENTER)
+        textPaint(fonts.barlow(800), FOCUSED_SIZE, context.color(R.color.time_up_ink), 0.04f, Paint.Align.CENTER)
     private val unfocusedText = textPaint(fonts.barlow(700), UNFOCUSED_SIZE, white, 0.04f, Paint.Align.CENTER)
     private val focusedBaseline = BAR_CENTER_Y + focusedText.centerToBaselinePerPx("H") * FOCUSED_SIZE
     private val unfocusedBaseline = BAR_CENTER_Y + unfocusedText.centerToBaselinePerPx("H") * UNFOCUSED_SIZE

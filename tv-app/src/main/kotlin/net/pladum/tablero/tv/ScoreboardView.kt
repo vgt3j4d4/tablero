@@ -70,7 +70,7 @@ private const val STATUS_ICON_GAP = 12f
 @SuppressLint("ViewConstructor") // Built in code by MainActivity, never inflated from XML.
 class ScoreboardView(context: Context, private val timeSource: TimeSource) : View(context) {
     private val fonts = BoardFonts(context)
-    private val textColor = context.getColor(R.color.text)
+    private val textColor = context.color(R.color.text)
 
     private var scale = 1f
     private var offsetX = 0f
@@ -80,13 +80,13 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
     private var layer: Bitmap? = null
     private val layerCanvas = Canvas()
     private var layerDirty = true
-    private val backgroundColor = context.getColor(R.color.board_background)
+    private val backgroundColor = context.color(R.color.board_background)
 
     private var snapshot: GameSnapshot? = null
 
-    private val clockBoxPaint = fillPaint(context.getColor(R.color.clock_box))
+    private val clockBoxPaint = fillPaint(context.color(R.color.clock_box))
     private val clockBoxBorder = RectF(CLOCK_BOX).apply { inset(CLOCK_BOX_BORDER / 2, CLOCK_BOX_BORDER / 2) }
-    private val clockBoxBorderPaint = strokePaint(context.getColor(R.color.clock_box_border), CLOCK_BOX_BORDER)
+    private val clockBoxBorderPaint = strokePaint(context.color(R.color.clock_box_border), CLOCK_BOX_BORDER)
     private val clockPaint = ledPaint(R.color.led_red, Paint.Align.RIGHT)
     private val clockGhostPaint = ledPaint(R.color.led_red_unlit, Paint.Align.LEFT)
     private val ledBaselineOffset = clockPaint.centerToBaselinePerPx("8") * LED_SIZE
@@ -100,7 +100,7 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
     private val left = TeamSlot(Side.LEFT, LEFT_TEAM_X)
     private val right = TeamSlot(Side.RIGHT, RIGHT_TEAM_X)
 
-    private val statusLinePaint = fillPaint(context.getColor(R.color.status_line))
+    private val statusLinePaint = fillPaint(context.color(R.color.status_line))
     private val clockStatePaint = textPaint(fonts.barlow(600), STATUS_SIZE, textColor, 0.08f, Paint.Align.RIGHT)
     private val statusBaseline = STATUS_CENTER_Y + clockStatePaint.centerToBaselinePerPx("H") * STATUS_SIZE
     private val statusIconPaint = fillPaint(textColor)
@@ -365,13 +365,13 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
     }
 
     private fun ledPaint(colorRes: Int, align: Paint.Align) =
-        textPaint(fonts.led, LED_SIZE, context.getColor(colorRes), align = align)
+        textPaint(fonts.led, LED_SIZE, context.color(colorRes), align = align)
 
     /** One team column: its name (HOME / AWAY), score over its unlit segments. */
     private inner class TeamSlot(side: Side, private val centerX: Float) {
         private var score = -1
 
-        private val name = context.getString(side.teamNameRes()).uppercase(resources.configuration.locales[0])
+        private val name = context.getString(side.teamNameRes()).uppercase(resources.configuration.primaryLocale)
         private val namePaint = textPaint(fonts.barlow(700), NAME_SIZE, textColor, 0.03f, Paint.Align.CENTER).apply {
             fitText(name, NAME_SIZE, NAME_MAX_WIDTH)
         }

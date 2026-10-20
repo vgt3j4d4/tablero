@@ -118,7 +118,7 @@ class MainActivity : Activity() {
 
     private fun logLanguage() {
         val source = if (AppLanguage.chosen(this) != null) "chosen in the app" else "from the device"
-        val locale = resources.configuration.locales[0].toLanguageTag()
+        val locale = resources.configuration.primaryLocale.toLanguageTag()
         Log.i(LOG_TAG, "Language $locale ($source), e.g. ${getString(Side.LEFT.teamNameRes())}")
     }
 
