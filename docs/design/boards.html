@@ -31,23 +31,49 @@
   --alert-frame: #FF3B2F;
   --adjust: #FFB21E;
   --adjust-ink: #3A2A05;
+  /* The board's own colors; menu, scrim, dialogs and bars over the board use the tokens above in both modes. */
+  --board-bg: var(--bg);
+  --board-text: var(--text);
+  --clock-box: #0B0C0E;
+  --clock-box-border: #1A1D22;
+  --clock-ghost: rgb(22, 5, 5);
+  --score-ghost: rgb(22, 16, 2);
+  --status-line: var(--line-soft);
+  --toast-bg: var(--text);
+  --toast-ink: var(--bg);
+  --toast-off: var(--off);
 }
+/* Outdoor mode (boards 14–19): a light board for daylight courts. No unlit segments; the toast turns dark so it
+   still stands out on white. */
+.outdoor {
+  --board-bg: #FFFFFF;
+  --board-text: #0A0A0A;
+  --clock: #0A0A0A;
+  --score: #B0121B;
+  --clock-box: #F1F2F4;
+  --clock-box-border: #D9DBDE;
+  --status-line: #E3E5E8;
+  --toast-bg: #111317;
+  --toast-ink: #F5F2EA;
+  --toast-off: #8B919B;
+}
+.outdoor .ghost { visibility: hidden; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlow Condensed', sans-serif; }
 .screen { width: 1920px; height: 1080px; position: relative; overflow: hidden; background: var(--bg); }
 .layer { position: absolute; inset: 0; }
 
 /* Scoreboard */
-.board { display: flex; flex-direction: column; height: 100%; }
+.board { display: flex; flex-direction: column; height: 100%; background: var(--board-bg); color: var(--board-text); }
 .clock-row { height: 476px; padding-top: 36px; display: flex; justify-content: center; }
-.clock-box { width: 1240px; height: 440px; background: #0B0C0E; border: 2px solid #1A1D22; border-radius: 32px;
+.clock-box { width: 1240px; height: 440px; background: var(--clock-box); border: 2px solid var(--clock-box-border); border-radius: 32px;
   display: flex; align-items: center; justify-content: center; }
 .led { display: grid; justify-items: end; align-items: center; font-family: 'DSEG7 Classic', monospace; font-weight: 700; line-height: 1; }
 .led > span { grid-area: 1 / 1; }
 .led.clock { font-size: 330px; color: var(--clock); }
-.led.clock .ghost { color: rgb(22, 5, 5); }
+.led.clock .ghost { color: var(--clock-ghost); }
 .led.score { font-size: 330px; color: var(--score); }
-.led.score .ghost { color: rgb(22, 16, 2); }
+.led.score .ghost { color: var(--score-ghost); }
 .teams { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 260px minmax(0, 1fr); }
 .team { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; min-width: 0; }
 .team-name { max-width: 800px; font-size: 84px; font-weight: 700; line-height: 1; letter-spacing: 0.03em;
@@ -59,8 +85,8 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
 .board.large .team { gap: 14px; }
 .board.large .team-name { font-size: 56px; }
 .status { height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; padding: 0 48px;
-  border-top: 2px solid var(--line-soft); font-size: 28px; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); }
-.status .state { display: flex; align-items: center; gap: 12px; color: var(--text); }
+  border-top: 2px solid var(--status-line); font-size: 28px; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); }
+.status .state { display: flex; align-items: center; gap: 12px; color: var(--board-text); }
 
 /* Shared bits */
 .keycap { border: 2px solid currentColor; border-radius: 8px; padding: 0 10px; line-height: 38px; white-space: nowrap; }
@@ -72,7 +98,7 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
 
 /* Bottom bars over the status bar */
 .toast { position: absolute; left: 500px; bottom: 0; width: 920px; height: 64px; padding: 0 28px; display: flex; align-items: center;
-  justify-content: space-between; background: var(--text); color: var(--bg); border-radius: 16px 16px 0 0; }
+  justify-content: space-between; background: var(--toast-bg); color: var(--toast-ink); border-radius: 16px 16px 0 0; }
 .time-up-frame { position: absolute; inset: 0; border: 14px solid var(--alert-frame); }
 .time-up-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 88px; padding: 0 48px; display: flex; align-items: center;
   justify-content: space-between; gap: 24px; background: var(--alert); color: #FFFFFF; }
@@ -115,6 +141,10 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
 <body>
 <div id="root"></div>
 <script>
+const params = new URLSearchParams(location.search);
+/* outdoor-<board> shows <board> in outdoor mode. */
+const outdoor = (params.get('board') || '').startsWith('outdoor-');
+
 const STRINGS = {
   en: {
     home: 'HOME', away: 'AWAY',
@@ -126,9 +156,9 @@ const STRINGS = {
     menuRows: [
       [['Game clock', '07:42', false], ['Game length', '10:00', true]],
       [['Home score', '48', true], ['Away score', '45', true]],
-      [['New game', '', false], ['Layout', 'Classic', true], ['Language', 'English', true], ['Exit', '', false]],
+      [['New game', '', false], ['Layout', 'Classic', true], ['Mode', outdoor ? 'Outdoor' : 'Indoor', true], ['Language', 'English', true], ['Exit', '', false]],
     ],
-    menuFocused: 'Home score',
+    menuFocused: outdoor ? 'Mode' : 'Home score',
     move: 'MOVE', change: 'CHANGE', open: 'OPEN', close: 'CLOSE',
     adjust: 'ADJUST CLOCK', was: 'was 07:42', min: '±1 MIN', sec: '±1 SEC', done: 'DONE',
     setClock: 'SET GAME CLOCK', setClockSub: 'Was 07:42 · clock stopped', minLabel: 'MIN', secLabel: 'SEC',
@@ -161,9 +191,9 @@ const STRINGS = {
     menuRows: [
       [['Reloj de juego', '07:42', false], ['Duración del partido', '10:00', true]],
       [['Puntos Local', '48', true], ['Puntos Visita', '45', true]],
-      [['Nuevo partido', '', false], ['Diseño', 'Clásico', true], ['Idioma', 'Español', true], ['Salir', '', false]],
+      [['Nuevo partido', '', false], ['Diseño', 'Clásico', true], ['Modo', outdoor ? 'Exterior' : 'Interior', true], ['Idioma', 'Español', true], ['Salir', '', false]],
     ],
-    menuFocused: 'Puntos Local',
+    menuFocused: outdoor ? 'Modo' : 'Puntos Local',
     move: 'MOVER', change: 'CAMBIAR', open: 'ABRIR', close: 'CERRAR',
     adjust: 'AJUSTAR RELOJ', was: 'antes 07:42', min: '±1 MIN', sec: '±1 SEG', done: 'LISTO',
     setClock: 'FIJAR RELOJ DE JUEGO', setClockSub: 'Antes 07:42 · reloj detenido', minLabel: 'MIN', secLabel: 'SEG',
@@ -188,7 +218,6 @@ const STRINGS = {
   },
 };
 
-const params = new URLSearchParams(location.search);
 const lang = STRINGS[params.get('lang')] ? params.get('lang') : 'en';
 const T = STRINGS[lang];
 document.documentElement.lang = lang;
@@ -250,9 +279,9 @@ const BOARDS = {
     <div class="toast">
       <div style="display:flex;align-items:center;gap:16px">
         <span style="font-size:40px;font-weight:800;letter-spacing:0.04em">${esc(T.feedbackTeam)}</span>
-        <span style="font-size:32px;font-weight:600;color:var(--off)">48 → 51</span>
+        <span style="font-size:32px;font-weight:600;color:var(--toast-off)">48 → 51</span>
       </div>
-      <div class="hint" style="font-size:28px;font-weight:600;letter-spacing:0.06em;color:var(--off)"><span class="keycap">${esc(T.back)}</span>${esc(T.undo)}</div>
+      <div class="hint" style="font-size:28px;font-weight:600;letter-spacing:0.06em;color:var(--toast-off)"><span class="keycap">${esc(T.back)}</span>${esc(T.undo)}</div>
     </div>`,
 
   'menu': () => {
@@ -399,9 +428,13 @@ BOARDS['large-live-game'] = () => scoreboard({ large: true });
 BOARDS['large-time-up'] = () => BOARDS['time-up'](true);
 BOARDS['large-quick-clock-adjust'] = () => BOARDS['quick-clock-adjust'](true);
 
+for (const board of ['live-game', 'large-live-game', 'time-up', 'action-feedback', 'quick-clock-adjust', 'menu']) {
+  BOARDS[`outdoor-${board}`] = BOARDS[board];
+}
+
 const id = BOARDS[params.get('board')] ? params.get('board') : 'live-game';
 document.title = `tablero — ${id} (${lang})`;
-document.getElementById('root').innerHTML = `<div class="screen">${BOARDS[id]()}</div>`;
+document.getElementById('root').innerHTML = `<div class="screen ${outdoor ? 'outdoor' : ''}">${BOARDS[id]()}</div>`;
 </script>
 </body>
 </html>
