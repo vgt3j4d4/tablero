@@ -121,7 +121,8 @@ adb shell dumpsys gfxinfo <tv-app package>
 ## Fire TV Stick 2nd gen
 
 The spare Amazon stick (AFTT, Fire OS 5.2 = Android 5.1) runs tablero too. Debloating and the kiosk above are only
-written for the Xiaomi; on the Fire TV, open tablero from **Your Apps & Games**.
+written for the Xiaomi; on the Fire TV, open tablero from **Your Apps & Games** (see *Debloat and kiosk* below for
+what Fire OS allows).
 
 1. Settings → **My Fire TV** (called **Device** on older software) → **Developer options**. If it isn't listed,
    open **About** and select the stick's name 7 times.
@@ -133,6 +134,36 @@ written for the Xiaomi; on the Fire TV, open tablero from **Your Apps & Games**.
 Checked on Fire OS 5.2.9.5: install and launch, fonts, 10 Hz clock (~3 ms per frame), restore after a kill with
 the clock running, buzzer, menu on Back long press (via `input keyevent --longpress`), and HOME going straight to
 the Fire launcher (no home-app chooser).
+
+### Debloat and kiosk
+
+Fire OS doesn't let the shell touch Amazon's apps: `pm disable-user` fails with `SecurityException: Permission
+Denial: attempt to change component state`, and `pm hide` answers `new hidden state: false` and changes nothing
+(checked on Fire OS 5.2.9.5 with the launcher, the screensaver and Live TV). So:
+
+- **tablero can't be the home app.** HOME always opens the Amazon launcher (`com.amazon.tv.launcher`), the only way
+  to beat it would be disabling it, and the shell can't. Avoid `pm uninstall -k --user 0` on Amazon apps: Android 5.1
+  has no `install-existing`, so only a factory reset brings them back.
+- **Only apps installed from the Appstore can be removed**, with a plain uninstall (reinstall them from the Appstore):
+
+  ```bash
+  adb shell pm list packages -3        # tablero plus whatever was installed from the Appstore
+  adb shell pm uninstall <package>     # e.g. com.netflix.ninja, com.amazon.firetv.youtube
+  ```
+
+  Apps that aren't running only take storage, so this frees little memory.
+- **Settings the shell can change:**
+
+  ```bash
+  adb shell settings put global window_animation_scale 0
+  adb shell settings put global transition_animation_scale 0
+  adb shell settings put global animator_duration_scale 0
+  adb shell settings put secure screensaver_enabled 0   # the screensaver process alone took ~100 MB
+  # Undo: put 1 instead of 0.
+  ```
+
+Most of the RAM stays with Amazon's services (launcher ~100 MB, Alexa, metrics, Live TV…): on the stick, with
+tablero in front, about 200 MB of the 0.9 GB were available after the steps above.
 
 ## TODO
 
