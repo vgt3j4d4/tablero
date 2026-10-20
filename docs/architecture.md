@@ -129,7 +129,7 @@ value, OK opens the focused row.
   field (minutes stop at 0 and 60, seconds wrap without carrying), ←/→ switch field, OK sends one `SetGameClock`
   (nothing when the time wasn't changed), Back cancels; both return to the menu.
 - **New game** sends `NewGame` and closes the menu; Back on the scoreboard undoes it.
-- **Exit to Android TV** (design 09) opens only while the clock is stopped (muted while it runs, like Game clock):
+- **Exit** (design 09) opens only while the clock is stopped (muted while it runs, like Game clock):
   a confirm screen with CANCEL focused. ←/→ move between CANCEL and EXIT, OK on CANCEL or Back returns to the menu.
   OK held on EXIT for 2 s fills the button in red and then closes the menu and opens the stock launcher (Android TV
   Settings if it was disabled for the optional kiosk, see `stick-setup.md`); releasing OK sooner, moving the focus or the

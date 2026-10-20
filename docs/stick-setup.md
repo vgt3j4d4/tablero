@@ -47,7 +47,7 @@ Keep the Play Store (`com.android.vending`) but turn auto-updates off.
 **Setup in use:** the stock launcher (`com.google.android.tvlauncher`) stays the home screen, and tablero is an
 ordinary app opened from its apps row. HOME on the remote goes to the launcher; the game keeps going meanwhile (the
 engine and the buzzer live in the app process, and the state is saved on every change), and opening tablero again
-shows it as it is. tablero's menu has **Exit to Android TV** (clock stopped, hold OK 2 s on EXIT), which opens the
+shows it as it is. tablero's menu has **Exit** (clock stopped, hold OK 2 s on EXIT), which opens the
 launcher; its screen tells the scorer to open tablero from the apps row to come back.
 
 ### Optional: tablero as the home app (kiosk)
@@ -78,7 +78,7 @@ Checked on the stick with the launcher disabled:
   `adb connect` worked right after it).
 - HOME returns to tablero, from Settings too. Two crashes in a row (`adb shell am crash <package>`) just restarted
   tablero on HOME with the game restored.
-- Exit to Android TV has no launcher to open, so it opens **Android TV Settings** (the side panel), which can't open
+- Exit has no launcher to open, so it opens **Android TV Settings** (the side panel), which can't open
   other apps. The launcher's page (*Apps → See all apps → system apps → Pantalla principal de Android TV*) offers
   **Enable**, which turns the kiosk off; Settings offers no Disable for the home app, so turning it back on needs
   `pm disable-user` over ADB.

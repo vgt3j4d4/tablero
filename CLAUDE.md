@@ -131,9 +131,9 @@ via HDMI-CEC (verify with a key logger).
   so a score can still be fixed); OK opens it again.
 
 Menu overlay (Back long press; D-pad navigable): game clock (set exact time, stopped only), game length, left/right
-score, new game, language, exit to Android TV (only while stopped; confirm screen with Cancel focused; exit
-requires holding OK 2 s). Open until Back. Scores change with every ←/→ press; game length and language apply when
-focus leaves their row or the menu closes (one undo for game length, one activity recreate for language).
+score, new game, language, exit (only while stopped; confirm screen with Cancel focused; exit requires holding OK
+2 s). Open until Back. Scores change with every ←/→ press; game length and language apply when focus leaves their
+row or the menu closes (one undo for game length, one activity recreate for language).
 
 ## Tech stack
 
