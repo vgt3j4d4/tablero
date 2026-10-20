@@ -47,6 +47,10 @@
     <string name="menu_game_length">Duración del partido</string>
     <string name="menu_score">Puntos %1$s</string>
     <string name="menu_new_game">Nuevo partido</string>
+    <string name="menu_layout">Diseño</string>
+    <!-- Menu → Layout values: today's board, and the one with bigger digits for small screens. -->
+    <string name="layout_classic">Clásico</string>
+    <string name="layout_large">Grande</string>
     <string name="menu_language">Idioma</string>
     <string name="menu_exit">Salir</string>
     <string name="hint_move">MOVER</string>

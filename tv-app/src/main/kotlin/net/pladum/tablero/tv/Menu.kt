@@ -18,6 +18,7 @@ enum class MenuRow(val group: Int) {
     HOME_SCORE(1),
     AWAY_SCORE(1),
     NEW_GAME(2),
+    LAYOUT(2),
     LANGUAGE(2),
     EXIT(2),
 }
@@ -38,6 +39,8 @@ data class MenuState(
     val focused: MenuRow,
     /** A game length chosen with ←/→ and not applied yet, or null to show the engine's. */
     val pendingGameLengthMs: Long?,
+    /** The board's layout, which the Layout row shows and changes at once. */
+    val layout: BoardLayout,
     /** The language the Language row shows: the one in use, or one chosen and not applied yet. */
     val language: Locale,
     /** The set game clock dialog, shown instead of the menu while open. */
@@ -77,11 +80,12 @@ interface MenuKeys {
  * Scores change with every press (one [Command.Score] each, as on the scoreboard). Game length and language are
  * kept pending while their row is focused and applied when focus leaves the row or the menu closes: game length as
  * one [Command.SetGameLength], so stepping through minutes takes a single undo, and language once, because applying
- * it recreates the activity.
+ * it recreates the activity. Layout applies with every press: the board behind the menu shows it at once.
  *
  * Exit (design 09) only opens while the clock is stopped, on a confirm screen with CANCEL focused;
  * leaving takes OK held on EXIT for [EXIT_HOLD_MS]. Releasing OK sooner, moving the focus or Back cancels the hold.
  *
+ * @param layout the board's layout when the menu is built; [applyLayout] gets each change.
  * @param languages the bundled languages, in menu order; [language] is the one in use.
  * @param now the current [TimeSource][net.pladum.tablero.shared.TimeSource] time, which starts a hold.
  * @param postDelayed runs an action after a delay in ms, unless [removeCallbacks] drops it first.
@@ -91,6 +95,8 @@ interface MenuKeys {
 class Menu(
     private val dispatch: (Command) -> Unit,
     private val snapshot: () -> GameSnapshot,
+    layout: BoardLayout,
+    private val applyLayout: (BoardLayout) -> Unit,
     private val languages: List<Locale>,
     private val language: Locale,
     private val applyLanguage: (Locale) -> Unit,
@@ -104,6 +110,7 @@ class Menu(
     var focused: MenuRow? = null
         private set
 
+    private var layout = layout
     private var pendingGameLengthMs: Long? = null
     private var pendingLanguage: Locale? = null
     private var setClock: SetClockEditor? = null
@@ -246,6 +253,12 @@ class Menu(
             }
             MenuRow.HOME_SCORE -> dispatch(Command.Score(Side.LEFT, delta))
             MenuRow.AWAY_SCORE -> dispatch(Command.Score(Side.RIGHT, delta))
+            MenuRow.LAYOUT -> {
+                val entries = BoardLayout.entries
+                layout = entries[(layout.ordinal + delta).mod(entries.size)]
+                applyLayout(layout)
+                notifyChange()
+            }
             MenuRow.LANGUAGE -> {
                 if (languages.size < 2) return
                 val current = languages.indexOf(pendingLanguage ?: language)
@@ -306,7 +319,9 @@ class Menu(
     }
 
     private fun notifyChange() = onChange(
-        focused?.let { MenuState(it, pendingGameLengthMs, pendingLanguage ?: language, setClock, exitConfirm) },
+        focused?.let {
+            MenuState(it, pendingGameLengthMs, layout, pendingLanguage ?: language, setClock, exitConfirm)
+        },
     )
 }
 

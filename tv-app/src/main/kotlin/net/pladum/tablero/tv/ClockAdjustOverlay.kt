@@ -5,8 +5,7 @@ import android.graphics.Canvas
 import android.graphics.RectF
 import kotlin.math.abs
 
-// Design pixels, from docs/design/boards.html (.adjust-ring, .adjust-bar).
-private val RING = RectF(326f, 22f, 1594f, 490f)
+// Design pixels, from docs/design/boards.html (.adjust-ring, .adjust-bar); the ring's place comes from the layout.
 private const val RING_WIDTH = 8f
 private const val RING_RADIUS = 40f
 private const val BAR_TOP = 1016f
@@ -22,7 +21,7 @@ private const val HINT_GAP = 28f
 private const val GROUP_GAP = 40f
 
 /**
- * Quick clock adjust (design 07): an amber ring around the clock and an amber bar over the status bar with
+ * Quick clock adjust (design 07, 13): an amber ring around the clock and an amber bar over the status bar with
  * `ADJUST CLOCK  +1:00  was 7:42` and the key hints. Text is built in [show]; [draw] only draws. Design pixels.
  */
 class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
@@ -31,7 +30,7 @@ class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
 
     private val adjustColor = context.color(R.color.adjust)
     private val ink = context.color(R.color.adjust_ink)
-    private val ring = RectF(RING).apply { inset(RING_WIDTH / 2, RING_WIDTH / 2) }
+    private val ring = RectF()
     private val ringPaint = strokePaint(adjustColor, RING_WIDTH)
     private val barPaint = fillPaint(adjustColor)
 
@@ -59,6 +58,13 @@ class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
     /** Left edge of the hints, laid out from the right. */
     private val hintsLeft = hints.foldRight(DESIGN_WIDTH - PADDING + HINT_GAP) { hint, right ->
         hint.layoutEndingAt(right - HINT_GAP, BAR_CENTER_Y, hintPaint)
+    }
+
+    /** Puts the ring where [layout] has it. */
+    fun place(layout: BoardLayout) {
+        val box = layout.adjustRing
+        ring.set(box.left, box.top, box.right, box.bottom)
+        ring.inset(RING_WIDTH / 2, RING_WIDTH / 2)
     }
 
     fun show(session: ClockAdjustSession) {

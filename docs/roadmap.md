@@ -27,6 +27,7 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
 - [x] `tv-app`: launcher banner and adaptive icon (vector drawables from `scripts/make-icons.py`, concepts in
       `docs/design/icons.html`)
 - [x] `tv-app`: run on the Fire TV Stick 2nd gen (`minSdk 22`, fonts as assets, pre-24 boot detection)
+- [x] `tv-app`: Large layout (bigger clock and scores, no clock box), chosen in the menu next to Classic
 - [ ] Test the full Phase 1 flow on the Xiaomi stick
 - [ ] `scripts/setup-stick.sh` / `restore-stick.sh`
 - [ ] Readability test on a real TV from the far corner of a court

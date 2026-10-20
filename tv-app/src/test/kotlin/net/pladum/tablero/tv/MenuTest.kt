@@ -24,6 +24,7 @@ class MenuTest {
     private var snapshot = GameSnapshot.initial()
     private val dispatched = mutableListOf<Command>()
     private val applied = mutableListOf<Locale>()
+    private val layouts = mutableListOf<BoardLayout>()
     private var nowNanos = 0L
 
     /** The action the menu posted (the end of a hold on EXIT) and when it is due, until removed. */
@@ -36,6 +37,8 @@ class MenuTest {
     private val menu = Menu(
         dispatch = { dispatched += it },
         snapshot = { snapshot },
+        layout = BoardLayout.CLASSIC,
+        applyLayout = { layouts += it },
         languages = listOf(ENGLISH, SPANISH),
         language = ENGLISH,
         applyLanguage = { applied += it },
@@ -168,6 +171,51 @@ class MenuTest {
             val length = 7 * MINUTE_MS + 42_000
             assertEquals(8 * MINUTE_MS, stepGameLength(length, 1))
             assertEquals(7 * MINUTE_MS, stepGameLength(length, -1))
+        }
+    }
+
+    @Nested
+    inner class Layout {
+        @Test
+        fun `each press applies the next layout at once, wrapping around`() {
+            menu.open()
+            focus(MenuRow.LAYOUT)
+            assertEquals(BoardLayout.CLASSIC, shown?.layout)
+            menu.right()
+            assertEquals(listOf(BoardLayout.LARGE), layouts)
+            assertEquals(BoardLayout.LARGE, shown?.layout)
+            menu.right()
+            assertEquals(listOf(BoardLayout.LARGE, BoardLayout.CLASSIC), layouts)
+            menu.left()
+            assertEquals(BoardLayout.LARGE, layouts.last())
+            assertTrue(menu.isOpen)
+        }
+
+        @Test
+        fun `leaving the row or closing the menu applies nothing more`() {
+            menu.open()
+            focus(MenuRow.LAYOUT)
+            menu.right()
+            menu.down()
+            menu.back()
+            assertEquals(listOf(BoardLayout.LARGE), layouts)
+        }
+
+        @Test
+        fun `the menu shows the layout chosen last when it opens again`() {
+            menu.open()
+            focus(MenuRow.LAYOUT)
+            menu.right()
+            menu.back()
+            menu.open()
+            assertEquals(BoardLayout.LARGE, shown?.layout)
+        }
+
+        @Test
+        fun `a saved layout is restored, and an unknown or missing one falls back to classic`() {
+            assertEquals(BoardLayout.LARGE, resolveLayout("LARGE"))
+            assertEquals(BoardLayout.CLASSIC, resolveLayout("HUGE"))
+            assertEquals(BoardLayout.CLASSIC, resolveLayout(null))
         }
     }
 

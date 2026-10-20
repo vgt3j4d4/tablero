@@ -20,24 +20,11 @@ private const val TICK_MS = 100L
 /** How long a confirmation stays up after the last change to it. */
 private const val FEEDBACK_VISIBLE_MS = 3_000L
 
-// Layout in design pixels (DESIGN_WIDTH × DESIGN_HEIGHT), from docs/design/boards.html.
+// Design pixels (DESIGN_WIDTH × DESIGN_HEIGHT), from docs/design/boards.html; what moves between layouts is in
+// BoardLayout.
 private const val CENTER_X = DESIGN_WIDTH / 2
-private val CLOCK_BOX = RectF(340f, 36f, 1580f, 476f)
 private const val CLOCK_BOX_RADIUS = 32f
 private const val CLOCK_BOX_BORDER = 2f
-private const val LED_SIZE = 330f
-
-/** Team columns: two halves around a 260 px gap. */
-private const val LEFT_TEAM_X = 415f
-private const val RIGHT_TEAM_X = 1505f
-
-/**
- * The team block (84 px name row, 28 px gap, 330 px score) is centered between the clock row (476) and the status
- * bar (1016): the name row centers at 567 and the score at 802.
- */
-private const val NAME_CENTER_Y = 567f
-private const val SCORE_CENTER_Y = 802f
-private const val NAME_SIZE = 84f
 
 /** Longer team names shrink to fit. */
 private const val NAME_MAX_WIDTH = 800f
@@ -51,12 +38,12 @@ private const val STATUS_ICON_SIZE = 18f
 private const val STATUS_ICON_GAP = 12f
 
 /**
- * The scoreboard surface: one Canvas view, no layout (design screens 01, 02, 03 and 05 to 09). Renders the latest
+ * The scoreboard surface: one Canvas view (design screens 01 to 03, 05 to 09, 11 to 13). Renders the latest
  * [GameSnapshot] given to [render], confirmations given to [show], the time-up bar, the quick clock adjust overlay,
  * the menu, its set game clock dialog and its exit confirm screen.
  *
- * Everything is laid out in design pixels and scaled to the view. Text is built and measured when the state
- * changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
+ * Everything is laid out in design pixels, where [BoardLayout] puts it, and scaled to the view. Text is built and
+ * measured when the state or the layout changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
  * redraws only when the reading changes (1 Hz above the tenths threshold, 10 Hz below).
  *
  * Only the clock digits change at 10 Hz, so everything else (box, unlit segments, teams, status bar, overlays)
@@ -68,7 +55,11 @@ private const val STATUS_ICON_GAP = 12f
  * redraws on every frame while it lasts, but only the button's fill and labels over the layer.
  */
 @SuppressLint("ViewConstructor") // Built in code by MainActivity, never inflated from XML.
-class ScoreboardView(context: Context, private val timeSource: TimeSource) : View(context) {
+class ScoreboardView(
+    context: Context,
+    private val timeSource: TimeSource,
+    private var layout: BoardLayout,
+) : View(context) {
     private val fonts = BoardFonts(context)
     private val textColor = context.color(R.color.text)
 
@@ -84,21 +75,24 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
 
     private var snapshot: GameSnapshot? = null
 
+    private var hasClockBox = false
+    private val clockBox = RectF()
     private val clockBoxPaint = fillPaint(context.color(R.color.clock_box))
-    private val clockBoxBorder = RectF(CLOCK_BOX).apply { inset(CLOCK_BOX_BORDER / 2, CLOCK_BOX_BORDER / 2) }
+    private val clockBoxBorder = RectF()
     private val clockBoxBorderPaint = strokePaint(context.color(R.color.clock_box_border), CLOCK_BOX_BORDER)
     private val clockPaint = ledPaint(R.color.led_red, Paint.Align.RIGHT)
     private val clockGhostPaint = ledPaint(R.color.led_red_unlit, Paint.Align.LEFT)
-    private val ledBaselineOffset = clockPaint.centerToBaselinePerPx("8") * LED_SIZE
-    private val clockBaseline = CLOCK_BOX.centerY() + ledBaselineOffset
+    private val ledCenterPerPx = clockPaint.centerToBaselinePerPx("8")
+    private var ledBaselineOffset = 0f
+    private var clockBaseline = 0f
     private var reading: ClockReading? = null
     private var clockText = ""
     private var clockGhost = ""
     private var clockGhostX = 0f
     private var clockRight = 0f
 
-    private val left = TeamSlot(Side.LEFT, LEFT_TEAM_X)
-    private val right = TeamSlot(Side.RIGHT, RIGHT_TEAM_X)
+    private val left = TeamSlot(Side.LEFT)
+    private val right = TeamSlot(Side.RIGHT)
 
     private val statusLinePaint = fillPaint(context.color(R.color.status_line))
     private val clockStatePaint = textPaint(fonts.barlow(600), STATUS_SIZE, textColor, 0.08f, Paint.Align.RIGHT)
@@ -124,6 +118,10 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
     private val exitConfirm = ExitConfirmOverlay(context, fonts)
     private var menuState: MenuState? = null
 
+    init {
+        applyLayout()
+    }
+
     private var ticking = false
     private val tick = object : Runnable {
         override fun run() {
@@ -131,6 +129,15 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
             refreshClock()
             updateTicker()
         }
+    }
+
+    /** Switches to [next] (menu → Layout); everything is placed again and redrawn. */
+    fun setLayout(next: BoardLayout) {
+        if (next == layout) return
+        layout = next
+        applyLayout()
+        refreshClock()
+        invalidateLayer()
     }
 
     fun render(next: GameSnapshot) {
@@ -213,6 +220,26 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         }
         if (setClock.visible || exitConfirm.visible) layerDirty = true // The digits are in the layer, under the dialog.
         invalidate()
+    }
+
+    /** Places the clock, its box, the team columns and the adjust ring where [layout] has them. */
+    private fun applyLayout() {
+        for (paint in arrayOf(clockPaint, clockGhostPaint, clockDimPaint)) paint.textSize = layout.ledSize
+        ledBaselineOffset = ledCenterPerPx * layout.ledSize
+        clockBaseline = layout.clockCenterY + ledBaselineOffset
+        val box = layout.clockBox
+        hasClockBox = box != null
+        if (box != null) {
+            clockBox.set(box.left, box.top, box.right, box.bottom)
+            clockBoxBorder.set(clockBox)
+            clockBoxBorder.inset(CLOCK_BOX_BORDER / 2, CLOCK_BOX_BORDER / 2)
+        }
+        left.place(layout.leftTeamX)
+        right.place(layout.rightTeamX)
+        clockAdjust.place(layout)
+        // Measured again at the new size on the next refresh.
+        reading = null
+        clockGhost = ""
     }
 
     private fun invalidateLayer() {
@@ -317,8 +344,10 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         val saved = canvas.save()
         toDesignPixels(canvas)
 
-        canvas.drawRoundRect(CLOCK_BOX, CLOCK_BOX_RADIUS, CLOCK_BOX_RADIUS, clockBoxPaint)
-        canvas.drawRoundRect(clockBoxBorder, CLOCK_BOX_RADIUS, CLOCK_BOX_RADIUS, clockBoxBorderPaint)
+        if (hasClockBox) {
+            canvas.drawRoundRect(clockBox, CLOCK_BOX_RADIUS, CLOCK_BOX_RADIUS, clockBoxPaint)
+            canvas.drawRoundRect(clockBoxBorder, CLOCK_BOX_RADIUS, CLOCK_BOX_RADIUS, clockBoxBorderPaint)
+        }
         canvas.drawText(clockGhost, clockGhostX, clockBaseline, clockGhostPaint)
 
         left.draw(canvas)
@@ -364,18 +393,19 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         canvas.scale(scale, scale)
     }
 
+    /** Sized by [applyLayout]. */
     private fun ledPaint(colorRes: Int, align: Paint.Align) =
-        textPaint(fonts.led, LED_SIZE, context.color(colorRes), align = align)
+        textPaint(fonts.led, layout.ledSize, context.color(colorRes), align = align)
 
-    /** One team column: its name (HOME / AWAY), score over its unlit segments. */
-    private inner class TeamSlot(side: Side, private val centerX: Float) {
+    /** One team column: its name (HOME / AWAY), score over its unlit segments. Placed by [place]. */
+    private inner class TeamSlot(side: Side) {
         private var score = -1
+        private var centerX = 0f
 
         private val name = context.getString(side.teamNameRes()).uppercase(resources.configuration.primaryLocale)
-        private val namePaint = textPaint(fonts.barlow(700), NAME_SIZE, textColor, 0.03f, Paint.Align.CENTER).apply {
-            fitText(name, NAME_SIZE, NAME_MAX_WIDTH)
-        }
-        private val nameBaseline = NAME_CENTER_Y + namePaint.centerToBaselinePerPx("H") * namePaint.textSize
+        private val namePaint = textPaint(fonts.barlow(700), layout.nameSize, textColor, 0.03f, Paint.Align.CENTER)
+        private val nameCenterPerPx = namePaint.centerToBaselinePerPx("H")
+        private var nameBaseline = 0f
 
         private var scoreText = ""
         private var scoreGhost = ""
@@ -383,7 +413,18 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
         private var scoreRight = 0f
         private val scorePaint = ledPaint(R.color.led_amber, Paint.Align.RIGHT)
         private val scoreGhostPaint = ledPaint(R.color.led_amber_unlit, Paint.Align.LEFT)
-        private val scoreBaseline = SCORE_CENTER_Y + ledBaselineOffset
+        private var scoreBaseline = 0f
+
+        /** Puts the column at [x] and sizes it as [layout] has it. */
+        fun place(x: Float) {
+            centerX = x
+            namePaint.fitText(name, layout.nameSize, NAME_MAX_WIDTH)
+            nameBaseline = layout.nameCenterY + nameCenterPerPx * namePaint.textSize
+            scorePaint.textSize = layout.ledSize
+            scoreGhostPaint.textSize = layout.ledSize
+            scoreBaseline = layout.scoreCenterY + ledBaselineOffset
+            placeScore()
+        }
 
         /** Returns true when anything this column shows changed. */
         fun update(team: TeamState): Boolean {
@@ -393,11 +434,15 @@ class ScoreboardView(context: Context, private val timeSource: TimeSource) : Vie
             val ghost = scoreGhost(scoreText)
             if (ghost != scoreGhost) {
                 scoreGhost = ghost
-                val width = scoreGhostPaint.measureText(ghost)
-                scoreGhostX = centerX - width / 2
-                scoreRight = scoreGhostX + width
+                placeScore()
             }
             return true
+        }
+
+        private fun placeScore() {
+            val width = scoreGhostPaint.measureText(scoreGhost)
+            scoreGhostX = centerX - width / 2
+            scoreRight = scoreGhostX + width
         }
 
         fun draw(canvas: Canvas) {

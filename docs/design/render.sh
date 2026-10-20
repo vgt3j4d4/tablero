@@ -16,6 +16,9 @@ BOARDS=(
   08-set-game-clock
   09-exit-confirm
   10-remote-mapping
+  11-large-live-game
+  12-large-time-up
+  13-large-quick-clock-adjust
 )
 LANGS=(en es)
 
