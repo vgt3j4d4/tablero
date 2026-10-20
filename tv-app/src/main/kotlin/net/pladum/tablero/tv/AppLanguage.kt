@@ -6,7 +6,9 @@ import android.content.res.Configuration
 import android.content.res.XmlResourceParser
 import java.util.Locale
 
-private const val PREFS = "settings"
+/** Preferences holding what is chosen in the menu: the language and the layout. */
+internal const val SETTINGS_PREFS = "settings"
+
 private const val PREF_LANGUAGE = "language"
 private const val ANDROID_NS = "http://schemas.android.com/apk/res/android"
 
@@ -56,7 +58,7 @@ object AppLanguage {
         return Configuration().apply { setLocale(locale) }
     }
 
-    private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    private fun prefs(context: Context) = context.getSharedPreferences(SETTINGS_PREFS, Context.MODE_PRIVATE)
 }
 
 /** The saved language [tag] if it is still bundled, else null (follow the device). */

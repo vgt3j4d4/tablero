@@ -52,6 +52,12 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
 .team { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; min-width: 0; }
 .team-name { max-width: 800px; font-size: 84px; font-weight: 700; line-height: 1; letter-spacing: 0.03em;
   text-transform: uppercase; white-space: nowrap; }
+/* Large layout (boards 11–13): no clock box; clock and scores share one LED size, at least 36 px from every edge. */
+.board.large .clock-row { height: 446px; padding-top: 36px; align-items: center; }
+.board.large .led.clock, .board.large .led.score { font-size: 410px; }
+.board.large .teams { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.board.large .team { gap: 14px; }
+.board.large .team-name { font-size: 56px; }
 .status { height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; padding: 0 48px;
   border-top: 2px solid var(--line-soft); font-size: 28px; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); }
 .status .state { display: flex; align-items: center; gap: 12px; color: var(--text); }
@@ -68,10 +74,11 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
 .toast { position: absolute; left: 500px; bottom: 0; width: 920px; height: 64px; padding: 0 28px; display: flex; align-items: center;
   justify-content: space-between; background: var(--text); color: var(--bg); border-radius: 16px 16px 0 0; }
 .time-up-frame { position: absolute; inset: 0; border: 14px solid var(--alert-frame); }
-.time-up-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 104px; padding: 0 48px; display: flex; align-items: center;
+.time-up-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 88px; padding: 0 48px; display: flex; align-items: center;
   justify-content: space-between; gap: 24px; background: var(--alert); color: #FFFFFF; }
-.btn { height: 68px; padding: 0 24px; border-radius: 12px; font-family: inherit; font-weight: 800; letter-spacing: 0.04em; }
+.btn { height: 64px; padding: 0 24px; border-radius: 12px; font-family: inherit; font-weight: 800; letter-spacing: 0.04em; }
 .adjust-ring { position: absolute; left: 326px; top: 22px; width: 1268px; height: 468px; border: 8px solid var(--adjust); border-radius: 40px; }
+.adjust-ring.large { left: 259px; top: 12px; width: 1402px; height: 458px; }
 .adjust-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; padding: 0 48px; display: flex; align-items: center;
   justify-content: space-between; background: var(--adjust); color: var(--bg); }
 
@@ -119,7 +126,7 @@ const STRINGS = {
     menuRows: [
       [['Game clock', '07:42', false], ['Game length', '10:00', true]],
       [['Home score', '48', true], ['Away score', '45', true]],
-      [['New game', '', false], ['Language', 'English', true], ['Exit', '', false]],
+      [['New game', '', false], ['Layout', 'Classic', true], ['Language', 'English', true], ['Exit', '', false]],
     ],
     menuFocused: 'Home score',
     move: 'MOVE', change: 'CHANGE', open: 'OPEN', close: 'CLOSE',
@@ -154,7 +161,7 @@ const STRINGS = {
     menuRows: [
       [['Reloj de juego', '07:42', false], ['Duración del partido', '10:00', true]],
       [['Puntos Local', '48', true], ['Puntos Visita', '45', true]],
-      [['Nuevo partido', '', false], ['Idioma', 'Español', true], ['Salir', '', false]],
+      [['Nuevo partido', '', false], ['Diseño', 'Clásico', true], ['Idioma', 'Español', true], ['Salir', '', false]],
     ],
     menuFocused: 'Puntos Local',
     move: 'MOVER', change: 'CAMBIAR', open: 'ABRIR', close: 'CERRAR',
@@ -203,13 +210,17 @@ function team(name, score) {
     </div>`;
 }
 
-function scoreboard({ leftScore = '48', rightScore = '45', clock = '07:42', running = true } = {}) {
+function scoreboard({ leftScore = '48', rightScore = '45', clock = '07:42', running = true, large = false } = {}) {
   const state = running ? `${RUN_ICON}<span>${T.running}</span>` : `${PAUSE_ICON}<span>${T.stopped}</span>`;
-  return `
+  const led = `<div class="led clock"><span class="ghost">${ghost(clock)}</span><span>${esc(clock)}</span></div>`;
+  return large ? `
+    <div class="board large">
+      <div class="clock-row">${led}</div>
+      <div class="teams">${team(T.home, leftScore)}${team(T.away, rightScore)}</div>
+      <div class="status"><div class="state">${state}</div></div>
+    </div>` : `
     <div class="board">
-      <div class="clock-row"><div class="clock-box">
-        <div class="led clock"><span class="ghost">${ghost(clock)}</span><span>${esc(clock)}</span></div>
-      </div></div>
+      <div class="clock-row"><div class="clock-box">${led}</div></div>
       <div class="teams">${team(T.home, leftScore)}<div></div>${team(T.away, rightScore)}</div>
       <div class="status"><div class="state">${state}</div></div>
     </div>`;
@@ -220,8 +231,8 @@ const BOARDS = {
 
   'final-minute': () => scoreboard({ leftScore: '58', rightScore: '59', clock: '38.4' }),
 
-  'time-up': () => `
-    ${scoreboard({ leftScore: '62', rightScore: '58', clock: '0.0', running: false })}
+  'time-up': (large = false) => `
+    ${scoreboard({ leftScore: '62', rightScore: '58', clock: '0.0', running: false, large })}
     <div class="time-up-frame"></div>
     <div class="time-up-bar">
       <div style="display:flex;align-items:baseline;gap:20px;min-width:0">
@@ -265,9 +276,9 @@ const BOARDS = {
       </div>`;
   },
 
-  'quick-clock-adjust': () => `
-    ${scoreboard({ clock: '08:42' })}
-    <div class="adjust-ring"></div>
+  'quick-clock-adjust': (large = false) => `
+    ${scoreboard({ clock: '08:42', large })}
+    <div class="adjust-ring ${large ? 'large' : ''}"></div>
     <div class="adjust-bar">
       <div style="display:flex;align-items:baseline;gap:18px">
         <span style="font-size:36px;font-weight:800;letter-spacing:0.06em">${esc(T.adjust)}</span>
@@ -383,6 +394,10 @@ const BOARDS = {
       </div>`;
   },
 };
+
+BOARDS['large-live-game'] = () => scoreboard({ large: true });
+BOARDS['large-time-up'] = () => BOARDS['time-up'](true);
+BOARDS['large-quick-clock-adjust'] = () => BOARDS['quick-clock-adjust'](true);
 
 const id = BOARDS[params.get('board')] ? params.get('board') : 'live-game';
 document.title = `tablero — ${id} (${lang})`;

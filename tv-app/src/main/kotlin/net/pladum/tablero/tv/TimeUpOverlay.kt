@@ -7,13 +7,13 @@ import android.graphics.RectF
 
 // Design pixels, from docs/design/boards.html (.time-up-frame, .time-up-bar, .btn).
 private const val FRAME_WIDTH = 14f
-private const val BAR_TOP = 976f
-private const val BAR_CENTER_Y = 1028f
+private const val BAR_TOP = 992f
+private const val BAR_CENTER_Y = 1036f
 private const val PADDING = 48f
 private const val TITLE_SIZE = 48f
 private const val RESULT_SIZE = 30f
 private const val TEXT_GAP = 20f
-private const val BUTTON_HEIGHT = 68f
+private const val BUTTON_HEIGHT = 64f
 private const val BUTTON_RADIUS = 12f
 private const val BUTTON_PADDING = 24f
 private const val BUTTON_GAP = 16f

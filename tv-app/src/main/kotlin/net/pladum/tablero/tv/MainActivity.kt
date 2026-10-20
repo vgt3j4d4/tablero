@@ -51,11 +51,17 @@ class MainActivity : Activity() {
         timeSource = app.timeSource
         logLanguage()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        scoreboard = ScoreboardView(this, timeSource)
+        val layout = LayoutSetting.get(this)
+        scoreboard = ScoreboardView(this, timeSource, layout)
         setContentView(scoreboard)
         menu = Menu(
             dispatch = { dispatch(it) },
             snapshot = { engine.snapshot.value },
+            layout = layout,
+            applyLayout = {
+                LayoutSetting.set(this, it)
+                scoreboard.setLayout(it)
+            },
             languages = AppLanguage.available(this),
             language = AppLanguage.inUse(this),
             applyLanguage = { AppLanguage.set(this, it) },

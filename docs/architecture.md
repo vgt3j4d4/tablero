@@ -125,6 +125,11 @@ value, OK opens the focused row.
   one undo instead of three and can't push older actions (an accidental new game) out of the 20-entry history.
   Language is applied once because applying it recreates the activity; the menu reopens on the row it was on.
   The activity also applies a pending game length when it stops.
+- **Layout** (*Classic* / *Large*, design 01 / 11) applies with every ←/→ press: the board behind the menu changes at
+  once, without recreating the activity. The choice is saved in preferences (`LayoutSetting`, next to the language),
+  so the board comes back the same after a restart or a reboot; a fresh install starts on Classic. Each layout is a
+  `BoardLayout` value holding where the board's parts sit (clock box or none, LED size, team columns, name size,
+  adjust ring); `ScoreboardView` reads those values instead of branching on the layout.
 - **Game clock** opens the set game clock dialog (design 08) only while the clock is stopped: ↑/↓ change the focused
   field (minutes stop at 0 and 60, seconds wrap without carrying), ←/→ switch field, OK sends one `SetGameClock`
   (nothing when the time wasn't changed), Back cancels; both return to the menu.

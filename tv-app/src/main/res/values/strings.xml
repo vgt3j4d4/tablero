@@ -58,6 +58,10 @@
     <string name="menu_game_length">Game length</string>
     <string name="menu_score">%1$s score</string>
     <string name="menu_new_game">New game</string>
+    <string name="menu_layout">Layout</string>
+    <!-- Menu → Layout values: today's board, and the one with bigger digits for small screens. -->
+    <string name="layout_classic">Classic</string>
+    <string name="layout_large">Large</string>
     <string name="menu_language">Language</string>
     <string name="menu_exit">Exit</string>
     <string name="hint_move">MOVE</string>

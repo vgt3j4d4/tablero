@@ -10,14 +10,18 @@ and [`architecture.md`](../architecture.md); these images show how it looks.
 | 02 | [Final minute](en/02-final-minute.png) | Below 1:00 the clock shows tenths (`38.4`) |
 | 03 | [Time up](en/03-time-up.png) | Buzzer state: red frame, result, and the choice between *New game* (default: 0–0) and *Reset clock · keep score* |
 | 05 | [Action feedback](en/05-action-feedback.png) | Confirmation after each action (`HOME +3 · 48 → 51`) with the Undo hint |
-| 06 | [Menu](en/06-menu.png) | Long-press Back: game clock, game length, scores, new game, language, exit |
+| 06 | [Menu](en/06-menu.png) | Long-press Back: game clock, game length, scores, new game, layout, language, exit |
 | 07 | [Quick clock adjust](en/07-quick-clock-adjust.png) | ↓ opens it: ↑/↓ ±1 min, ←/→ ±1 s, OK done, Back cancel; works while the clock runs |
 | 08 | [Set game clock](en/08-set-game-clock.png) | Exact time entry from the menu, only while the clock is stopped |
 | 09 | [Exit confirm](en/09-exit-confirm.png) | Guarded exit to Android TV: Cancel focused by default, exit needs OK held for 2 s |
 | 10 | [Remote mapping](en/10-remote-mapping.png) | Key mapping for the Xiaomi Mi TV Stick remote |
+| 11 | [Large: live game](en/11-large-live-game.png) | The *Large* layout (menu → Layout): no clock box, clock and scores 410 px instead of 330, smaller team names |
+| 12 | [Large: time up](en/12-large-time-up.png) | Time up in the Large layout; the bar clears the scores |
+| 13 | [Large: quick clock adjust](en/13-large-quick-clock-adjust.png) | Quick clock adjust in the Large layout: the ring goes around the bare digits |
 
-Spanish versions use the same file names under [`es/`](es/). Numbers are fixed because issues link to the files;
-04 (a next-game team picker) was dropped.
+Screens 01–10 show the *Classic* layout, the default; the other screens look the same in both layouts (the menu,
+dialogs and bars only differ in the board behind them). Spanish versions use the same file names under [`es/`](es/).
+Numbers are fixed because issues link to the files; 04 (a next-game team picker) was dropped.
 
 ## Visual language
 
