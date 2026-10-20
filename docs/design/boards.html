@@ -43,15 +43,15 @@
   --toast-ink: var(--bg);
   --toast-off: var(--off);
 }
-/* Outdoor mode (boards 14–19): a light board for daylight courts. No unlit segments; the toast turns dark so it
-   still stands out on white. */
+/* Outdoor mode (boards 14–19): a light board for daylight courts. No clock box (its grey would cost the clock
+   contrast) and no unlit segments; the toast turns dark so it still stands out on white. */
 .outdoor {
   --board-bg: #FFFFFF;
   --board-text: #0A0A0A;
   --clock: #0A0A0A;
   --score: #B0121B;
-  --clock-box: #F1F2F4;
-  --clock-box-border: #D9DBDE;
+  --clock-box: transparent;
+  --clock-box-border: transparent;
   --status-line: #E3E5E8;
   --toast-bg: #111317;
   --toast-ink: #F5F2EA;
