@@ -6,7 +6,7 @@ import android.content.res.Configuration
 import android.content.res.XmlResourceParser
 import java.util.Locale
 
-/** Preferences holding what is chosen in the menu: the language and the layout. */
+/** Preferences holding what is chosen in the menu: the language, the layout and the mode. */
 internal const val SETTINGS_PREFS = "settings"
 
 private const val PREF_LANGUAGE = "language"

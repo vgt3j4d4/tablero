@@ -19,6 +19,12 @@ BOARDS=(
   11-large-live-game
   12-large-time-up
   13-large-quick-clock-adjust
+  14-outdoor-live-game
+  15-outdoor-large-live-game
+  16-outdoor-time-up
+  17-outdoor-action-feedback
+  18-outdoor-quick-clock-adjust
+  19-outdoor-menu
 )
 LANGS=(en es)
 
