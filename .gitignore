@@ -18,6 +18,7 @@ __pycache__/
 .idea/
 *.iml
 .vscode/
+bin/
 
 # OS
 .DS_Store

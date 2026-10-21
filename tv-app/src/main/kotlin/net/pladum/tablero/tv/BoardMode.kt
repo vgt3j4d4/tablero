@@ -1,9 +1,11 @@
 package net.pladum.tablero.tv
 
-import android.content.Context
 import android.view.WindowManager
 
 private const val PREF_MODE = "mode"
+
+/** The clock box's colors, both color resources. */
+data class ClockBoxColors(val fill: Int, val border: Int)
 
 /**
  * The board's colors (docs/design/boards.html): Indoor is design 01–13, Outdoor is design 14–19. The menu's Mode row
@@ -12,9 +14,8 @@ private const val PREF_MODE = "mode"
  */
 enum class BoardMode(
     val background: Int,
-    /** The clock box's fill and border where the layout has one, or null for none. */
-    val clockBox: Int?,
-    val clockBoxBorder: Int?,
+    /** The clock box's colors where the layout has one, or null for none. */
+    val clockBox: ClockBoxColors?,
     val clock: Int,
     val clockUnlit: Int,
     val score: Int,
@@ -32,8 +33,7 @@ enum class BoardMode(
     /** LEDs on a black board. */
     INDOOR(
         background = R.color.board_background,
-        clockBox = R.color.clock_box,
-        clockBoxBorder = R.color.clock_box_border,
+        clockBox = ClockBoxColors(fill = R.color.clock_box, border = R.color.clock_box_border),
         clock = R.color.led_red,
         clockUnlit = R.color.led_red_unlit,
         score = R.color.led_amber,
@@ -55,7 +55,6 @@ enum class BoardMode(
     OUTDOOR(
         background = R.color.outdoor_background,
         clockBox = null,
-        clockBoxBorder = null,
         clock = R.color.outdoor_ink,
         clockUnlit = R.color.outdoor_ink_unlit,
         score = R.color.outdoor_score,
@@ -75,20 +74,5 @@ fun BoardMode.labelRes(): Int = when (this) {
     BoardMode.OUTDOOR -> R.string.mode_outdoor
 }
 
-/**
- * The mode chosen in the menu, kept in preferences so the board comes back the same after a restart or a reboot.
- * [BoardMode.INDOOR] until one is chosen.
- */
-object ModeSetting {
-    fun get(context: Context): BoardMode = resolveMode(prefs(context).getString(PREF_MODE, null))
-
-    fun set(context: Context, mode: BoardMode) {
-        prefs(context).edit().putString(PREF_MODE, mode.name).apply()
-    }
-
-    private fun prefs(context: Context) = context.getSharedPreferences(SETTINGS_PREFS, Context.MODE_PRIVATE)
-}
-
-/** The saved mode [name], or [BoardMode.INDOOR] when nothing (or something no longer known) was saved. */
-internal fun resolveMode(name: String?): BoardMode =
-    BoardMode.entries.firstOrNull { it.name == name } ?: BoardMode.INDOOR
+/** The mode chosen in the menu; [BoardMode.INDOOR] until one is chosen. */
+object ModeSetting : EnumSetting<BoardMode>(PREF_MODE, BoardMode.entries, BoardMode.INDOOR)

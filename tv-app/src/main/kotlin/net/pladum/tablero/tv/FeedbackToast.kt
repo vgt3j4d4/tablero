@@ -23,9 +23,10 @@ private const val HINT_GAP = 24f
 
 /**
  * The confirmation over the status bar (design 05, 17: `HOME +3`, `48 → 51`, then the `BACK UNDO` hint), in the
- * colors of the board's [BoardMode]. Text is built and measured in [show]; [draw] only draws. Coordinates are design pixels.
+ * colors of the board's [BoardMode]: [mode] until [setMode] changes it. Text is built and measured in [show]; [draw]
+ * only draws. Coordinates are design pixels.
  */
-class FeedbackToast(private val context: Context, fonts: BoardFonts) {
+class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: BoardMode) {
     var visible = false
         private set
 
@@ -50,7 +51,11 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts) {
     private val hint = KeyHint(context.getString(R.string.key_back), context.getString(R.string.hint_undo))
     private val hintLeft = hint.layoutEndingAt(RIGHT - PADDING, CENTER_Y, hintPaint)
 
-    /** Takes [mode]'s colors; until then nothing shows. */
+    init {
+        setMode(mode)
+    }
+
+    /** Takes [mode]'s colors. */
     fun setMode(mode: BoardMode) {
         panelPaint.color = context.color(mode.toastPanel)
         titlePaint.color = context.color(mode.toastTitle)
