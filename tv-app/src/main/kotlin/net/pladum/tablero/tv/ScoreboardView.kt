@@ -75,9 +75,7 @@ class ScoreboardView(
 
     private var snapshot: GameSnapshot? = null
 
-    /** Whether the layout has a clock box, and whether the mode colors one; it shows when both are true. */
-    private var hasClockBox = false
-    private var clockBoxColored = false
+    /** Shows when the layout places a clock box and the mode colors one. */
     private val clockBox = RectF()
     private val clockBoxPaint = fillPaint()
     private val clockBoxBorder = RectF()
@@ -106,7 +104,7 @@ class ScoreboardView(
     private var clockStateText = ""
     private var statusIconX = 0f
 
-    private val toast = FeedbackToast(context, fonts)
+    private val toast = FeedbackToast(context, fonts, mode)
     private val hideToast = Runnable {
         toast.hide()
         invalidateLayer()
@@ -239,7 +237,6 @@ class ScoreboardView(
         ledBaselineOffset = ledCenterPerPx * layout.ledSize
         clockBaseline = layout.clockCenterY + ledBaselineOffset
         val box = layout.clockBox
-        hasClockBox = box != null
         if (box != null) {
             clockBox.set(box.left, box.top, box.right, box.bottom)
             clockBoxBorder.set(clockBox)
@@ -256,12 +253,9 @@ class ScoreboardView(
     /** Colors the board as [mode] has it. */
     private fun applyMode() {
         backgroundColor = context.color(mode.background)
-        val box = mode.clockBox
-        val boxBorder = mode.clockBoxBorder
-        clockBoxColored = box != null && boxBorder != null
-        if (box != null && boxBorder != null) {
-            clockBoxPaint.color = context.color(box)
-            clockBoxBorderPaint.color = context.color(boxBorder)
+        mode.clockBox?.let { box ->
+            clockBoxPaint.color = context.color(box.fill)
+            clockBoxBorderPaint.color = context.color(box.border)
         }
         val clock = context.color(mode.clock)
         clockPaint.color = clock
@@ -271,8 +265,10 @@ class ScoreboardView(
         clockStatePaint.color = text
         statusIconPaint.color = text
         statusLinePaint.color = context.color(mode.statusLine)
-        left.setMode(mode, text)
-        right.setMode(mode, text)
+        val score = context.color(mode.score)
+        val scoreUnlit = context.color(mode.scoreUnlit)
+        left.setColors(text, score, scoreUnlit)
+        right.setColors(text, score, scoreUnlit)
         toast.setMode(mode)
     }
 
@@ -378,7 +374,7 @@ class ScoreboardView(
         val saved = canvas.save()
         toDesignPixels(canvas)
 
-        if (hasClockBox && clockBoxColored) {
+        if (layout.clockBox != null && mode.clockBox != null) {
             canvas.drawRoundRect(clockBox, CLOCK_BOX_RADIUS, CLOCK_BOX_RADIUS, clockBoxPaint)
             canvas.drawRoundRect(clockBoxBorder, CLOCK_BOX_RADIUS, CLOCK_BOX_RADIUS, clockBoxBorderPaint)
         }
@@ -431,7 +427,7 @@ class ScoreboardView(
     private fun ledPaint(align: Paint.Align) = textPaint(fonts.led, layout.ledSize, 0, align = align)
 
     /**
-     * One team column: its name (HOME / AWAY), score over its unlit segments. Placed by [place], colored by [setMode].
+     * One team column: its name (HOME / AWAY), score over its unlit segments. Placed by [place], colored by [setColors].
      */
     private inner class TeamSlot(side: Side) {
         private var score = -1
@@ -461,11 +457,11 @@ class ScoreboardView(
             placeScore()
         }
 
-        /** Takes [mode]'s colors; [text] is the name's, already resolved. */
-        fun setMode(mode: BoardMode, text: Int) {
-            namePaint.color = text
-            scorePaint.color = context.color(mode.score)
-            scoreGhostPaint.color = context.color(mode.scoreUnlit)
+        /** Colors the name, the score and its unlit segments, as resolved colors. */
+        fun setColors(name: Int, score: Int, scoreUnlit: Int) {
+            namePaint.color = name
+            scorePaint.color = score
+            scoreGhostPaint.color = scoreUnlit
         }
 
         /** Returns true when anything this column shows changed. */

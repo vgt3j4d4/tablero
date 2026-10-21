@@ -216,9 +216,9 @@ class MenuTest {
 
         @Test
         fun `a saved layout is restored, and an unknown or missing one falls back to classic`() {
-            assertEquals(BoardLayout.LARGE, resolveLayout("LARGE"))
-            assertEquals(BoardLayout.CLASSIC, resolveLayout("HUGE"))
-            assertEquals(BoardLayout.CLASSIC, resolveLayout(null))
+            assertEquals(BoardLayout.LARGE, LayoutSetting.resolve("LARGE"))
+            assertEquals(BoardLayout.CLASSIC, LayoutSetting.resolve("HUGE"))
+            assertEquals(BoardLayout.CLASSIC, LayoutSetting.resolve(null))
         }
     }
 
@@ -261,9 +261,9 @@ class MenuTest {
 
         @Test
         fun `a saved mode is restored, and an unknown or missing one falls back to indoor`() {
-            assertEquals(BoardMode.OUTDOOR, resolveMode("OUTDOOR"))
-            assertEquals(BoardMode.INDOOR, resolveMode("NIGHT"))
-            assertEquals(BoardMode.INDOOR, resolveMode(null))
+            assertEquals(BoardMode.OUTDOOR, ModeSetting.resolve("OUTDOOR"))
+            assertEquals(BoardMode.INDOOR, ModeSetting.resolve("NIGHT"))
+            assertEquals(BoardMode.INDOOR, ModeSetting.resolve(null))
         }
     }
 

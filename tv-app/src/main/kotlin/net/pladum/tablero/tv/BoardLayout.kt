@@ -1,7 +1,5 @@
 package net.pladum.tablero.tv
 
-import android.content.Context
-
 private const val PREF_LAYOUT = "layout"
 
 /** A rectangle in design pixels; plain floats so layouts stay usable in JVM unit tests. */
@@ -66,20 +64,5 @@ fun BoardLayout.labelRes(): Int = when (this) {
     BoardLayout.LARGE -> R.string.layout_large
 }
 
-/**
- * The layout chosen in the menu, kept in preferences so the board comes back the same after a restart or a reboot.
- * [BoardLayout.CLASSIC] until one is chosen.
- */
-object LayoutSetting {
-    fun get(context: Context): BoardLayout = resolveLayout(prefs(context).getString(PREF_LAYOUT, null))
-
-    fun set(context: Context, layout: BoardLayout) {
-        prefs(context).edit().putString(PREF_LAYOUT, layout.name).apply()
-    }
-
-    private fun prefs(context: Context) = context.getSharedPreferences(SETTINGS_PREFS, Context.MODE_PRIVATE)
-}
-
-/** The saved layout [name], or [BoardLayout.CLASSIC] when nothing (or something no longer known) was saved. */
-internal fun resolveLayout(name: String?): BoardLayout =
-    BoardLayout.entries.firstOrNull { it.name == name } ?: BoardLayout.CLASSIC
+/** The layout chosen in the menu; [BoardLayout.CLASSIC] until one is chosen. */
+object LayoutSetting : EnumSetting<BoardLayout>(PREF_LAYOUT, BoardLayout.entries, BoardLayout.CLASSIC)
