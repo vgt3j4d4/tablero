@@ -7,8 +7,8 @@ private const val PREF_MODE = "mode"
 
 /**
  * The board's colors (docs/design/boards.html): Indoor is design 01–13, Outdoor is design 14–19. The menu's Mode row
- * chooses one; [ScoreboardView] and [FeedbackToast] read these values instead of branching on the mode. A null color
- * leaves that part out. The menu, its dialogs and the time-up and adjust bars look the same in both modes.
+ * chooses one; [ScoreboardView] and [FeedbackToast] read these values instead of branching on the mode. A null clock
+ * box color leaves the box out. The menu, its dialogs and the time-up and adjust bars look the same in both modes.
  */
 enum class BoardMode(
     val background: Int,
@@ -16,11 +16,9 @@ enum class BoardMode(
     val clockBox: Int?,
     val clockBoxBorder: Int?,
     val clock: Int,
-    /** The clock's unlit segments, or null for none. */
-    val clockUnlit: Int?,
+    val clockUnlit: Int,
     val score: Int,
-    /** The scores' unlit segments, or null for none. */
-    val scoreUnlit: Int?,
+    val scoreUnlit: Int,
     /** Team names and the status bar's text and icon. */
     val text: Int,
     val statusLine: Int,
@@ -50,17 +48,18 @@ enum class BoardMode(
 
     /**
      * For daylight, where reflections wash out a dark board and dim reds: black digits and deep red scores on white,
-     * no clock box or unlit segments (they would only take contrast), a dark confirmation, and the window at full
-     * brightness (which only reaches the backlight when tablero runs on the TV itself, not on a stick over HDMI).
+     * no clock box (its grey would only take contrast), faint unlit segments (without them a lit 1 drifts right and a
+     * short reading looks off-centre), a dark confirmation, and the window at full brightness (which only reaches the
+     * backlight when tablero runs on the TV itself, not on a stick over HDMI).
      */
     OUTDOOR(
         background = R.color.outdoor_background,
         clockBox = null,
         clockBoxBorder = null,
         clock = R.color.outdoor_ink,
-        clockUnlit = null,
+        clockUnlit = R.color.outdoor_ink_unlit,
         score = R.color.outdoor_score,
-        scoreUnlit = null,
+        scoreUnlit = R.color.outdoor_score_unlit,
         text = R.color.outdoor_ink,
         statusLine = R.color.outdoor_status_line,
         toastPanel = R.color.panel,

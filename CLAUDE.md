@@ -107,8 +107,8 @@ tablero/
   (`BoardLayout`): **Classic** (default; clock in a box, 330 px digits) and **Large** (no clock box, 410 px digits,
   smaller team names, ≥ 36 px from every edge for TVs that overscan).
 - Two modes, chosen in the menu (`BoardMode`, colors as data): **Indoor** (default; the LED look above) and
-  **Outdoor** for daylight courts: white board, black clock and team names, deep red scores, no clock box and no
-  unlit segments, a dark confirmation, and full window brightness (it only reaches the backlight on a Google TV set,
+  **Outdoor** for daylight courts: white board, black clock and team names, deep red scores, no clock box, faint
+  unlit segments (they keep each digit's place), a dark confirmation, and full window brightness (it only reaches the backlight on a Google TV set,
   not on a stick over HDMI). Menu, dialogs, time-up and adjust bars look the same in both modes.
 
 ## Remote control mapping (Phase 1, Xiaomi Bluetooth remote)

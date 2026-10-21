@@ -44,7 +44,8 @@
   --toast-off: var(--off);
 }
 /* Outdoor mode (boards 14–19): a light board for daylight courts. No clock box (its grey would cost the clock
-   contrast) and no unlit segments; the toast turns dark so it still stands out on white. */
+   contrast); faint unlit segments keep each digit's place (without them a 1 drifts right and a short reading looks
+   off-centre); the toast turns dark so it still stands out on white. */
 .outdoor {
   --board-bg: #FFFFFF;
   --board-text: #0A0A0A;
@@ -52,12 +53,13 @@
   --score: #B0121B;
   --clock-box: transparent;
   --clock-box-border: transparent;
+  --clock-ghost: #EEEFF1;
+  --score-ghost: #F6E7E8;
   --status-line: #E3E5E8;
   --toast-bg: #111317;
   --toast-ink: #F5F2EA;
   --toast-off: #8B919B;
 }
-.outdoor .ghost { visibility: hidden; }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlow Condensed', sans-serif; }
 .screen { width: 1920px; height: 1080px; position: relative; overflow: hidden; background: var(--bg); }
@@ -223,7 +225,8 @@ const T = STRINGS[lang];
 document.documentElement.lang = lang;
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const ghost = (s) => s.replace(/[0-9]/g, '8');
+/* As the app draws them (LedText.kt): MM:SS and SS.t readings over fixed 88:88 and 88.8 cells. */
+const ghost = (s) => (s.includes(':') ? '88:88' : '88.8');
 const scoreGhost = (s) => '8'.repeat(Math.max(2, s.length));
 const hint = (key, label) => `<span class="hint"><span class="keycap">${esc(key)}</span>${esc(label)}</span>`;
 const PAUSE_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2" y="1" width="5" height="16" rx="1" fill="currentColor"/><rect x="11" y="1" width="5" height="16" rx="1" fill="currentColor"/></svg>';
@@ -428,9 +431,12 @@ BOARDS['large-live-game'] = () => scoreboard({ large: true });
 BOARDS['large-time-up'] = () => BOARDS['time-up'](true);
 BOARDS['large-quick-clock-adjust'] = () => BOARDS['quick-clock-adjust'](true);
 
-for (const board of ['live-game', 'large-live-game', 'time-up', 'action-feedback', 'quick-clock-adjust', 'menu']) {
+for (const board of ['time-up', 'action-feedback', 'quick-clock-adjust', 'menu']) {
   BOARDS[`outdoor-${board}`] = BOARDS[board];
 }
+/* A 1, a short clock and one-digit scores: what the unlit segments have to hold in place. */
+BOARDS['outdoor-live-game'] = () => scoreboard({ leftScore: '3', rightScore: '0', clock: '9:21' });
+BOARDS['outdoor-large-live-game'] = () => scoreboard({ leftScore: '3', rightScore: '0', clock: '9:21', large: true });
 
 const id = BOARDS[params.get('board')] ? params.get('board') : 'live-game';
 document.title = `tablero — ${id} (${lang})`;

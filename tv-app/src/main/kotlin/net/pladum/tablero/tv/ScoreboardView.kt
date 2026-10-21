@@ -83,7 +83,6 @@ class ScoreboardView(
     private val clockBoxBorder = RectF()
     private val clockBoxBorderPaint = strokePaint(0, CLOCK_BOX_BORDER)
     private val clockPaint = ledPaint(Paint.Align.RIGHT)
-    private var hasClockGhost = false
     private val clockGhostPaint = ledPaint(Paint.Align.LEFT)
     private val ledCenterPerPx = clockPaint.centerToBaselinePerPx("8")
     private var ledBaselineOffset = 0f
@@ -267,9 +266,7 @@ class ScoreboardView(
         val clock = context.color(mode.clock)
         clockPaint.color = clock
         clockDimPaint.color = menu.dimmed(clock)
-        val clockUnlit = mode.clockUnlit
-        hasClockGhost = clockUnlit != null
-        if (clockUnlit != null) clockGhostPaint.color = context.color(clockUnlit)
+        clockGhostPaint.color = context.color(mode.clockUnlit)
         val text = context.color(mode.text)
         clockStatePaint.color = text
         statusIconPaint.color = text
@@ -385,7 +382,7 @@ class ScoreboardView(
             canvas.drawRoundRect(clockBox, CLOCK_BOX_RADIUS, CLOCK_BOX_RADIUS, clockBoxPaint)
             canvas.drawRoundRect(clockBoxBorder, CLOCK_BOX_RADIUS, CLOCK_BOX_RADIUS, clockBoxBorderPaint)
         }
-        if (hasClockGhost) canvas.drawText(clockGhost, clockGhostX, clockBaseline, clockGhostPaint)
+        canvas.drawText(clockGhost, clockGhostX, clockBaseline, clockGhostPaint)
 
         left.draw(canvas)
         right.draw(canvas)
@@ -434,8 +431,7 @@ class ScoreboardView(
     private fun ledPaint(align: Paint.Align) = textPaint(fonts.led, layout.ledSize, 0, align = align)
 
     /**
-     * One team column: its name (HOME / AWAY), score over its unlit segments when the mode has them. Placed by
-     * [place], colored by [setMode].
+     * One team column: its name (HOME / AWAY), score over its unlit segments. Placed by [place], colored by [setMode].
      */
     private inner class TeamSlot(side: Side) {
         private var score = -1
@@ -451,7 +447,6 @@ class ScoreboardView(
         private var scoreGhostX = 0f
         private var scoreRight = 0f
         private val scorePaint = ledPaint(Paint.Align.RIGHT)
-        private var hasGhost = false
         private val scoreGhostPaint = ledPaint(Paint.Align.LEFT)
         private var scoreBaseline = 0f
 
@@ -470,9 +465,7 @@ class ScoreboardView(
         fun setMode(mode: BoardMode, text: Int) {
             namePaint.color = text
             scorePaint.color = context.color(mode.score)
-            val unlit = mode.scoreUnlit
-            hasGhost = unlit != null
-            if (unlit != null) scoreGhostPaint.color = context.color(unlit)
+            scoreGhostPaint.color = context.color(mode.scoreUnlit)
         }
 
         /** Returns true when anything this column shows changed. */
@@ -496,7 +489,7 @@ class ScoreboardView(
 
         fun draw(canvas: Canvas) {
             canvas.drawText(name, centerX, nameBaseline, namePaint)
-            if (hasGhost) canvas.drawText(scoreGhost, scoreGhostX, scoreBaseline, scoreGhostPaint)
+            canvas.drawText(scoreGhost, scoreGhostX, scoreBaseline, scoreGhostPaint)
             canvas.drawText(scoreText, scoreRight, scoreBaseline, scorePaint)
         }
     }

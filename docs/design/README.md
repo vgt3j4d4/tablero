@@ -18,7 +18,7 @@ and [`architecture.md`](../architecture.md); these images show how it looks.
 | 11 | [Large: live game](en/11-large-live-game.png) | The *Large* layout (menu → Layout): no clock box, clock and scores 410 px instead of 330, smaller team names |
 | 12 | [Large: time up](en/12-large-time-up.png) | Time up in the Large layout; the bar clears the scores |
 | 13 | [Large: quick clock adjust](en/13-large-quick-clock-adjust.png) | Quick clock adjust in the Large layout: the ring goes around the bare digits |
-| 14 | [Outdoor: live game](en/14-outdoor-live-game.png) | The *Outdoor* mode (menu → Mode) for daylight courts: white board, black clock and team names, deep red scores, no clock box, no unlit segments |
+| 14 | [Outdoor: live game](en/14-outdoor-live-game.png) | The *Outdoor* mode (menu → Mode) for daylight courts: white board, black clock and team names, deep red scores, no clock box, faint unlit segments; shown at `9:21` and 3–0, where they keep the digits in place |
 | 15 | [Outdoor: Large](en/15-outdoor-large-live-game.png) | Outdoor in the Large layout |
 | 16 | [Outdoor: time up](en/16-outdoor-time-up.png) | Time up in Outdoor: the red frame and bar are unchanged |
 | 17 | [Outdoor: action feedback](en/17-outdoor-action-feedback.png) | The confirmation turns dark so it stands out on the white board |
@@ -35,7 +35,9 @@ Numbers are fixed because issues link to the files; 04 (a next-game team picker)
   segments behind them. Game clock LED red `#FF3B2F`, scores LED amber `#FFB21E`.
 - **Outdoor** mode: in daylight, reflections wash out a dark screen and dim reds, so the board turns light, like the
   day mode of maps apps: white background, clock and team names `#0A0A0A`, scores deep red `#B0121B`, no clock box
-  (its grey would take contrast from the clock; the digits stay where Classic puts them), no unlit segments. The confirmation becomes a dark panel; menu, dialogs, time-up and adjust bars keep
+  (its grey would take contrast from the clock; the digits stay where Classic puts them), and faint unlit segments
+  (`#EEEFF1` clock, `#F6E7E8` scores). Without them a lit 1 drifts right of its cell and a short reading (`9:21`,
+  `3`) looks off-centre. The confirmation becomes a dark panel; menu, dialogs, time-up and adjust bars keep
   their colors.
 - Teams are named by side, in white: `HOME` (left) and `AWAY` (right), `LOCAL` / `VISITA` in Spanish.
 - UI text in **Barlow Condensed**; key hints drawn as outlined keycaps.
