@@ -27,7 +27,7 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
 - Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
   display rounding, persisted state) are done with unit tests. `tv-app`: one activity, the final scoreboard look
   (`ScoreboardView`: LED clock and scores, HOME / AWAY labels, status bar, action confirmations; Classic and Large
-  layouts), quick clock adjust,
+  layouts; Indoor and Outdoor modes), quick clock adjust,
   time-up bar, menu (with the set game clock dialog), buzzer at time up (synthesized horn), remote key adapter,
   persistence, fonts, launcher banner and icon, localization (English + Spanish, in-app language via `AppLanguage`), `HOME` intent filter and
   guarded exit to Android TV (menu → hold OK 2 s → the stock launcher).
@@ -106,6 +106,10 @@ tablero/
   (clock running/stopped, action confirmations like `HOME +3 · 48 → 51`). Two layouts, chosen in the menu
   (`BoardLayout`): **Classic** (default; clock in a box, 330 px digits) and **Large** (no clock box, 410 px digits,
   smaller team names, ≥ 36 px from every edge for TVs that overscan).
+- Two modes, chosen in the menu (`BoardMode`, colors as data): **Indoor** (default; the LED look above) and
+  **Outdoor** for daylight courts: white board, black clock and team names, deep red scores, no clock box and no
+  unlit segments, a dark confirmation, and full window brightness (it only reaches the backlight on a Google TV set,
+  not on a stick over HDMI). Menu, dialogs, time-up and adjust bars look the same in both modes.
 
 ## Remote control mapping (Phase 1, Xiaomi Bluetooth remote)
 
@@ -134,10 +138,10 @@ via HDMI-CEC (verify with a key logger).
   so a score can still be fixed); OK opens it again.
 
 Menu overlay (Back long press; D-pad navigable): game clock (set exact time, stopped only), game length, left/right
-score, new game, layout, language, exit (only while stopped; confirm screen with Cancel focused; exit requires
-holding OK 2 s). Open until Back. Scores and layout change with every ←/→ press; game length and language apply when
-focus leaves their row or the menu closes (one undo for game length, one activity recreate for language). Layout and
-language are saved in preferences and survive restarts.
+score, new game, layout, mode, language, exit (only while stopped; confirm screen with Cancel focused; exit requires
+holding OK 2 s). Open until Back. Scores, layout and mode change with every ←/→ press; game length and language apply
+when focus leaves their row or the menu closes (one undo for game length, one activity recreate for language). Layout,
+mode and language are saved in preferences and survive restarts.
 
 ## Tech stack
 

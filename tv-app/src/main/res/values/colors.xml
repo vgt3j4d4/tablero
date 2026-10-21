@@ -13,6 +13,11 @@
     <color name="status_line">#FF16191D</color>
     <color name="text">#FFF5F2EA</color>
     <color name="text_off">#FF3A3F47</color>
+    <!-- Outdoor mode (menu → Mode): a light board for daylight; see BoardMode. -->
+    <color name="outdoor_background">#FFFFFFFF</color>
+    <color name="outdoor_ink">#FF0A0A0A</color>
+    <color name="outdoor_score">#FFB0121B</color>
+    <color name="outdoor_status_line">#FFE3E5E8</color>
     <!-- Clock-editing modes (quick adjust): amber ring and bar, dark ink on the bar. -->
     <color name="adjust">#FFFFB21E</color>
     <color name="adjust_ink">#FF3A2A05</color>

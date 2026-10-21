@@ -51,6 +51,10 @@
     <!-- Menu → Layout values: today's board, and the one with bigger digits for small screens. -->
     <string name="layout_classic">Clásico</string>
     <string name="layout_large">Grande</string>
+    <string name="menu_mode">Modo</string>
+    <!-- Menu → Mode values: today's dark board, and a light one for daylight courts. -->
+    <string name="mode_indoor">Interior</string>
+    <string name="mode_outdoor">Exterior</string>
     <string name="menu_language">Idioma</string>
     <string name="menu_exit">Salir</string>
     <string name="hint_move">MOVER</string>

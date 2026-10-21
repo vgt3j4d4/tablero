@@ -195,6 +195,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
             MenuRow.AWAY_SCORE -> context.getString(R.string.menu_score, context.getString(Side.RIGHT.teamNameRes()))
             MenuRow.NEW_GAME -> context.getString(R.string.menu_new_game)
             MenuRow.LAYOUT -> context.getString(R.string.menu_layout)
+            MenuRow.MODE -> context.getString(R.string.menu_mode)
             MenuRow.LANGUAGE -> context.getString(R.string.menu_language)
             MenuRow.EXIT -> context.getString(R.string.menu_exit)
         }
@@ -216,6 +217,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
                 MenuRow.HOME_SCORE -> left.toString()
                 MenuRow.AWAY_SCORE -> right.toString()
                 MenuRow.LAYOUT -> context.getString(state.layout.labelRes())
+                MenuRow.MODE -> context.getString(state.mode.labelRes())
                 MenuRow.LANGUAGE -> state.language.nativeName()
                 MenuRow.GAME_CLOCK, MenuRow.NEW_GAME, MenuRow.EXIT -> ""
             }
@@ -257,8 +259,14 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
 
     private companion object {
         /** Rows whose value ←/→ change; they show both chevrons. */
-        val CHANGEABLE =
-            setOf(MenuRow.GAME_LENGTH, MenuRow.HOME_SCORE, MenuRow.AWAY_SCORE, MenuRow.LAYOUT, MenuRow.LANGUAGE)
+        val CHANGEABLE = setOf(
+            MenuRow.GAME_LENGTH,
+            MenuRow.HOME_SCORE,
+            MenuRow.AWAY_SCORE,
+            MenuRow.LAYOUT,
+            MenuRow.MODE,
+            MenuRow.LANGUAGE,
+        )
 
         /** Rows that only open while the clock is stopped; muted, without a chevron, while it runs. */
         val STOPPED_ONLY = setOf(MenuRow.GAME_CLOCK, MenuRow.EXIT)

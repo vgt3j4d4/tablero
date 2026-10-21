@@ -20,6 +20,11 @@ Use the HDMI extender so the stick's antenna isn't flush behind the TV.
   larger than the 3" (7.6 cm) LED digits of typical portable scoreboards.
 - Mount at the centre of a sideline, high and tilted down; avoid facing windows. LCD TVs are fine indoors but
   wash out in direct sunlight.
+- **Outdoors**, set tablero's menu → Mode to *Outdoor* (a light board, design 14), and on the TV set the picture
+  mode to *Vivid* / *Dynamic* and the backlight to maximum. tablero asks for full brightness, but that only reaches
+  the backlight when it runs on the TV itself (a Google TV set): a stick can't change the TV's backlight over HDMI.
+  Shade on the screen helps more than anything else: a canopy or a hood, or the sun behind the TV rather than on its
+  face. A matte screen reflects less sky than a glossy one, and in direct sun a TV can overheat and go dark.
 - Any OS is fine when using the stick (Roku, Tizen, webOS…) — it is just an HDMI screen. Check that the TV
   powers on to the last-used HDMI input.
 

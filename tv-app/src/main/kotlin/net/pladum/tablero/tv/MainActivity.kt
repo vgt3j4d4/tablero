@@ -52,7 +52,9 @@ class MainActivity : Activity() {
         logLanguage()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val layout = LayoutSetting.get(this)
-        scoreboard = ScoreboardView(this, timeSource, layout)
+        val mode = ModeSetting.get(this)
+        applyBrightness(mode)
+        scoreboard = ScoreboardView(this, timeSource, layout, mode)
         setContentView(scoreboard)
         menu = Menu(
             dispatch = { dispatch(it) },
@@ -61,6 +63,12 @@ class MainActivity : Activity() {
             applyLayout = {
                 LayoutSetting.set(this, it)
                 scoreboard.setLayout(it)
+            },
+            mode = mode,
+            applyMode = {
+                ModeSetting.set(this, it)
+                scoreboard.setMode(it)
+                applyBrightness(it)
             },
             languages = AppLanguage.available(this),
             language = AppLanguage.inUse(this),
@@ -75,6 +83,11 @@ class MainActivity : Activity() {
         savedInstanceState?.getString(STATE_MENU_ROW)
             ?.let { saved -> MenuRow.entries.firstOrNull { it.name == saved } }
             ?.let(menu::open)
+    }
+
+    /** Outdoor asks for full brightness; it only reaches the backlight when tablero runs on the TV itself. */
+    private fun applyBrightness(mode: BoardMode) {
+        window.attributes = window.attributes.apply { screenBrightness = mode.screenBrightness }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

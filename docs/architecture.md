@@ -130,6 +130,11 @@ value, OK opens the focused row.
   so the board comes back the same after a restart or a reboot; a fresh install starts on Classic. Each layout is a
   `BoardLayout` value holding where the board's parts sit (clock box or none, LED size, team columns, name size,
   adjust ring); `ScoreboardView` reads those values instead of branching on the layout.
+- **Mode** (*Indoor* / *Outdoor*, design 01 / 14) works the same way: every ←/→ press repaints the board behind the
+  menu, and the choice is saved in preferences (`ModeSetting`); a fresh install starts on Indoor. Each mode is a
+  `BoardMode` value holding the board's colors (a null color leaves that part out: Outdoor has no clock box and no
+  unlit segments) and the window brightness the activity asks for (`BRIGHTNESS_OVERRIDE_FULL` outdoors). The
+  menu, dialogs, time-up and adjust bars keep their colors in both modes.
 - **Game clock** opens the set game clock dialog (design 08) only while the clock is stopped: ↑/↓ change the focused
   field (minutes stop at 0 and 60, seconds wrap without carrying), ←/→ switch field, OK sends one `SetGameClock`
   (nothing when the time wasn't changed), Back cancels; both return to the menu.

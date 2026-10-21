@@ -25,6 +25,7 @@ class MenuTest {
     private val dispatched = mutableListOf<Command>()
     private val applied = mutableListOf<Locale>()
     private val layouts = mutableListOf<BoardLayout>()
+    private val modes = mutableListOf<BoardMode>()
     private var nowNanos = 0L
 
     /** The action the menu posted (the end of a hold on EXIT) and when it is due, until removed. */
@@ -39,6 +40,8 @@ class MenuTest {
         snapshot = { snapshot },
         layout = BoardLayout.CLASSIC,
         applyLayout = { layouts += it },
+        mode = BoardMode.INDOOR,
+        applyMode = { modes += it },
         languages = listOf(ENGLISH, SPANISH),
         language = ENGLISH,
         applyLanguage = { applied += it },
@@ -216,6 +219,51 @@ class MenuTest {
             assertEquals(BoardLayout.LARGE, resolveLayout("LARGE"))
             assertEquals(BoardLayout.CLASSIC, resolveLayout("HUGE"))
             assertEquals(BoardLayout.CLASSIC, resolveLayout(null))
+        }
+    }
+
+    @Nested
+    inner class Mode {
+        @Test
+        fun `each press applies the next mode at once, wrapping around`() {
+            menu.open()
+            focus(MenuRow.MODE)
+            assertEquals(BoardMode.INDOOR, shown?.mode)
+            menu.right()
+            assertEquals(listOf(BoardMode.OUTDOOR), modes)
+            assertEquals(BoardMode.OUTDOOR, shown?.mode)
+            menu.right()
+            assertEquals(listOf(BoardMode.OUTDOOR, BoardMode.INDOOR), modes)
+            menu.left()
+            assertEquals(BoardMode.OUTDOOR, modes.last())
+            assertTrue(menu.isOpen)
+        }
+
+        @Test
+        fun `leaving the row or closing the menu applies nothing more`() {
+            menu.open()
+            focus(MenuRow.MODE)
+            menu.right()
+            menu.down()
+            menu.back()
+            assertEquals(listOf(BoardMode.OUTDOOR), modes)
+        }
+
+        @Test
+        fun `the menu shows the mode chosen last when it opens again`() {
+            menu.open()
+            focus(MenuRow.MODE)
+            menu.right()
+            menu.back()
+            menu.open()
+            assertEquals(BoardMode.OUTDOOR, shown?.mode)
+        }
+
+        @Test
+        fun `a saved mode is restored, and an unknown or missing one falls back to indoor`() {
+            assertEquals(BoardMode.OUTDOOR, resolveMode("OUTDOOR"))
+            assertEquals(BoardMode.INDOOR, resolveMode("NIGHT"))
+            assertEquals(BoardMode.INDOOR, resolveMode(null))
         }
     }
 

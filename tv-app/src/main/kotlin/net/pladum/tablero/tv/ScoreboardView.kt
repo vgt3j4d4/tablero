@@ -38,12 +38,12 @@ private const val STATUS_ICON_SIZE = 18f
 private const val STATUS_ICON_GAP = 12f
 
 /**
- * The scoreboard surface: one Canvas view (design screens 01 to 03, 05 to 09, 11 to 13). Renders the latest
+ * The scoreboard surface: one Canvas view (design screens 01 to 03, 05 to 09, 11 to 19). Renders the latest
  * [GameSnapshot] given to [render], confirmations given to [show], the time-up bar, the quick clock adjust overlay,
  * the menu, its set game clock dialog and its exit confirm screen.
  *
- * Everything is laid out in design pixels, where [BoardLayout] puts it, and scaled to the view. Text is built and
- * measured when the state or the layout changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
+ * Everything is laid out in design pixels, where [BoardLayout] puts it, in the colors of [BoardMode], and scaled to
+ * the view. Text is built and measured when the state or the layout changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
  * redraws only when the reading changes (1 Hz above the tenths threshold, 10 Hz below).
  *
  * Only the clock digits change at 10 Hz, so everything else (box, unlit segments, teams, status bar, overlays)
@@ -59,9 +59,9 @@ class ScoreboardView(
     context: Context,
     private val timeSource: TimeSource,
     private var layout: BoardLayout,
+    private var mode: BoardMode,
 ) : View(context) {
     private val fonts = BoardFonts(context)
-    private val textColor = context.color(R.color.text)
 
     private var scale = 1f
     private var offsetX = 0f
@@ -71,17 +71,20 @@ class ScoreboardView(
     private var layer: Bitmap? = null
     private val layerCanvas = Canvas()
     private var layerDirty = true
-    private val backgroundColor = context.color(R.color.board_background)
+    private var backgroundColor = 0
 
     private var snapshot: GameSnapshot? = null
 
+    /** Whether the layout has a clock box, and whether the mode colors one; it shows when both are true. */
     private var hasClockBox = false
+    private var clockBoxColored = false
     private val clockBox = RectF()
-    private val clockBoxPaint = fillPaint(context.color(R.color.clock_box))
+    private val clockBoxPaint = fillPaint()
     private val clockBoxBorder = RectF()
-    private val clockBoxBorderPaint = strokePaint(context.color(R.color.clock_box_border), CLOCK_BOX_BORDER)
-    private val clockPaint = ledPaint(R.color.led_red, Paint.Align.RIGHT)
-    private val clockGhostPaint = ledPaint(R.color.led_red_unlit, Paint.Align.LEFT)
+    private val clockBoxBorderPaint = strokePaint(0, CLOCK_BOX_BORDER)
+    private val clockPaint = ledPaint(Paint.Align.RIGHT)
+    private var hasClockGhost = false
+    private val clockGhostPaint = ledPaint(Paint.Align.LEFT)
     private val ledCenterPerPx = clockPaint.centerToBaselinePerPx("8")
     private var ledBaselineOffset = 0f
     private var clockBaseline = 0f
@@ -94,10 +97,10 @@ class ScoreboardView(
     private val left = TeamSlot(Side.LEFT)
     private val right = TeamSlot(Side.RIGHT)
 
-    private val statusLinePaint = fillPaint(context.color(R.color.status_line))
-    private val clockStatePaint = textPaint(fonts.barlow(600), STATUS_SIZE, textColor, 0.08f, Paint.Align.RIGHT)
+    private val statusLinePaint = fillPaint()
+    private val clockStatePaint = textPaint(fonts.barlow(600), STATUS_SIZE, 0, 0.08f, Paint.Align.RIGHT)
     private val statusBaseline = STATUS_CENTER_Y + clockStatePaint.centerToBaselinePerPx("H") * STATUS_SIZE
-    private val statusIconPaint = fillPaint(textColor)
+    private val statusIconPaint = fillPaint()
     private val pauseBarLeft = RectF()
     private val pauseBarRight = RectF()
     private var running: Boolean? = null
@@ -113,13 +116,14 @@ class ScoreboardView(
     private val timeUp = TimeUpOverlay(context, fonts)
     private var timeUpFocus: TimeUpChoice? = null
     private val menu = MenuOverlay(context, fonts)
-    private val clockDimPaint = ledPaint(R.color.led_red, Paint.Align.RIGHT).apply { color = menu.dimmed(color) }
+    private val clockDimPaint = ledPaint(Paint.Align.RIGHT)
     private val setClock = SetClockOverlay(context, fonts)
     private val exitConfirm = ExitConfirmOverlay(context, fonts)
     private var menuState: MenuState? = null
 
     init {
         applyLayout()
+        applyMode()
     }
 
     private var ticking = false
@@ -137,6 +141,14 @@ class ScoreboardView(
         layout = next
         applyLayout()
         refreshClock()
+        invalidateLayer()
+    }
+
+    /** Switches to [next] (menu → Mode); everything is redrawn in its colors. */
+    fun setMode(next: BoardMode) {
+        if (next == mode) return
+        mode = next
+        applyMode()
         invalidateLayer()
     }
 
@@ -242,6 +254,31 @@ class ScoreboardView(
         clockGhost = ""
     }
 
+    /** Colors the board as [mode] has it. */
+    private fun applyMode() {
+        backgroundColor = context.color(mode.background)
+        val box = mode.clockBox
+        val boxBorder = mode.clockBoxBorder
+        clockBoxColored = box != null && boxBorder != null
+        if (box != null && boxBorder != null) {
+            clockBoxPaint.color = context.color(box)
+            clockBoxBorderPaint.color = context.color(boxBorder)
+        }
+        val clock = context.color(mode.clock)
+        clockPaint.color = clock
+        clockDimPaint.color = menu.dimmed(clock)
+        val clockUnlit = mode.clockUnlit
+        hasClockGhost = clockUnlit != null
+        if (clockUnlit != null) clockGhostPaint.color = context.color(clockUnlit)
+        val text = context.color(mode.text)
+        clockStatePaint.color = text
+        statusIconPaint.color = text
+        statusLinePaint.color = context.color(mode.statusLine)
+        left.setMode(mode, text)
+        right.setMode(mode, text)
+        toast.setMode(mode)
+    }
+
     private fun invalidateLayer() {
         layerDirty = true
         invalidate()
@@ -344,11 +381,11 @@ class ScoreboardView(
         val saved = canvas.save()
         toDesignPixels(canvas)
 
-        if (hasClockBox) {
+        if (hasClockBox && clockBoxColored) {
             canvas.drawRoundRect(clockBox, CLOCK_BOX_RADIUS, CLOCK_BOX_RADIUS, clockBoxPaint)
             canvas.drawRoundRect(clockBoxBorder, CLOCK_BOX_RADIUS, CLOCK_BOX_RADIUS, clockBoxBorderPaint)
         }
-        canvas.drawText(clockGhost, clockGhostX, clockBaseline, clockGhostPaint)
+        if (hasClockGhost) canvas.drawText(clockGhost, clockGhostX, clockBaseline, clockGhostPaint)
 
         left.draw(canvas)
         right.draw(canvas)
@@ -393,17 +430,19 @@ class ScoreboardView(
         canvas.scale(scale, scale)
     }
 
-    /** Sized by [applyLayout]. */
-    private fun ledPaint(colorRes: Int, align: Paint.Align) =
-        textPaint(fonts.led, layout.ledSize, context.color(colorRes), align = align)
+    /** Sized by [applyLayout], colored by [applyMode]. */
+    private fun ledPaint(align: Paint.Align) = textPaint(fonts.led, layout.ledSize, 0, align = align)
 
-    /** One team column: its name (HOME / AWAY), score over its unlit segments. Placed by [place]. */
+    /**
+     * One team column: its name (HOME / AWAY), score over its unlit segments when the mode has them. Placed by
+     * [place], colored by [setMode].
+     */
     private inner class TeamSlot(side: Side) {
         private var score = -1
         private var centerX = 0f
 
         private val name = context.getString(side.teamNameRes()).uppercase(resources.configuration.primaryLocale)
-        private val namePaint = textPaint(fonts.barlow(700), layout.nameSize, textColor, 0.03f, Paint.Align.CENTER)
+        private val namePaint = textPaint(fonts.barlow(700), layout.nameSize, 0, 0.03f, Paint.Align.CENTER)
         private val nameCenterPerPx = namePaint.centerToBaselinePerPx("H")
         private var nameBaseline = 0f
 
@@ -411,8 +450,9 @@ class ScoreboardView(
         private var scoreGhost = ""
         private var scoreGhostX = 0f
         private var scoreRight = 0f
-        private val scorePaint = ledPaint(R.color.led_amber, Paint.Align.RIGHT)
-        private val scoreGhostPaint = ledPaint(R.color.led_amber_unlit, Paint.Align.LEFT)
+        private val scorePaint = ledPaint(Paint.Align.RIGHT)
+        private var hasGhost = false
+        private val scoreGhostPaint = ledPaint(Paint.Align.LEFT)
         private var scoreBaseline = 0f
 
         /** Puts the column at [x] and sizes it as [layout] has it. */
@@ -424,6 +464,15 @@ class ScoreboardView(
             scoreGhostPaint.textSize = layout.ledSize
             scoreBaseline = layout.scoreCenterY + ledBaselineOffset
             placeScore()
+        }
+
+        /** Takes [mode]'s colors; [text] is the name's, already resolved. */
+        fun setMode(mode: BoardMode, text: Int) {
+            namePaint.color = text
+            scorePaint.color = context.color(mode.score)
+            val unlit = mode.scoreUnlit
+            hasGhost = unlit != null
+            if (unlit != null) scoreGhostPaint.color = context.color(unlit)
         }
 
         /** Returns true when anything this column shows changed. */
@@ -447,7 +496,7 @@ class ScoreboardView(
 
         fun draw(canvas: Canvas) {
             canvas.drawText(name, centerX, nameBaseline, namePaint)
-            canvas.drawText(scoreGhost, scoreGhostX, scoreBaseline, scoreGhostPaint)
+            if (hasGhost) canvas.drawText(scoreGhost, scoreGhostX, scoreBaseline, scoreGhostPaint)
             canvas.drawText(scoreText, scoreRight, scoreBaseline, scorePaint)
         }
     }

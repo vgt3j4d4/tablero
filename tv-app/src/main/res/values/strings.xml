@@ -62,6 +62,10 @@
     <!-- Menu → Layout values: today's board, and the one with bigger digits for small screens. -->
     <string name="layout_classic">Classic</string>
     <string name="layout_large">Large</string>
+    <string name="menu_mode">Mode</string>
+    <!-- Menu → Mode values: today's dark board, and a light one for daylight courts. -->
+    <string name="mode_indoor">Indoor</string>
+    <string name="mode_outdoor">Outdoor</string>
     <string name="menu_language">Language</string>
     <string name="menu_exit">Exit</string>
     <string name="hint_move">MOVE</string>
