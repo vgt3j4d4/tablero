@@ -147,7 +147,8 @@ class GameEngine(
             is Command.SetRules -> {
                 if (s.gameClock.running) return Step.Reject(RejectReason.CLOCK_RUNNING)
                 if (command.preset.periods == s.rules.periods) return Step.Reject(RejectReason.NO_CHANGE)
-                s.copy(rules = s.rules.copy(periods = command.preset.periods), period = 1, inBreak = false).withoutFouls()
+                val rules = s.rules.copy(periods = command.preset.periods)
+                s.copy(rules = rules, period = 1, inBreak = false).withoutFouls()
             }
             is Command.Foul -> {
                 if (s.rules.periods == null) return Step.Reject(RejectReason.NOT_IN_RULES)
@@ -319,7 +320,8 @@ class GameEngine(
     private fun GameSnapshot.afterBreak(): GameSnapshot =
         copy(gameClock = ClockState.stopped(lengthMs(period)), inBreak = false)
 
-    private fun GameSnapshot.withoutFouls(): GameSnapshot = copy(left = left.copy(fouls = 0), right = right.copy(fouls = 0))
+    private fun GameSnapshot.withoutFouls(): GameSnapshot =
+        copy(left = left.copy(fouls = 0), right = right.copy(fouls = 0))
 
     private sealed interface Step {
         data class Reject(val reason: RejectReason) : Step

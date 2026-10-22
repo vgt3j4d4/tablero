@@ -119,8 +119,8 @@ class EngineStateTest {
         advance(GAME_MS)
         apply(NextPeriod(withBreak = true))
         val saved = engine.exportState()
-        val breakNanos = PeriodRules.FIBA.breakMs * NANOS_PER_MS
-        start(restored = saved.copy(savedAtNanos = saved.savedAtNanos + breakNanos), rebooted = true, timeSource = { 42 })
+        val breakOver = saved.copy(savedAtNanos = saved.savedAtNanos + PeriodRules.FIBA.breakMs * NANOS_PER_MS)
+        start(restored = breakOver, rebooted = true, timeSource = { 42 })
         assertFalse(state.inBreak)
         assertFalse(state.timeUp)
         assertClock(GAME_MS, running = false)
