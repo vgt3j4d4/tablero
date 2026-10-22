@@ -13,6 +13,7 @@ import net.pladum.tablero.shared.Command.SetGameLength
 import net.pladum.tablero.shared.Command.SetRules
 import net.pladum.tablero.shared.Command.StartClock
 import net.pladum.tablero.shared.Command.StopClock
+import net.pladum.tablero.shared.Command.ToggleClock
 import net.pladum.tablero.shared.Command.TogglePossession
 import net.pladum.tablero.shared.Command.Undo
 import net.pladum.tablero.shared.GameEvent.BreakEnded
@@ -34,15 +35,6 @@ private val FIBA = PeriodRules.FIBA
 private val BREAK_MS = FIBA.breakMs
 private val HALFTIME_MS = FIBA.halftimeMs
 private val OVERTIME_MS = FIBA.overtimeLengthMs
-
-/** Switches to FIBA rules, as the menu's Rules row does. */
-private fun EngineHarness.fiba() = apply(SetRules(RulesPreset.FIBA))
-
-/** Runs the current period's clock out, from wherever it is. */
-private fun EngineHarness.playOut() {
-    apply(StartClock)
-    advance(remainingMs)
-}
 
 /** Plays periods out until [period] is on the board, skipping the breaks. */
 private fun EngineHarness.goTo(period: Int) {
@@ -83,6 +75,12 @@ class PeriodRulesTest {
             apply(SetRules(RulesPreset.PICKUP))
             assertEquals(1, state.period)
             assertEquals(0, state.left.fouls)
+        }
+
+        @Test
+        fun `rules saved with values no preset has count as the preset of their kind`() {
+            assertEquals(RulesPreset.FIBA, RulesPreset.of(GameRules(periods = FIBA.copy(breakMs = MINUTE_MS))))
+            assertEquals(RulesPreset.PICKUP, RulesPreset.of(GameRules(gameLengthMs = 7 * MINUTE_MS)))
         }
 
         @Test
@@ -223,6 +221,17 @@ class PeriodRulesTest {
             assertFalse(state.inBreak)
             assertClock(GAME_MS, running = false)
             assertEquals(listOf(ClockStarted, GameClockExpired, ClockStarted, BreakEnded), clockEvents)
+        }
+
+        @Test
+        fun `the clock toggle ends a break, whichever input sends it`() = engineTest {
+            fiba()
+            playOut()
+            apply(NextPeriod(withBreak = true))
+            apply(ToggleClock)
+            assertFalse(state.inBreak)
+            assertClock(GAME_MS, running = false)
+            assertEquals(EndBreak, (events.last { it is GameEvent.CommandApplied } as GameEvent.CommandApplied).command)
         }
 
         @Test

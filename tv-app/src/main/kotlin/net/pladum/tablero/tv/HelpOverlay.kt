@@ -38,9 +38,6 @@ private const val KEYCAP_SIZE = 34f
 private const val KEYCAP_HEIGHT = 51f
 private const val KEYCAP_TOP = ROW_CENTER - KEYCAP_HEIGHT / 2
 private const val KEYCAP_MIN_WIDTH = 76f
-
-/** The ↓ row's place in the table: OK, ←, →, ↑, ↓, BACK. */
-private const val DOWN_ROW = 4
 private const val KEYCAP_PADDING = 14f
 private const val KEYCAP_BORDER = 3f
 private const val KEYCAP_RADIUS = 12f
@@ -135,32 +132,28 @@ class HelpOverlay(context: Context, fonts: BoardFonts) {
     private val none = context.getString(R.string.help_none)
     private val home = context.getString(Side.LEFT.teamNameRes())
     private val away = context.getString(Side.RIGHT.teamNameRes())
-    private val pickupRows = run {
-        val locale = context.resources.configuration.primaryLocale
-        listOf(
-            Row(context.getString(R.string.key_ok), context.getString(R.string.help_clock),
-                context.getString(R.string.help_clock_note), null),
-            Row(context.getString(R.string.key_left), context.getString(R.string.help_score_up, home),
-                context.getString(R.string.help_score_note), context.getString(R.string.help_score_down, home)),
-            Row(context.getString(R.string.key_right), context.getString(R.string.help_score_up, away),
-                context.getString(R.string.help_score_note), context.getString(R.string.help_score_down, away)),
-            Row(context.getString(R.string.key_up), context.getString(R.string.help_possession),
-                context.getString(R.string.help_possession_note, home.uppercase(locale)),
-                context.getString(R.string.help_possession_hide)),
-            Row(context.getString(R.string.key_down), context.getString(R.string.help_adjust),
-                context.getString(R.string.help_adjust_note), null),
-            Row(context.getString(R.string.key_back), context.getString(R.string.help_undo),
-                context.getString(R.string.help_undo_note), context.getString(R.string.help_menu)),
-        )
-    }
+    private val okRow = Row(context.getString(R.string.key_ok), context.getString(R.string.help_clock),
+        context.getString(R.string.help_clock_note), null)
+    private val leftRow = Row(context.getString(R.string.key_left), context.getString(R.string.help_score_up, home),
+        context.getString(R.string.help_score_note), context.getString(R.string.help_score_down, home))
+    private val rightRow = Row(context.getString(R.string.key_right), context.getString(R.string.help_score_up, away),
+        context.getString(R.string.help_score_note), context.getString(R.string.help_score_down, away))
+    private val upRow = Row(context.getString(R.string.key_up), context.getString(R.string.help_possession),
+        context.getString(R.string.help_possession_note, context.teamTitle(Side.LEFT)),
+        context.getString(R.string.help_possession_hide))
+    private val pickupDownRow = Row(context.getString(R.string.key_down), context.getString(R.string.help_adjust),
+        context.getString(R.string.help_adjust_note), null)
 
-    /** Under period rules ↓ also counts down breaks, and holding it gives a team foul. */
-    private val periodRows = pickupRows.toMutableList().apply {
-        this[DOWN_ROW] = Row(context.getString(R.string.key_down), context.getString(R.string.help_adjust),
+    /** Under period rules ↓ also adjusts breaks, and holding it gives a team foul. */
+    private val periodDownRow by lazy {
+        Row(context.getString(R.string.key_down), context.getString(R.string.help_adjust),
             context.getString(R.string.help_adjust_note_breaks), context.getString(R.string.help_foul),
             context.getString(R.string.help_foul_note, home, away))
     }
-    private var rows: List<Row> = pickupRows
+    private val backRow = Row(context.getString(R.string.key_back), context.getString(R.string.help_undo),
+        context.getString(R.string.help_undo_note), context.getString(R.string.help_menu))
+    private var periodRules = false
+    private var rows = rows()
 
     private val swatch = RectF(
         CONTENT_LEFT, FOOTER_CENTER_Y - SWATCH_SIZE / 2, CONTENT_LEFT + SWATCH_SIZE, FOOTER_CENTER_Y + SWATCH_SIZE / 2,
@@ -233,12 +226,18 @@ class HelpOverlay(context: Context, fonts: BoardFonts) {
 
     /** Shows or hides the screen, with the ↓ row [periodRules] call for; returns true when that changed. */
     fun update(open: Boolean, periodRules: Boolean): Boolean {
-        val nextRows = if (periodRules) periodRows else pickupRows
-        if (open == visible && nextRows === rows) return false
+        if (open == visible && periodRules == this.periodRules) return false
         visible = open
-        rows = nextRows
+        if (periodRules != this.periodRules) {
+            this.periodRules = periodRules
+            rows = rows()
+        }
         return true
     }
+
+    /** The table, top to bottom, with the ↓ row of the rules in use. */
+    private fun rows(): List<Row> =
+        listOf(okRow, leftRow, rightRow, upRow, if (periodRules) periodDownRow else pickupDownRow, backRow)
 
     fun draw(canvas: Canvas) {
         if (!visible) return

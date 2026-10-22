@@ -14,6 +14,10 @@ private const val KEYCAP_GAP = 10f
 /** Paint for keycap outlines; the keycap takes the color of the hint's text. */
 fun keycapPaint(color: Int) = strokePaint(color, KEYCAP_BORDER)
 
+/** Lays out these hints in a row ending at [right], [gap] apart, centered on [centerY]; returns the row's left edge. */
+fun List<KeyHint>.layoutEndingAt(right: Float, gap: Float, centerY: Float, paint: Paint): Float =
+    foldRight(right + gap) { hint, end -> hint.layoutEndingAt(end - gap, centerY, paint) }
+
 /**
  * A remote key in an outlined keycap followed by what it does: `[BACK] UNDO`. Laid out once with [layoutEndingAt],
  * then drawn as is. Coordinates are design pixels.

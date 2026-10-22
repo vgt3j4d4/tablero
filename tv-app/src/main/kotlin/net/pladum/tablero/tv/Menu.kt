@@ -13,33 +13,40 @@ private const val MINUTE_MS = 60_000L
 const val EXIT_HOLD_MS = 2_000L
 
 /**
- * The menu's rows, top to bottom; rows with the same [group] sit together between dividing lines. A [stoppedOnly] row
- * only opens or changes while the clock is stopped, and is muted while it runs. A [periodRulesOnly] row only shows
- * under period rules (design 32).
+ * The menu's rows, top to bottom; rows with the same [group] sit together between dividing lines. A [changeable]
+ * row's value changes with ←/→ (it shows both chevrons); the others open with OK. A [stoppedOnly] row only opens or
+ * changes while the clock is stopped, and is muted while it runs. A [periodRulesOnly] row only shows under period
+ * rules (design 32).
  */
-enum class MenuRow(val group: Int, val stoppedOnly: Boolean = false, val periodRulesOnly: Boolean = false) {
+enum class MenuRow(
+    val group: Int,
+    val changeable: Boolean = false,
+    val stoppedOnly: Boolean = false,
+    val periodRulesOnly: Boolean = false,
+) {
     GAME_CLOCK(0, stoppedOnly = true),
-    PERIOD(0, periodRulesOnly = true),
+    PERIOD(0, changeable = true, periodRulesOnly = true),
 
     /** The period length under period rules. */
-    GAME_LENGTH(0),
-    HOME_SCORE(1),
-    AWAY_SCORE(1),
-    HOME_FOULS(1, periodRulesOnly = true),
-    AWAY_FOULS(1, periodRulesOnly = true),
+    GAME_LENGTH(0, changeable = true),
+    HOME_SCORE(1, changeable = true),
+    AWAY_SCORE(1, changeable = true),
+    HOME_FOULS(1, changeable = true, periodRulesOnly = true),
+    AWAY_FOULS(1, changeable = true, periodRulesOnly = true),
     NEW_GAME(2),
-    RULES(2, stoppedOnly = true),
-    LAYOUT(2),
-    MODE(2),
-    LANGUAGE(2),
+    RULES(2, changeable = true, stoppedOnly = true),
+    LAYOUT(2, changeable = true),
+    MODE(2, changeable = true),
+    LANGUAGE(2, changeable = true),
     HELP(2, stoppedOnly = true),
     EXIT(2, stoppedOnly = true),
     ;
 
     companion object {
+        private val PICKUP_ROWS = entries.filterNot { it.periodRulesOnly }
+
         /** The rows the menu shows under [rules], top to bottom. */
-        fun shownUnder(rules: GameRules): List<MenuRow> =
-            if (rules.periods != null) entries else entries.filterNot { it.periodRulesOnly }
+        fun shownUnder(rules: GameRules): List<MenuRow> = if (rules.periods != null) entries else PICKUP_ROWS
     }
 }
 
@@ -118,7 +125,7 @@ interface MenuKeys {
  * the snapshot ([MenuRow.shownUnder]), so the period and fouls rows appear once period rules apply.
  *
  * Game clock, rules, how to use and exit only open or change while the clock is stopped ([MenuRow.stoppedOnly]): the
- * dialog shows the stopped time, rules only change with the clock stopped, and the other two screens hide the board. OK or Back closes how to use; [openHelp] shows it
+ * dialog shows the stopped time, and the two screens hide the board. OK or Back closes how to use; [openHelp] shows it
  * without the menu, on the first launch.
  *
  * Exit (design 09) opens on a confirm screen with CANCEL focused; leaving takes OK held on EXIT for [EXIT_HOLD_MS].
@@ -329,7 +336,7 @@ class Menu(
             MenuRow.HOME_FOULS -> dispatch(Command.Foul(Side.LEFT, delta))
             MenuRow.AWAY_FOULS -> dispatch(Command.Foul(Side.RIGHT, delta))
             MenuRow.RULES -> {
-                val applied = RulesPreset.of(snapshot().rules) ?: RulesPreset.PICKUP
+                val applied = RulesPreset.of(snapshot().rules)
                 pendingRules = RulesPreset.entries.step(pendingRules ?: applied, delta).takeIf { it != applied }
                 notifyChange()
             }

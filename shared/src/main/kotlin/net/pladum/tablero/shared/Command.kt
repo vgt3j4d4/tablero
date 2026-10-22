@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 sealed interface Command {
+    /** Starts or stops the clock; during a break it ends the break. Recorded as what it resolved to. */
     @Serializable
     @SerialName("toggle_clock")
     data object ToggleClock : Command

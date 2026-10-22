@@ -56,9 +56,7 @@ class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
     )
 
     /** Left edge of the hints, laid out from the right. */
-    private val hintsLeft = hints.foldRight(DESIGN_WIDTH - PADDING + HINT_GAP) { hint, right ->
-        hint.layoutEndingAt(right - HINT_GAP, BAR_CENTER_Y, hintPaint)
-    }
+    private val hintsLeft = hints.layoutEndingAt(DESIGN_WIDTH - PADDING, HINT_GAP, BAR_CENTER_Y, hintPaint)
 
     /** Puts the ring where [layout] has it. */
     fun place(layout: BoardLayout) {

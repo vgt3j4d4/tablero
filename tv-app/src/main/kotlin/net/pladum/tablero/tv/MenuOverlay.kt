@@ -39,9 +39,7 @@ private const val CHEVRON_GAP = 14f
 private const val VALUE_RIGHT = TEXT_RIGHT - CHEVRON_SIZE - CHEVRON_GAP
 private const val FOOTER_TOP = 1000f
 
-/** Where the rows are cut when they outgrow the panel (design 32), and how far they fade out there. */
-private const val LIST_TOP = FIRST_ROW_TOP
-private const val LIST_BOTTOM = FOOTER_TOP
+/** How far the rows fade out where they are cut, below the title and above the footer (design 32). */
 private const val FADE_BOTTOM = 120f
 private const val FADE_TOP = 60f
 private const val FOOTER_CENTER_Y = 1041f
@@ -101,8 +99,9 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
     private var scroll = 0f
     private var rowsBottom = 0f
     private val panel = context.color(R.color.panel)
-    private val fadeTopPaint = fadePaint(LIST_TOP, LIST_TOP + FADE_TOP, panel, transparent(panel))
-    private val fadeBottomPaint = fadePaint(LIST_BOTTOM - FADE_BOTTOM, LIST_BOTTOM, transparent(panel), panel)
+    private val fadeTopPaint = fadePaint(FIRST_ROW_TOP, FIRST_ROW_TOP + FADE_TOP, panel, transparent(panel))
+    private val fadeBottomPaint = fadePaint(FOOTER_TOP - FADE_BOTTOM, FOOTER_TOP, transparent(panel), panel)
+    private val periodLengthLabel = context.getString(R.string.menu_period_length)
 
     private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, muted, 0.06f)
     private val keycapPaint = keycapPaint(muted)
@@ -165,14 +164,14 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
         canvas.drawText(title, TEXT_LEFT, TITLE_BASELINE, titlePaint)
         canvas.drawText(chip, TEXT_RIGHT, TITLE_BASELINE, chipPaint)
         val saved = canvas.save()
-        canvas.clipRect(PANEL_LEFT, LIST_TOP, DESIGN_WIDTH, LIST_BOTTOM)
+        canvas.clipRect(PANEL_LEFT, FIRST_ROW_TOP, DESIGN_WIDTH, FOOTER_TOP)
         canvas.translate(0f, -scroll)
         for (y in groupLines) canvas.drawRect(PANEL_LEFT, y, DESIGN_WIDTH, y + GROUP_LINE, groupLinePaint)
         for (row in rows) row.draw(canvas)
         canvas.restoreToCount(saved)
-        if (scroll > 0) canvas.drawRect(PANEL_LEFT, LIST_TOP, DESIGN_WIDTH, LIST_TOP + FADE_TOP, fadeTopPaint)
-        if (rowsBottom - scroll > LIST_BOTTOM) {
-            canvas.drawRect(PANEL_LEFT, LIST_BOTTOM - FADE_BOTTOM, DESIGN_WIDTH, LIST_BOTTOM, fadeBottomPaint)
+        if (scroll > 0) canvas.drawRect(PANEL_LEFT, FIRST_ROW_TOP, DESIGN_WIDTH, FIRST_ROW_TOP + FADE_TOP, fadeTopPaint)
+        if (rowsBottom - scroll > FOOTER_TOP) {
+            canvas.drawRect(PANEL_LEFT, FOOTER_TOP - FADE_BOTTOM, DESIGN_WIDTH, FOOTER_TOP, fadeBottomPaint)
         }
         canvas.drawRect(PANEL_LEFT, FOOTER_TOP, DESIGN_WIDTH, FOOTER_TOP + BORDER, linePaint)
         for (hint in hints) hint.draw(canvas, hintBaseline, hintPaint, keycapPaint)
@@ -183,7 +182,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
         if (!visible) return
         val row = rows[MenuRow.GAME_CLOCK.ordinal]
         val top = row.top - scroll
-        if (top < LIST_TOP) return
+        if (top < FIRST_ROW_TOP) return
         row.styleValue()
         canvas.drawText(clock, row.valueCenter, top + rowBaseline, valuePaint)
     }
@@ -215,9 +214,9 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
         val index = shown.indexOf(focused)
         val above = rows[shown[maxOf(index - 1, 0)].ordinal].top
         val below = rows[shown[minOf(index + 1, shown.lastIndex)].ordinal].top + ROW_HEIGHT
-        if (above - scroll < LIST_TOP) scroll = above - LIST_TOP
-        if (below - scroll > LIST_BOTTOM) scroll = below - LIST_BOTTOM
-        scroll = scroll.coerceIn(0f, maxOf(0f, rowsBottom - LIST_BOTTOM))
+        if (above - scroll < FIRST_ROW_TOP) scroll = above - FIRST_ROW_TOP
+        if (below - scroll > FOOTER_TOP) scroll = below - FOOTER_TOP
+        scroll = scroll.coerceIn(0f, maxOf(0f, rowsBottom - FOOTER_TOP))
     }
 
     /** Opaque, since a shader's colors are drawn through the paint's alpha. */
@@ -268,11 +267,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
         fun layout(state: MenuState, values: Values) {
             focused = state.focused == row
             enabled = !row.stoppedOnly || running != true
-            label = if (row == MenuRow.GAME_LENGTH && values.rules.periods != null) {
-                context.getString(R.string.menu_period_length)
-            } else {
-                fixedLabel
-            }
+            label = if (row == MenuRow.GAME_LENGTH && values.rules.periods != null) periodLengthLabel else fixedLabel
             value = when (row) {
                 MenuRow.PERIOD -> if (values.overtime > 0) {
                     context.getString(R.string.menu_period_overtime, values.overtime)
@@ -285,7 +280,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
                 MenuRow.HOME_FOULS -> values.left.fouls.toString()
                 MenuRow.AWAY_FOULS -> values.right.fouls.toString()
                 MenuRow.RULES -> {
-                    val rules = state.pendingRules ?: RulesPreset.of(values.rules) ?: RulesPreset.PICKUP
+                    val rules = state.pendingRules ?: RulesPreset.of(values.rules)
                     context.getString(rules.labelRes())
                 }
                 MenuRow.LAYOUT -> context.getString(state.layout.labelRes())
@@ -293,7 +288,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
                 MenuRow.LANGUAGE -> state.language.nativeName()
                 MenuRow.GAME_CLOCK, MenuRow.NEW_GAME, MenuRow.HELP, MenuRow.EXIT -> ""
             }
-            hasLeftChevron = row in CHANGEABLE && enabled
+            hasLeftChevron = row.changeable && enabled
             hasRightChevron = enabled
             val width = maxOf(VALUE_MIN_WIDTH, valuePaint.measureText(value))
             valueCenter = VALUE_RIGHT - width / 2
@@ -339,22 +334,6 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
         val period: Int,
         val overtime: Int,
     )
-
-    private companion object {
-        /** Rows whose value ←/→ change; they show both chevrons. */
-        val CHANGEABLE = setOf(
-            MenuRow.PERIOD,
-            MenuRow.GAME_LENGTH,
-            MenuRow.HOME_SCORE,
-            MenuRow.AWAY_SCORE,
-            MenuRow.HOME_FOULS,
-            MenuRow.AWAY_FOULS,
-            MenuRow.RULES,
-            MenuRow.LAYOUT,
-            MenuRow.MODE,
-            MenuRow.LANGUAGE,
-        )
-    }
 }
 
 /** [color] fully transparent, for a fade into it. */

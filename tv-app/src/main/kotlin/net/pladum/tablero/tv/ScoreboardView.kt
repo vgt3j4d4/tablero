@@ -85,7 +85,6 @@ class ScoreboardView(
     private val clockBoxBorderPaint = strokePaint(0, CLOCK_BOX_BORDER)
     private val clockPaint = ledPaint(Paint.Align.RIGHT)
     private val clockGhostPaint = ledPaint(Paint.Align.LEFT)
-    private val ledCenterPerPx = clockPaint.centerToBaselinePerPx("8")
     private var ledBaselineOffset = 0f
     private var clockBaseline = 0f
     private var reading: ClockReading? = null
@@ -192,10 +191,7 @@ class ScoreboardView(
         if (session == null) {
             clockAdjust.hide()
         } else {
-            if (!clockAdjust.visible) {
-                removeCallbacks(hideToast)
-                toast.hide()
-            }
+            if (!clockAdjust.visible) dropToast()
             clockAdjust.show(session)
         }
         invalidateLayer()
@@ -208,8 +204,7 @@ class ScoreboardView(
     fun showFoulBar(open: Boolean) {
         if (open == foulBar.visible) return
         if (open) {
-            removeCallbacks(hideToast)
-            toast.hide()
+            dropToast()
         }
         foulBar.visible = open
         invalidateLayer()
@@ -221,8 +216,7 @@ class ScoreboardView(
      */
     fun showTimeUpBar(focused: TimeUpChoice?) {
         if (focused != null && timeUpFocus == null) {
-            removeCallbacks(hideToast)
-            toast.hide()
+            dropToast()
         }
         timeUpFocus = focused
         if (updateTimeUp()) invalidateLayer()
@@ -231,8 +225,7 @@ class ScoreboardView(
     /** Shows the menu, or one of its dialogs, for [state]; hides it when null. */
     fun showMenu(state: MenuState?) {
         if (state != null && menuState == null) {
-            removeCallbacks(hideToast)
-            toast.hide()
+            dropToast()
         }
         menuState = state
         if (updateMenu()) invalidateLayer() else invalidate() // A hold on EXIT starting or ending.
@@ -259,7 +252,7 @@ class ScoreboardView(
     /** Places the clock, its box, the team columns and the adjust ring where [layout] has them. */
     private fun applyLayout() {
         for (paint in arrayOf(clockPaint, clockGhostPaint, clockDimPaint)) paint.textSize = layout.ledSize
-        ledBaselineOffset = ledCenterPerPx * layout.ledSize
+        ledBaselineOffset = fonts.ledCenterPerPx * layout.ledSize
         clockBaseline = layout.clockCenterY + ledBaselineOffset
         val box = layout.clockBox
         if (box != null) {
@@ -302,6 +295,12 @@ class ScoreboardView(
         fouls.setColors(text, score, scoreUnlit, clock, clockUnlit)
         toast.setMode(mode)
         foulBar.setMode(context, mode)
+    }
+
+    /** Drops the confirmation showing over the status bar, e.g. when a bar or the menu takes its place. */
+    private fun dropToast() {
+        removeCallbacks(hideToast)
+        toast.hide()
     }
 
     private fun invalidateLayer() {
@@ -358,8 +357,7 @@ class ScoreboardView(
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        removeCallbacks(hideToast)
-        toast.hide()
+        dropToast()
         updateTicker()
     }
 
@@ -482,55 +480,34 @@ class ScoreboardView(
         private val nameCenterPerPx = namePaint.centerToBaselinePerPx("H")
         private var nameBaseline = 0f
 
-        private var scoreText = ""
-        private var scoreGhost = ""
-        private var scoreGhostX = 0f
-        private var scoreRight = 0f
-        private val scorePaint = ledPaint(Paint.Align.RIGHT)
-        private val scoreGhostPaint = ledPaint(Paint.Align.LEFT)
-        private var scoreBaseline = 0f
+        private val digits = LedDigits(fonts)
 
         /** Puts the column at [x] and sizes it as [layout] has it. */
         fun place(x: Float) {
             centerX = x
             namePaint.fitText(name, layout.nameSize, NAME_MAX_WIDTH)
             nameBaseline = layout.nameCenterY + nameCenterPerPx * namePaint.textSize
-            scorePaint.textSize = layout.ledSize
-            scoreGhostPaint.textSize = layout.ledSize
-            scoreBaseline = layout.scoreCenterY + ledBaselineOffset
-            placeScore()
+            digits.place(x, layout.scoreCenterY, layout.ledSize)
         }
 
         /** Colors the name, the score and its unlit segments, as resolved colors. */
         fun setColors(name: Int, score: Int, scoreUnlit: Int) {
             namePaint.color = name
-            scorePaint.color = score
-            scoreGhostPaint.color = scoreUnlit
+            digits.setColors(score, scoreUnlit)
         }
 
         /** Returns true when anything this column shows changed. */
         fun update(team: TeamState): Boolean {
             if (team.score == score) return false
             score = team.score
-            scoreText = score.toString()
-            val ghost = scoreGhost(scoreText)
-            if (ghost != scoreGhost) {
-                scoreGhost = ghost
-                placeScore()
-            }
+            val text = score.toString()
+            digits.setText(text, scoreGhost(text))
             return true
-        }
-
-        private fun placeScore() {
-            val width = scoreGhostPaint.measureText(scoreGhost)
-            scoreGhostX = centerX - width / 2
-            scoreRight = scoreGhostX + width
         }
 
         fun draw(canvas: Canvas) {
             canvas.drawText(name, centerX, nameBaseline, namePaint)
-            canvas.drawText(scoreGhost, scoreGhostX, scoreBaseline, scoreGhostPaint)
-            canvas.drawText(scoreText, scoreRight, scoreBaseline, scorePaint)
+            digits.draw(canvas)
         }
     }
 }

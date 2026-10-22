@@ -59,9 +59,7 @@ class FoulBarOverlay(context: Context, fonts: BoardFonts) {
     )
 
     init {
-        val hintsLeft = hints.foldRight(DESIGN_WIDTH - PADDING + HINT_GAP) { hint, right ->
-            hint.layoutEndingAt(right - HINT_GAP, BAR_CENTER_Y, hintPaint)
-        }
+        val hintsLeft = hints.layoutEndingAt(DESIGN_WIDTH - PADDING, HINT_GAP, BAR_CENTER_Y, hintPaint)
         titlePaint.fitText(title, TITLE_SIZE, hintsLeft - GROUP_GAP - PADDING)
     }
 

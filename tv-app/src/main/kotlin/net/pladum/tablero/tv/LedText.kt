@@ -28,8 +28,11 @@ fun ClockReading.ghost(): String = when (this) {
     is ClockReading.SecondsTenths -> CLOCK_GHOST_TENTHS
 }
 
+/** The unlit segments behind [digits] LED digits. */
+fun ledGhost(digits: Int): String = "8".repeat(digits)
+
 /** The unlit segments behind a score: two digits, more from 100 up. */
-fun scoreGhost(score: String): String = "8".repeat(maxOf(MIN_SCORE_DIGITS, score.length))
+fun scoreGhost(score: String): String = ledGhost(maxOf(MIN_SCORE_DIGITS, score.length))
 
 /** A duration in whole seconds as `M:SS` (`10:00`, `0:05`): the game length, a clock adjustment. */
 fun durationText(durationMs: Long): String {

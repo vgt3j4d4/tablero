@@ -72,7 +72,11 @@ enum class RulesPreset(val periods: PeriodRules?) {
     ;
 
     companion object {
-        /** The preset [rules] follow, or null for rules no preset matches. */
-        fun of(rules: GameRules): RulesPreset? = entries.firstOrNull { it.periods == rules.periods }
+        /**
+         * The preset [rules] follow. Rules no preset matches exactly (saved by a version with other values) count as
+         * the first preset of their kind: with periods or without.
+         */
+        fun of(rules: GameRules): RulesPreset = entries.firstOrNull { it.periods == rules.periods }
+            ?: entries.first { (it.periods == null) == (rules.periods == null) }
     }
 }

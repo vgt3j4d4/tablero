@@ -12,7 +12,6 @@ import net.pladum.tablero.shared.Command.ResetGameClock
 import net.pladum.tablero.shared.Command.Score
 import net.pladum.tablero.shared.Command.SetGameClock
 import net.pladum.tablero.shared.Command.SetGameLength
-import net.pladum.tablero.shared.Command.SetRules
 import net.pladum.tablero.shared.Command.StartClock
 import net.pladum.tablero.shared.Command.StopClock
 import net.pladum.tablero.shared.Command.TogglePossession
@@ -52,11 +51,10 @@ class EngineStateTest {
 
     @Test
     fun `JSON round trip keeps FIBA rules, fouls, the period and a running break`() = engineTest {
-        apply(SetRules(RulesPreset.FIBA))
+        fiba()
         apply(Foul(LEFT, 1))
         apply(ChangePeriod(1))
-        apply(StartClock)
-        advance(GAME_MS)
+        playOut()
         apply(NextPeriod(withBreak = true))
         apply(EndBreak)
         apply(Undo)
@@ -114,9 +112,8 @@ class EngineStateTest {
 
     @Test
     fun `after a reboot a break that ran out is over, one that didn't is paused`() = engineTest {
-        apply(SetRules(RulesPreset.FIBA))
-        apply(StartClock)
-        advance(GAME_MS)
+        fiba()
+        playOut()
         apply(NextPeriod(withBreak = true))
         val saved = engine.exportState()
         val breakOver = saved.copy(savedAtNanos = saved.savedAtNanos + PeriodRules.FIBA.breakMs * NANOS_PER_MS)

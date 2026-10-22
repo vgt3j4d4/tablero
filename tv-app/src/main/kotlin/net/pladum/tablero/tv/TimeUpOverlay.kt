@@ -6,14 +6,8 @@ import android.graphics.Paint
 import android.graphics.RectF
 import net.pladum.tablero.shared.GameSnapshot
 
-// Design pixels, from docs/design/boards.html (.time-up-frame, .time-up-bar, .btn).
+// Design pixels, from docs/design/boards.html (.time-up-frame, .time-up-bar, .btn); the bar is a tall one (BarTitle).
 private const val FRAME_WIDTH = 14f
-private const val BAR_TOP = 992f
-private const val BAR_CENTER_Y = 1036f
-private const val PADDING = 48f
-private const val TITLE_SIZE = 48f
-private const val RESULT_SIZE = 30f
-private const val TEXT_GAP = 20f
 private const val BUTTON_HEIGHT = 64f
 private const val BUTTON_RADIUS = 12f
 private const val BUTTON_PADDING = 24f
@@ -23,15 +17,12 @@ private const val FOCUSED_SIZE = 32f
 private const val UNFOCUSED_BORDER = 3f
 private const val UNFOCUSED_SIZE = 28f
 
-/** Minimum space between the title group and the buttons. */
-private const val GROUP_GAP = 24f
-
 /**
  * Time up (design 03, 29): a red frame around the board while the game is at time up, and while the bar is open a
- * red bar over the status bar with the title, the score and the two buttons of the focused [TimeUpChoices]: `TIME UP
- * Home wins 62–58` with NEW GAME / RESET CLOCK · KEEP SCORE when the game is over, `END OF PERIOD 2  Home leads
- * 48–45` with HALFTIME · 15:00 (or BREAK · 2:00) / SKIP BREAK at the end of a period. Text is built in [update];
- * [draw] only draws. Design pixels.
+ * red bar over the status bar with the title, the score and the two buttons [TimeUpChoices.at] the snapshot calls
+ * for: `TIME UP  Home wins 62–58` with NEW GAME / RESET CLOCK · KEEP SCORE when the game is over, `END OF PERIOD 2
+ * Home leads 48–45` with HALFTIME · 15:00 (or BREAK · 2:00) / SKIP BREAK at the end of a period. Text is built in
+ * [update]; [draw] only draws. Design pixels.
  */
 class TimeUpOverlay(private val context: Context, fonts: BoardFonts) {
     var barVisible = false
@@ -46,44 +37,33 @@ class TimeUpOverlay(private val context: Context, fonts: BoardFonts) {
     private val barPaint = fillPaint(context.color(R.color.time_up_bar))
     private val white = context.color(R.color.time_up_text)
 
-    private var title = ""
-    private val titlePaint = textPaint(fonts.barlow(800), TITLE_SIZE, white, 0.06f)
-    private val resultPaint = textPaint(fonts.barlow(600), RESULT_SIZE, white)
-    private val titleCenter = titlePaint.centerToBaselinePerPx("H")
-    private var result = ""
-    private var resultX = 0f
-    private var baseline = 0f
+    private val title = BarTitle(fonts, white, white)
 
     private val focusedFill = fillPaint(white)
     private val unfocusedOutline = strokePaint(context.color(R.color.time_up_outline), UNFOCUSED_BORDER)
     private val focusedText =
         textPaint(fonts.barlow(800), FOCUSED_SIZE, context.color(R.color.time_up_ink), 0.04f, Paint.Align.CENTER)
     private val unfocusedText = textPaint(fonts.barlow(700), UNFOCUSED_SIZE, white, 0.04f, Paint.Align.CENTER)
-    private val focusedBaseline = BAR_CENTER_Y + focusedText.centerToBaselinePerPx("H") * FOCUSED_SIZE
-    private val unfocusedBaseline = BAR_CENTER_Y + unfocusedText.centerToBaselinePerPx("H") * UNFOCUSED_SIZE
+    private val focusedBaseline = TALL_BAR_CENTER_Y + focusedText.centerToBaselinePerPx("H") * FOCUSED_SIZE
+    private val unfocusedBaseline = TALL_BAR_CENTER_Y + unfocusedText.centerToBaselinePerPx("H") * UNFOCUSED_SIZE
 
     private val first = Button()
     private val second = Button()
-    private var buttonsLeft = 0f
 
     /**
-     * Takes the latest state; returns true when what the overlay shows changed. The buttons follow [s]
-     * ([TimeUpChoices.at]), so a [focused] choice from just before a change of pair highlights neither.
+     * Takes the latest state; returns true when what the overlay shows changed. A [focused] choice from just before
+     * the snapshot changed the pair highlights neither button until the bar catches up.
      */
     fun update(s: GameSnapshot, focused: TimeUpChoice?): Boolean {
         val bar = s.timeUp && focused != null
-        val shown = if (bar) {
-            Shown(TimeUpChoices.at(s), s.left.score, s.right.score, s.period, s.overtime, s.nextPeriod)
-        } else {
-            null
-        }
+        val shown = if (bar) Shown(s.left.score, s.right.score, s.period, s.nextPeriod) else null
         if (s.timeUp == frameVisible && bar == barVisible && focused == this.focused && shown == this.shown) {
             return false
         }
         frameVisible = s.timeUp
         barVisible = bar
         this.focused = focused
-        if (shown != null && shown != this.shown) layout(shown, s)
+        if (shown != null && shown != this.shown) layout(s)
         this.shown = shown
         return true
     }
@@ -91,47 +71,34 @@ class TimeUpOverlay(private val context: Context, fonts: BoardFonts) {
     fun draw(canvas: Canvas) {
         if (frameVisible) canvas.drawRect(frame, framePaint)
         if (!barVisible) return
-        canvas.drawRect(0f, BAR_TOP, DESIGN_WIDTH, DESIGN_HEIGHT, barPaint)
-        canvas.drawText(title, PADDING, baseline, titlePaint)
-        canvas.drawText(result, resultX, baseline, resultPaint)
+        canvas.drawRect(0f, TALL_BAR_TOP, DESIGN_WIDTH, DESIGN_HEIGHT, barPaint)
+        title.draw(canvas)
         first.draw(canvas, first.choice == focused)
         second.draw(canvas, second.choice == focused)
     }
 
-    /**
-     * Labels and places the buttons, right to left, then builds the title and the result and places them; both shrink
-     * if a translation would reach the buttons.
-     */
-    private fun layout(shown: Shown, s: GameSnapshot) {
-        val choices = shown.choices
+    /** Labels and places the buttons, right to left, then the title and the result before them. */
+    private fun layout(s: GameSnapshot) {
+        val choices = TimeUpChoices.at(s)
         first.set(choices.first, buttonLabel(choices.first, s))
         second.set(choices.second, buttonLabel(choices.second, s))
-        buttonsLeft = first.layoutEndingAt(second.layoutEndingAt(DESIGN_WIDTH - PADDING) - BUTTON_GAP)
+        val buttonsLeft = first.layoutEndingAt(second.layoutEndingAt(DESIGN_WIDTH - BAR_PADDING) - BUTTON_GAP)
 
         val periodEnd = choices == TimeUpChoices.PERIOD_END
-        title = when {
+        val titleText = when {
             !periodEnd -> context.getString(R.string.time_up_title)
-            shown.overtime > 0 -> context.getString(R.string.time_up_overtime_end, shown.overtime)
-            else -> context.getString(R.string.time_up_period_end, shown.period)
+            s.overtime > 0 -> context.getString(R.string.time_up_overtime_end, s.overtime)
+            else -> context.getString(R.string.time_up_period_end, s.period)
         }
-        val left = shown.left
-        val right = shown.right
+        val left = s.left.score
+        val right = s.right.score
         val ahead = if (periodEnd) R.string.time_up_leads else R.string.time_up_wins
-        result = when {
+        val result = when {
             left > right -> context.getString(ahead, context.getString(R.string.team_home), left, right)
             right > left -> context.getString(ahead, context.getString(R.string.team_away), right, left)
             else -> context.getString(R.string.time_up_tie, left, right)
         }
-        titlePaint.textSize = TITLE_SIZE
-        resultPaint.textSize = RESULT_SIZE
-        val width = titlePaint.measureText(title) + TEXT_GAP + resultPaint.measureText(result)
-        val available = buttonsLeft - GROUP_GAP - PADDING
-        if (width > available) {
-            titlePaint.textSize = TITLE_SIZE * available / width
-            resultPaint.textSize = RESULT_SIZE * available / width
-        }
-        resultX = PADDING + titlePaint.measureText(title) + TEXT_GAP * titlePaint.textSize / TITLE_SIZE
-        baseline = BAR_CENTER_Y + titleCenter * titlePaint.textSize
+        title.layout(titleText, result, buttonsLeft)
     }
 
     /** A button's label; the break's says how long it lasts. */
@@ -146,15 +113,8 @@ class TimeUpOverlay(private val context: Context, fonts: BoardFonts) {
         TimeUpChoice.SKIP_BREAK -> context.getString(R.string.time_up_skip_break)
     }
 
-    /** What the bar shows from the snapshot, to tell when it needs laying out again. */
-    private data class Shown(
-        val choices: TimeUpChoices,
-        val left: Int,
-        val right: Int,
-        val period: Int,
-        val overtime: Int,
-        val nextPeriod: Int?,
-    )
+    /** What the bar's text depends on in the snapshot, to tell when it needs laying out again. */
+    private data class Shown(val left: Int, val right: Int, val period: Int, val nextPeriod: Int?)
 
     /** One of the two buttons; [set] gives it its choice and label. Each is as wide as its focused look. */
     private inner class Button {
@@ -172,7 +132,7 @@ class TimeUpOverlay(private val context: Context, fonts: BoardFonts) {
         /** Places the button so that it ends at [right]; returns its left edge. */
         fun layoutEndingAt(right: Float): Float {
             val width = focusedText.measureText(label) + 2 * (BUTTON_PADDING + FOCUSED_BORDER)
-            box.set(right - width, BAR_CENTER_Y - BUTTON_HEIGHT / 2, right, BAR_CENTER_Y + BUTTON_HEIGHT / 2)
+            box.set(right - width, TALL_BAR_CENTER_Y - BUTTON_HEIGHT / 2, right, TALL_BAR_CENTER_Y + BUTTON_HEIGHT / 2)
             outline.set(box)
             outline.inset(UNFOCUSED_BORDER / 2, UNFOCUSED_BORDER / 2) // The stroke is centered on the outline.
             return box.left

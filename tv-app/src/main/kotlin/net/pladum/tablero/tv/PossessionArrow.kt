@@ -17,8 +17,8 @@ private const val ARROW_WIDTH_PER_HEIGHT = 0.8f
 /** The arrows' outline, drawn with round joins so their tips look like the design's rounded polygons. */
 private const val ARROW_STROKE = 10f
 
-/** The period's unlit segments: periods and overtimes fit one digit. */
-private const val PERIOD_GHOST = "8"
+/** Periods and overtimes fit one digit. */
+private val PERIOD_GHOST = ledGhost(1)
 
 /**
  * The possession arrow between the scores (design 20–23): a `POS` label in line with the team names over a pair of
@@ -32,10 +32,9 @@ private const val PERIOD_GHOST = "8"
 class PossessionArrow(context: Context, fonts: BoardFonts) {
     private var side: Side? = null
 
-    /** The period or overtime number shown between the arrows, or 0 under Pickup rules. */
+    /** The period or overtime shown between the arrows, or 0 under Pickup rules. */
     private var period = 0
     private var overtime = false
-    private var periodText = ""
 
     private val possessionLabel = context.getString(R.string.possession_label)
     private val periodLabel = context.getString(R.string.period_label)
@@ -45,39 +44,27 @@ class PossessionArrow(context: Context, fonts: BoardFonts) {
     private val labelBaselineOffset = labelPaint.centerToBaselinePerPx("H") * LABEL_SIZE
     private var labelBaseline = 0f
 
+    /** The arrows around the gap between the scores, and around the period digit; [update] picks the pair. */
     private val left = Path()
     private val right = Path()
-    private val periodLeftArrow = Path()
-    private val periodRightArrow = Path()
+    private val periodLeft = Path()
+    private val periodRight = Path()
+    private var leftArrow = left
+    private var rightArrow = right
     private val litPaint = arrowPaint()
     private val unlitPaint = arrowPaint()
-
-    private val periodPaint = textPaint(fonts.led, 0f, 0, align = Paint.Align.RIGHT)
-    private val periodUnlitPaint = textPaint(fonts.led, 0f, 0)
-    private val ledCenterPerPx = textPaint(fonts.led, LABEL_SIZE, 0).centerToBaselinePerPx(PERIOD_GHOST)
-    private var periodBaseline = 0f
-    private var periodGhostX = 0f
-    private var periodDigitRight = 0f
+    private val digit = LedDigits(fonts)
 
     /** Puts the label, the arrows and the period where [layout] has them. */
     fun place(layout: BoardLayout) {
         labelBaseline = layout.nameCenterY + labelBaselineOffset
-        val width = layout.possessionArrowHeight * ARROW_WIDTH_PER_HEIGHT
-        val baseX = layout.possessionArrowGap / 2
-        left.arrow(CENTER_X - baseX, CENTER_X - baseX - width, layout.possessionArrowHeight, layout)
-        right.arrow(CENTER_X + baseX, CENTER_X + baseX + width, layout.possessionArrowHeight, layout)
-
-        periodPaint.textSize = layout.periodSize
-        periodUnlitPaint.textSize = layout.periodSize
-        periodBaseline = layout.scoreCenterY + ledCenterPerPx * layout.periodSize
-        val digitWidth = periodUnlitPaint.measureText(PERIOD_GHOST)
-        periodGhostX = CENTER_X - digitWidth / 2
-        periodDigitRight = periodGhostX + digitWidth
-        val periodHeight = layout.periodArrowHeight
-        val periodWidth = periodHeight * ARROW_WIDTH_PER_HEIGHT
-        val periodBaseX = digitWidth / 2 + layout.periodArrowGap
-        periodLeftArrow.arrow(CENTER_X - periodBaseX, CENTER_X - periodBaseX - periodWidth, periodHeight, layout)
-        periodRightArrow.arrow(CENTER_X + periodBaseX, CENTER_X + periodBaseX + periodWidth, periodHeight, layout)
+        left.arrow(-layout.possessionArrowGap / 2, layout.possessionArrowHeight, layout)
+        right.arrow(layout.possessionArrowGap / 2, layout.possessionArrowHeight, layout)
+        digit.place(CENTER_X, layout.scoreCenterY, layout.periodSize)
+        digit.setText(period.toString(), PERIOD_GHOST)
+        val periodBase = digit.width / 2 + layout.periodArrowGap
+        periodLeft.arrow(-periodBase, layout.periodArrowHeight, layout)
+        periodRight.arrow(periodBase, layout.periodArrowHeight, layout)
     }
 
     /** Colors the label, the lit and unlit arrows and the period's lit and unlit digit, as resolved colors. */
@@ -85,8 +72,7 @@ class PossessionArrow(context: Context, fonts: BoardFonts) {
         labelPaint.color = label
         litPaint.color = lit
         unlitPaint.color = unlit
-        periodPaint.color = period
-        periodUnlitPaint.color = periodUnlit
+        digit.setColors(period, periodUnlit)
     }
 
     /** Points the arrow as [snapshot] has it, with its period under period rules. Returns true when that changed. */
@@ -101,32 +87,35 @@ class PossessionArrow(context: Context, fonts: BoardFonts) {
         side = snapshot.possession
         period = nextPeriod
         overtime = nextOvertime
-        periodText = period.toString()
+        digit.setText(period.toString(), PERIOD_GHOST)
         label = when {
             period == 0 -> possessionLabel
             overtime -> overtimeLabel
             else -> periodLabel
         }
+        leftArrow = if (period == 0) left else periodLeft
+        rightArrow = if (period == 0) right else periodRight
         return true
     }
 
     fun draw(canvas: Canvas) {
-        val side = side
         if (period == 0 && side == null) return
         canvas.drawText(label, CENTER_X, labelBaseline, labelPaint)
-        canvas.drawPath(if (period == 0) left else periodLeftArrow, if (side == Side.LEFT) litPaint else unlitPaint)
-        canvas.drawPath(if (period == 0) right else periodRightArrow, if (side == Side.RIGHT) litPaint else unlitPaint)
-        if (period == 0) return
-        canvas.drawText(PERIOD_GHOST, periodGhostX, periodBaseline, periodUnlitPaint)
-        canvas.drawText(periodText, periodDigitRight, periodBaseline, periodPaint)
+        canvas.drawPath(leftArrow, if (side == Side.LEFT) litPaint else unlitPaint)
+        canvas.drawPath(rightArrow, if (side == Side.RIGHT) litPaint else unlitPaint)
+        if (period != 0) digit.draw(canvas)
     }
 
-    /** A triangle [height] tall with its upright base at [baseX] and its tip at [tipX], centered on the scores. */
-    private fun Path.arrow(baseX: Float, tipX: Float, height: Float, layout: BoardLayout) {
-        val halfHeight = height / 2
+    /**
+     * A triangle [height] tall, centered on the scores, with its upright base [base] from the center (negative to
+     * the left) and its tip pointing away from the center.
+     */
+    private fun Path.arrow(base: Float, height: Float, layout: BoardLayout) {
+        val baseX = CENTER_X + base
+        val tipX = baseX + Math.copySign(height * ARROW_WIDTH_PER_HEIGHT, base)
         reset()
-        moveTo(baseX, layout.scoreCenterY - halfHeight)
-        lineTo(baseX, layout.scoreCenterY + halfHeight)
+        moveTo(baseX, layout.scoreCenterY - height / 2)
+        lineTo(baseX, layout.scoreCenterY + height / 2)
         lineTo(tipX, layout.scoreCenterY)
         close()
     }

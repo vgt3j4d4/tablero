@@ -61,6 +61,15 @@ class EngineHarness(private val test: TestScope) {
         assertEquals(before, state, "a rejected command must not change the state")
     }
 
+    /** Switches to FIBA rules, as the menu's Rules row does. */
+    fun fiba() = apply(Command.SetRules(RulesPreset.FIBA))
+
+    /** Runs the clock out from wherever it is: time up, or the end of a break. */
+    fun playOut() {
+        apply(Command.StartClock)
+        advance(remainingMs)
+    }
+
     fun assertClock(remainingMs: Long, running: Boolean) {
         assertEquals(remainingMs, this.remainingMs, "remaining")
         assertEquals(running, state.gameClock.running, "running")

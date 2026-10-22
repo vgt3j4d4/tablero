@@ -134,8 +134,7 @@ class RemoteKeyAdapterTest {
     private val fouls = FakeFouls()
     private val timeUp = TimeUpBar({ dispatched += it }, {})
     private val menu = FakeMenu()
-    private var inBreak = false
-    private val keys = RemoteKeyAdapter({ dispatched += it }, { inBreak }, clockAdjust, fouls, timeUp, menu)
+    private val keys = RemoteKeyAdapter({ dispatched += it }, clockAdjust, fouls, timeUp, menu)
 
     private fun shortPress(keyCode: Int) {
         assertTrue(keys.onKeyDown(keyCode, repeatCount = 0))
@@ -449,15 +448,6 @@ class RemoteKeyAdapterTest {
         shortPress(KEYCODE_DPAD_CENTER)
         val breakOrNot = listOf(true, false, true).map { Command.NextPeriod(withBreak = it) }
         assertEquals<List<Command>>(breakOrNot, dispatched)
-    }
-
-    @Test
-    fun `during a break OK ends it instead of starting the clock`() {
-        inBreak = true
-        shortPress(KEYCODE_DPAD_CENTER)
-        inBreak = false
-        shortPress(KEYCODE_DPAD_CENTER)
-        assertEquals(listOf<Command>(Command.EndBreak, ToggleClock), dispatched)
     }
 
     @Test

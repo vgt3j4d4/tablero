@@ -79,7 +79,7 @@ class MainActivity : Activity() {
             exitToAndroidTv = { AndroidTv.open(this) },
             onChange = { scoreboard.showMenu(it) },
         )
-        keys = RemoteKeyAdapter({ dispatch(it) }, { engine.snapshot.value.inBreak }, clockAdjust, foulBar, timeUp, menu)
+        keys = RemoteKeyAdapter({ dispatch(it) }, clockAdjust, foulBar, timeUp, menu)
         savedInstanceState?.getString(STATE_MENU_ROW)
             ?.let { saved -> MenuRow.entries.firstOrNull { it.name == saved } }
             ?.let(menu::open)
