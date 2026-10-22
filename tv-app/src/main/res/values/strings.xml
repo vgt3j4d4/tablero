@@ -53,6 +53,10 @@
     <string name="key_up_down" translatable="false">↑ ↓</string>
     <string name="key_left_right" translatable="false">← →</string>
     <string name="key_ok" translatable="false">OK</string>
+    <string name="key_up" translatable="false">↑</string>
+    <string name="key_down" translatable="false">↓</string>
+    <string name="key_left" translatable="false">←</string>
+    <string name="key_right" translatable="false">→</string>
     <string name="hint_minute">±1 MIN</string>
     <string name="hint_second">±1 SEC</string>
     <string name="hint_done">DONE</string>
@@ -74,6 +78,7 @@
     <string name="mode_indoor">Indoor</string>
     <string name="mode_outdoor">Outdoor</string>
     <string name="menu_language">Language</string>
+    <string name="menu_help">How to use</string>
     <string name="menu_exit">Exit</string>
     <string name="hint_move">MOVE</string>
     <string name="hint_change">CHANGE</string>
@@ -97,4 +102,30 @@
     <string name="exit_cancel" tools:ignore="ButtonCase">CANCEL</string>
     <string name="exit_confirm" tools:ignore="ButtonCase">EXIT</string>
     <string name="exit_hold">HOLD OK · %1$d S</string>
+
+    <!-- How to use (menu → How to use, and once on the first launch): a generic remote and what each key does when
+         pressed or held. Row texts are in sentence case; %1$s is the team name (Home, Away), uppercased in the
+         possession note. The legend's %1$s is the BACK key label, %2$s the menu row (How to use). -->
+    <string name="help_eyebrow">HOW TO USE</string>
+    <string name="help_title">Remote control</string>
+    <string name="help_column_key">KEY</string>
+    <string name="help_column_press">PRESS</string>
+    <string name="help_column_hold">HOLD</string>
+    <string name="help_clock">Start / stop clock</string>
+    <string name="help_clock_note">The center button</string>
+    <string name="help_score_up">%1$s +1</string>
+    <string name="help_score_down">%1$s −1</string>
+    <string name="help_score_note">Press twice for 2 points, three times for 3</string>
+    <string name="help_possession">Flip possession arrow</string>
+    <string name="help_possession_note">The first press points to %1$s</string>
+    <string name="help_possession_hide">Hide arrow</string>
+    <string name="help_adjust">Adjust clock</string>
+    <string name="help_adjust_note">Works while the clock runs</string>
+    <string name="help_undo">Undo last action</string>
+    <string name="help_undo_note">Fixes mistakes, even a new game</string>
+    <string name="help_menu">Open menu</string>
+    <string name="help_none" translatable="false">—</string>
+    <string name="help_legend">Grey keys aren\'t used. To see this again: Menu (hold %1$s) → %2$s.</string>
+    <string name="help_remote">Your remote may look different</string>
+    <string name="key_home">HOME</string>
 </resources>

@@ -30,6 +30,7 @@ Phase 1 scope). Shot clock, fouls, timeouts and periods are deferred.
 - [x] `tv-app`: Large layout (bigger clock and scores, no clock box), chosen in the menu next to Classic
 - [x] `tv-app`: Outdoor mode (a light board for daylight courts), chosen in the menu next to Indoor
 - [x] `shared` + `tv-app`: possession arrow between the scores (↑ flips it, long ↑ hides it)
+- [x] `tv-app`: How to use screen (a generic remote and what each key does), in the menu and on the first launch
 - [ ] Test the Outdoor mode on a real outdoor court in daylight
 - [ ] Test the full Phase 1 flow on the Xiaomi stick
 - [ ] `scripts/setup-stick.sh` / `restore-stick.sh`

@@ -11,9 +11,12 @@ private const val MINUTE_MS = 60_000L
 /** How long OK must be held on EXIT to leave for Android TV. */
 const val EXIT_HOLD_MS = 2_000L
 
-/** The menu's rows, top to bottom; rows with the same [group] sit together between dividing lines. */
-enum class MenuRow(val group: Int) {
-    GAME_CLOCK(0),
+/**
+ * The menu's rows, top to bottom; rows with the same [group] sit together between dividing lines. A [stoppedOnly] row
+ * only opens while the clock is stopped, and is muted while it runs.
+ */
+enum class MenuRow(val group: Int, val stoppedOnly: Boolean = false) {
+    GAME_CLOCK(0, stoppedOnly = true),
     GAME_LENGTH(0),
     HOME_SCORE(1),
     AWAY_SCORE(1),
@@ -21,7 +24,8 @@ enum class MenuRow(val group: Int) {
     LAYOUT(2),
     MODE(2),
     LANGUAGE(2),
-    EXIT(2),
+    HELP(2, stoppedOnly = true),
+    EXIT(2, stoppedOnly = true),
 }
 
 /** The exit confirm screen's buttons, left to right. */
@@ -50,7 +54,15 @@ data class MenuState(
     val setClock: SetClockEditor?,
     /** The exit confirm screen, shown instead of the menu while open. */
     val exitConfirm: ExitConfirm?,
-)
+    /** The how to use screen (design 10), shown instead of the menu while open. */
+    val help: Boolean,
+) {
+    /** The rows show: no dialog or screen is open over them. */
+    val showsRows: Boolean get() = setClock == null && exitConfirm == null && !help
+}
+
+/** Where the how to use screen was opened from, which is where closing it goes back to. */
+private enum class HelpOpenedFrom { MENU, LAUNCH }
 
 /** What the keys drive while the menu is open. */
 interface MenuKeys {
@@ -77,16 +89,21 @@ interface MenuKeys {
 }
 
 /**
- * The menu (design 06), its set game clock dialog (design 08) and its exit confirm screen (design 09). ↑/↓ move
- * between rows, ←/→ change the focused row's value, OK opens the focused row, Back closes the dialog or the menu.
+ * The menu (design 06), its set game clock dialog (design 08), its how to use screen (design 10) and its exit confirm
+ * screen (design 09). ↑/↓ move between rows, ←/→ change the focused row's value, OK opens the focused row, Back
+ * closes the dialog or the menu.
  *
  * Scores change with every press (one [Command.Score] each, as on the scoreboard). Game length and language are
  * kept pending while their row is focused and applied when focus leaves the row or the menu closes: game length as
  * one [Command.SetGameLength], so stepping through minutes takes a single undo, and language once, because applying
  * it recreates the activity. Layout and mode apply with every press: the board behind the menu shows them at once.
  *
- * Exit (design 09) only opens while the clock is stopped, on a confirm screen with CANCEL focused;
- * leaving takes OK held on EXIT for [EXIT_HOLD_MS]. Releasing OK sooner, moving the focus or Back cancels the hold.
+ * Game clock, how to use and exit only open while the clock is stopped ([MenuRow.stoppedOnly]): the dialog shows
+ * the stopped time, and the other two screens hide the board. OK or Back closes how to use; [openHelp] shows it
+ * without the menu, on the first launch.
+ *
+ * Exit (design 09) opens on a confirm screen with CANCEL focused; leaving takes OK held on EXIT for [EXIT_HOLD_MS].
+ * Releasing OK sooner, moving the focus or Back cancels the hold.
  *
  * @param layout the board's layout when the menu is built; [applyLayout] gets each change.
  * @param mode the board's mode when the menu is built; [applyMode] gets each change.
@@ -122,6 +139,7 @@ class Menu(
     private var pendingLanguage: Locale? = null
     private var setClock: SetClockEditor? = null
     private var exitConfirm: ExitConfirm? = null
+    private var help: HelpOpenedFrom? = null
     private val finishHold = Runnable { exit() }
 
     override val isOpen: Boolean get() = focused != null
@@ -135,12 +153,25 @@ class Menu(
         notifyChange()
     }
 
+    /**
+     * Shows the how to use screen on its own, e.g. on the first launch, unless the menu is open or the clock runs;
+     * closing it closes the menu. Returns whether it opened.
+     */
+    fun openHelp(): Boolean {
+        if (isOpen || snapshot().gameClock.running) return false
+        focused = MenuRow.HELP
+        help = HelpOpenedFrom.LAUNCH
+        notifyChange()
+        return true
+    }
+
     /** Applies pending values and closes the menu, dialog included. */
     fun close() {
         if (!isOpen) return
         focused = null
         setClock = null
         exitConfirm = null
+        help = null
         removeCallbacks(finishHold)
         applyPending()
         notifyChange()
@@ -166,7 +197,7 @@ class Menu(
     override fun up() {
         val editor = setClock
         when {
-            exitConfirm != null -> Unit
+            exitConfirm != null || help != null -> Unit
             editor != null -> show(editor.change(1))
             else -> move(-1)
         }
@@ -175,7 +206,7 @@ class Menu(
     override fun down() {
         val editor = setClock
         when {
-            exitConfirm != null -> Unit
+            exitConfirm != null || help != null -> Unit
             editor != null -> show(editor.change(-1))
             else -> move(1)
         }
@@ -184,6 +215,7 @@ class Menu(
     override fun left() {
         val editor = setClock
         when {
+            help != null -> Unit
             exitConfirm != null -> focusExitChoice(ExitChoice.CANCEL)
             editor != null -> show(editor.focus(ClockField.MINUTES))
             else -> change(-1)
@@ -193,6 +225,7 @@ class Menu(
     override fun right() {
         val editor = setClock
         when {
+            help != null -> Unit
             exitConfirm != null -> focusExitChoice(ExitChoice.EXIT)
             editor != null -> show(editor.focus(ClockField.SECONDS))
             else -> change(1)
@@ -200,6 +233,10 @@ class Menu(
     }
 
     override fun ok() {
+        if (help != null) {
+            closeHelp()
+            return
+        }
         val confirm = exitConfirm
         if (confirm != null) {
             when (confirm.focused) {
@@ -214,16 +251,20 @@ class Menu(
             show(null)
             return
         }
-        when (focused) {
-            MenuRow.GAME_CLOCK -> {
-                val s = snapshot()
-                if (!s.gameClock.running) show(SetClockEditor.of(s.gameClock.remainingNanos, s.rules))
-            }
+        val row = focused ?: return
+        val s = snapshot()
+        if (row.stoppedOnly && s.gameClock.running) return
+        when (row) {
+            MenuRow.GAME_CLOCK -> show(SetClockEditor.of(s.gameClock.remainingNanos, s.rules))
             MenuRow.NEW_GAME -> {
                 dispatch(Command.NewGame)
                 close()
             }
-            MenuRow.EXIT -> if (!snapshot().gameClock.running) {
+            MenuRow.HELP -> {
+                help = HelpOpenedFrom.MENU
+                notifyChange()
+            }
+            MenuRow.EXIT -> {
                 exitConfirm = ExitConfirm(ExitChoice.CANCEL)
                 notifyChange()
             }
@@ -235,6 +276,7 @@ class Menu(
 
     override fun back() {
         when {
+            help != null -> closeHelp()
             exitConfirm != null -> closeExitConfirm()
             setClock != null -> show(null)
             else -> close()
@@ -276,7 +318,7 @@ class Menu(
                 pendingLanguage = languages[(current + delta).mod(languages.size)].takeIf { it != language }
                 notifyChange()
             }
-            MenuRow.GAME_CLOCK, MenuRow.NEW_GAME, MenuRow.EXIT, null -> Unit
+            MenuRow.GAME_CLOCK, MenuRow.NEW_GAME, MenuRow.HELP, MenuRow.EXIT, null -> Unit
         }
     }
 
@@ -312,6 +354,15 @@ class Menu(
         notifyChange()
     }
 
+    private fun closeHelp() {
+        if (help == HelpOpenedFrom.LAUNCH) {
+            close()
+            return
+        }
+        help = null
+        notifyChange()
+    }
+
     private fun closeExitConfirm() {
         removeCallbacks(finishHold)
         exitConfirm = null
@@ -331,7 +382,9 @@ class Menu(
 
     private fun notifyChange() = onChange(
         focused?.let {
-            MenuState(it, pendingGameLengthMs, layout, mode, pendingLanguage ?: language, setClock, exitConfirm)
+            MenuState(
+                it, pendingGameLengthMs, layout, mode, pendingLanguage ?: language, setClock, exitConfirm, help != null,
+            )
         },
     )
 }

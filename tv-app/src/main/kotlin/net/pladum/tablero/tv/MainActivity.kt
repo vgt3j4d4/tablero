@@ -82,6 +82,8 @@ class MainActivity : Activity() {
         savedInstanceState?.getString(STATE_MENU_ROW)
             ?.let { saved -> MenuRow.entries.firstOrNull { it.name == saved } }
             ?.let(menu::open)
+        // How to use opens on its own the first time tablero starts with the clock stopped.
+        if (savedInstanceState == null && !HelpShown.get(this) && menu.openHelp()) HelpShown.set(this)
     }
 
     /**

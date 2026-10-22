@@ -22,6 +22,7 @@ private val SPANISH = Locale.forLanguageTag("es")
 
 class MenuTest {
     private var snapshot = GameSnapshot.initial()
+    private val running = ClockState(10 * MINUTE_MS * NANOS_PER_MS, startedAtNanos = 0)
     private val dispatched = mutableListOf<Command>()
     private val applied = mutableListOf<Locale>()
     private val layouts = mutableListOf<BoardLayout>()
@@ -317,7 +318,7 @@ class MenuTest {
 
         @Test
         fun `the dialog does not open while the clock runs`() {
-            snapshot = snapshot.copy(gameClock = ClockState(10 * MINUTE_MS * NANOS_PER_MS, startedAtNanos = 0))
+            snapshot = snapshot.copy(gameClock = running)
             menu.open()
             menu.ok()
             assertNull(shown?.setClock)
@@ -357,9 +358,91 @@ class MenuTest {
     }
 
     @Nested
-    inner class ExitToAndroidTv {
-        private val running = ClockState(10 * MINUTE_MS * NANOS_PER_MS, startedAtNanos = 0)
+    inner class HowToUse {
+        private fun openHelp() {
+            menu.open()
+            focus(MenuRow.HELP)
+            menu.ok()
+        }
 
+        @Test
+        fun `OK on how to use shows its screen`() {
+            openHelp()
+            assertEquals(true, shown?.help)
+            assertEquals(MenuRow.HELP, shown?.focused)
+        }
+
+        @Test
+        fun `the screen does not open while the clock runs`() {
+            snapshot = snapshot.copy(gameClock = running)
+            openHelp()
+            assertEquals(false, shown?.help)
+        }
+
+        @Test
+        fun `back or OK closes the screen back to the menu`() {
+            openHelp()
+            menu.back()
+            assertEquals(false, shown?.help)
+            assertEquals(MenuRow.HELP, shown?.focused)
+            menu.ok()
+            menu.ok()
+            assertTrue(menu.isOpen)
+            assertEquals(false, shown?.help)
+        }
+
+        @Test
+        fun `the arrows do nothing while the screen shows`() {
+            openHelp()
+            val before = shown
+            menu.up()
+            menu.down()
+            menu.left()
+            menu.right()
+            assertEquals(before, shown)
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `shown on its own, back or OK closes the menu with it`() {
+            assertTrue(menu.openHelp())
+            assertEquals(true, shown?.help)
+            assertEquals(MenuRow.HELP, shown?.focused)
+            menu.back()
+            assertFalse(menu.isOpen)
+            assertNull(shown)
+            menu.openHelp()
+            menu.ok()
+            assertFalse(menu.isOpen)
+        }
+
+        @Test
+        fun `opened from the menu after being shown on its own, it closes back to the menu`() {
+            menu.openHelp()
+            menu.back()
+            openHelp()
+            menu.back()
+            assertTrue(menu.isOpen)
+        }
+
+        @Test
+        fun `is not shown on its own while the clock runs`() {
+            snapshot = snapshot.copy(gameClock = running)
+            assertFalse(menu.openHelp())
+            assertFalse(menu.isOpen)
+        }
+
+        @Test
+        fun `is not shown on its own over an open menu`() {
+            menu.open()
+            assertFalse(menu.openHelp())
+            assertEquals(MenuRow.GAME_CLOCK, shown?.focused)
+            assertEquals(false, shown?.help)
+        }
+    }
+
+    @Nested
+    inner class ExitToAndroidTv {
         private fun openConfirm() {
             menu.open()
             focus(MenuRow.EXIT)

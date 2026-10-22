@@ -55,6 +55,12 @@ fun strokePaint(color: Int, width: Float) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     strokeWidth = width
 }
 
+/** A [strokePaint] with round caps and joins, for line icons (chevrons, arrows). */
+fun roundStrokePaint(color: Int, width: Float) = strokePaint(color, width).apply {
+    strokeCap = Paint.Cap.ROUND
+    strokeJoin = Paint.Join.ROUND
+}
+
 /**
  * Text is placed by its visual center line, like the design's flex centering. This is the distance from that
  * center down to the baseline, per pixel of text size, measured on [sample]: capitals for text, an 8 for digits.

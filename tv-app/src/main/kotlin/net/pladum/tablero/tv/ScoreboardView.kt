@@ -38,9 +38,9 @@ private const val STATUS_ICON_SIZE = 18f
 private const val STATUS_ICON_GAP = 12f
 
 /**
- * The scoreboard surface: one Canvas view (design screens 01 to 03, 05 to 09, 11 to 23). Renders the latest
- * [GameSnapshot] given to [render], confirmations given to [show], the time-up bar, the quick clock adjust overlay,
- * the menu, its set game clock dialog and its exit confirm screen.
+ * The scoreboard surface: one Canvas view (design screens 01 to 03, 05 to 23). Renders the latest [GameSnapshot]
+ * given to [render], confirmations given to [show], the time-up bar, the quick clock adjust overlay, the menu, its set
+ * game clock dialog, its how to use screen and its exit confirm screen.
  *
  * Everything is laid out in design pixels, where [BoardLayout] puts it, in the colors of [BoardMode], and scaled to
  * the view. Text is built and measured when the state or the layout changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
@@ -52,8 +52,9 @@ private const val STATUS_ICON_GAP = 12f
  * deadlines.
  * With the menu open, the board is dimmed in the layer and a tick draws the digits in a dimmed color, clipped to the
  * left of the panel, and the menu's Game clock value; the set game clock dialog and the exit confirm screen only
- * open while the clock is stopped, so they go into the layer with the clock digits under them. Holding OK on EXIT
- * redraws on every frame while it lasts, but only the button's fill and labels over the layer.
+ * open while the clock is stopped, so they go into the layer with the clock digits under them. How to use also only
+ * opens while the clock is stopped and covers the whole board, so it is all in the layer and no digits are drawn.
+ * Holding OK on EXIT redraws on every frame while it lasts, but only the button's fill and labels over the layer.
  */
 @SuppressLint("ViewConstructor") // Built in code by MainActivity, never inflated from XML.
 class ScoreboardView(
@@ -118,6 +119,7 @@ class ScoreboardView(
     private val clockDimPaint = ledPaint(Paint.Align.RIGHT)
     private val setClock = SetClockOverlay(context, fonts)
     private val exitConfirm = ExitConfirmOverlay(context, fonts)
+    private val help = HelpOverlay(context, fonts)
     private var menuState: MenuState? = null
 
     init {
@@ -307,7 +309,8 @@ class ScoreboardView(
         val s = snapshot ?: return false
         val panel = menu.update(menuState, s)
         val exit = exitConfirm.update(menuState?.exitConfirm)
-        return setClock.update(menuState?.setClock) || exit || panel
+        val helpChanged = help.update(menuState?.help == true)
+        return setClock.update(menuState?.setClock) || exit || helpChanged || panel
     }
 
     /** Runs the ticker only while the clock runs and the view is on a visible window. */
@@ -359,7 +362,7 @@ class ScoreboardView(
         }
         canvas.drawBitmap(layer, 0f, 0f, null)
         if (exitConfirm.visible) drawExitHold(canvas)
-        if (setClock.visible || exitConfirm.visible) return
+        if (setClock.visible || exitConfirm.visible || help.visible) return
         val saved = canvas.save()
         toDesignPixels(canvas)
         if (menu.visible) {
@@ -378,6 +381,11 @@ class ScoreboardView(
         canvas.drawColor(backgroundColor)
         val saved = canvas.save()
         toDesignPixels(canvas)
+        if (help.visible) { // It covers the whole board.
+            help.draw(canvas)
+            canvas.restoreToCount(saved)
+            return
+        }
 
         if (layout.clockBox != null && mode.clockBox != null) {
             canvas.drawRoundRect(clockBox, CLOCK_BOX_RADIUS, CLOCK_BOX_RADIUS, clockBoxPaint)
