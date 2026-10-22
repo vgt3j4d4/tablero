@@ -70,14 +70,15 @@ Numbers are fixed because issues link to the files; 04 (a next-game team picker)
 ## Regenerating the images
 
 The screens are plain HTML in [`boards.html`](boards.html) (fonts bundled in [`fonts/`](fonts/), both under the
-SIL Open Font License). Open `boards.html?board=<name>&lang=<en|es>` in a browser to view one, or regenerate all
-PNGs with headless Chrome:
+SIL Open Font License). Open `boards.html?board=<name>&lang=<en|es>` in a browser to view one, or regenerate the
+PNGs with headless Chrome, several at once:
 
 ```bash
-docs/design/render.sh                 # CHROME=/path/to/chrome to override the macOS default
+docs/design/render.sh                 # every board; CHROME=/path/to/chrome to override the macOS default
+docs/design/render.sh 06 fiba-menu    # only these boards, by number or name; JOBS=n renders n at a time
 ```
 
-Edit `boards.html` (layout or the `STRINGS` table) and re-run the script when the design changes.
+Edit `boards.html` (layout or the `STRINGS` table) and re-run the script for the boards the change touches.
 
 ## Launcher banner and icon
 
