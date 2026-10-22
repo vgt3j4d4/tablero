@@ -38,18 +38,19 @@ private const val STATUS_ICON_SIZE = 18f
 private const val STATUS_ICON_GAP = 12f
 
 /**
- * The scoreboard surface: one Canvas view (design screens 01 to 03, 05 to 23). Renders the latest [GameSnapshot]
- * given to [render], confirmations given to [show], the time-up bar, the quick clock adjust overlay, the menu, its set
- * game clock dialog, its how to use screen and its exit confirm screen.
+ * The scoreboard surface: one Canvas view (design screens 01 to 03, 05 to 33). Renders the latest [GameSnapshot]
+ * given to [render] (with the break bar while a break runs), confirmations given to [show], the time-up bar, the
+ * quick clock adjust overlay, the team foul bar, the menu, its set game clock dialog, its how to use screen and its
+ * exit confirm screen.
  *
  * Everything is laid out in design pixels, where [BoardLayout] puts it, in the colors of [BoardMode], and scaled to
  * the view. Text is built and measured when the state or the layout changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
  * redraws only when the reading changes (1 Hz above the tenths threshold, 10 Hz below).
  *
  * Only the clock digits change at 10 Hz, so everything else (box, unlit segments, teams, possession arrow and period,
- * fouls, status bar, overlays) is drawn into a screen-sized [layer] bitmap when it changes, and a tick draws that bitmap plus one
- * text. On the stick's slow CPU, recording and issuing the full scene on every tick missed about half the frame
- * deadlines.
+ * fouls, status bar, overlays) is drawn into a screen-sized [layer] bitmap when it changes, and a tick draws that
+ * bitmap plus one text. On the stick's slow CPU, recording and issuing the full scene on every tick missed about half
+ * the frame deadlines.
  * With the menu open, the board is dimmed in the layer and a tick draws the digits in a dimmed color, clipped to the
  * left of the panel, and the menu's Game clock value; the set game clock dialog and the exit confirm screen only
  * open while the clock is stopped, so they go into the layer with the clock digits under them. How to use also only
@@ -115,6 +116,7 @@ class ScoreboardView(
     }
     private val clockAdjust = ClockAdjustOverlay(context, fonts)
     private val foulBar = FoulBarOverlay(context, fonts)
+    private val breakBar = BreakOverlay(context, fonts)
     private val timeUp = TimeUpOverlay(context, fonts)
     private var timeUpFocus: TimeUpChoice? = null
     private val menu = MenuOverlay(context, fonts)
@@ -163,6 +165,7 @@ class ScoreboardView(
         changed = fouls.update(next) || changed
         changed = updateStatus(next) || changed
         changed = updateTimeUp() || changed
+        changed = breakBar.update(next) || changed
         changed = updateMenu() || changed
         if (changed) invalidateLayer()
         refreshClock()
@@ -324,7 +327,7 @@ class ScoreboardView(
 
     private fun updateTimeUp(): Boolean {
         val s = snapshot ?: return false
-        return timeUp.update(s.timeUp, s.left.score, s.right.score, timeUpFocus)
+        return timeUp.update(s, timeUpFocus)
     }
 
     private fun updateMenu(): Boolean {
@@ -433,7 +436,10 @@ class ScoreboardView(
         when {
             clockAdjust.visible -> clockAdjust.draw(canvas)
             foulBar.visible -> foulBar.draw(canvas)
-            !timeUp.barVisible -> toast.draw(canvas)
+            else -> {
+                breakBar.draw(canvas) // Never at time up, which only a period's end reaches.
+                if (!timeUp.barVisible) toast.draw(canvas)
+            }
         }
         menu.draw(canvas)
         if (setClock.visible || exitConfirm.visible) {

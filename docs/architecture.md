@@ -181,7 +181,7 @@ remote key adapter ignores key-ups whose key-down it never saw (a stray Back rel
 ## Events
 
 `GameClockExpired`, `BreakEnded`, `ClockStarted`, `ClockStopped`. The buzzer (`Buzzer` in `tv-app`) plays its horn
-on `GameClockExpired` and nothing else (`BreakEnded` joins it with the tv-app's FIBA screens). The engine emits it once, at the instant a running clock reaches 0 (run out or
+on `GameClockExpired` and `BreakEnded` and nothing else. The engine emits it once, at the instant a running clock reaches 0 (run out or
 adjusted down to 0), so an undo that brings a finished game back shows the time-up bar again but stays silent. The
 buzzer belongs to the application, not the activity: it loads once, survives a language recreate, and sounds even
 when another app is in front, because the clock keeps running there. An expiry found while restoring after a
@@ -190,8 +190,10 @@ restart is not replayed: the bar shows, the horn doesn't.
 The horn is `res/raw/buzzer.wav`, synthesized by `scripts/make-buzzer.py` (see `docs/hardware.md` → Audio). It
 plays as media, which is the stream that goes out over HDMI and follows the TV's volume.
 
-The time-up bar follows the snapshot's `timeUp`, not the event: it opens (NEW GAME focused) each time `timeUp`
-turns true, whether the clock ran out or an undo brought a finished game back, and goes away when it turns false.
+The time-up bar follows the snapshot's `timeUp`, not the event: it opens (its left button focused: NEW GAME, or the
+break at the end of a period) each time `timeUp` turns true, whether the clock ran out or an undo brought a finished
+game back, and goes away when it turns false. Which pair of buttons it offers follows the snapshot too
+(`TimeUpChoices.at`), so a score fixed with the bar closed can turn the end of period 4 into the way to overtime.
 Whether Back has closed it is UI state only (`TimeUpBar` in `tv-app`), so after a restart the bar shows again.
 
 `CommandApplied(command, before, after)` and `CommandUndone(command, before, after)` report every change with the
@@ -288,7 +290,7 @@ No Kotlin changes are needed.
 - OEM battery killers (Xiaomi, Huawei, Samsung): onboarding screen for battery-optimization exemptions; the
   system must tolerate the controller being killed (see invariant: TV owns the clock).
 
-## Rules: Pickup and FIBA (end of period and breaks not on screen yet)
+## Rules: Pickup and FIBA
 
 The menu's *Rules* row chooses how a game is played (design 24–33). **Pickup** is everything above: one clock per
 game, back-to-back games. **FIBA** adds team fouls, periods, breaks and overtime. The rules are data (`GameRules`)

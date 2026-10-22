@@ -45,6 +45,19 @@
     <string name="time_up_tie">Empate %1$d–%2$d</string>
     <string name="time_up_new_game">NUEVO PARTIDO</string>
     <string name="time_up_reset_clock">REINICIAR RELOJ · MISMO PUNTAJE</string>
+    <string name="time_up_period_end">FIN DEL PERIODO %1$d</string>
+    <string name="time_up_overtime_end">FIN DEL TIEMPO EXTRA %1$d</string>
+    <string name="time_up_leads">%1$s va ganando %2$d–%3$d</string>
+    <string name="time_up_break">DESCANSO · %1$s</string>
+    <string name="time_up_halftime">MEDIO TIEMPO · %1$s</string>
+    <string name="time_up_skip_break">SIN DESCANSO</string>
+
+    <string name="break_title">DESCANSO</string>
+    <string name="break_halftime">MEDIO TIEMPO</string>
+    <string name="break_next_period">El periodo %1$d empieza en 0:00</string>
+    <string name="break_next_overtime">El tiempo extra %1$d empieza en 0:00</string>
+    <string name="hint_adjust">AJUSTAR</string>
+    <string name="hint_end_break">TERMINAR DESCANSO</string>
 
     <!-- Key hints: the remote key's label in a keycap, then what it does. -->
     <string name="key_back">ATRÁS</string>

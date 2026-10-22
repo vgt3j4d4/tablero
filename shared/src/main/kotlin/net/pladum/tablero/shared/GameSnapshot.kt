@@ -64,10 +64,13 @@ data class GameSnapshot(
             return next.takeIf { (period < rules.periods || tied) && it <= rules.lastPeriod }
         }
 
+    /** Under period rules, the break before [next] is halftime: it follows the middle period. */
+    fun halftimeBefore(next: Int): Boolean = rules.periods?.let { next - 1 == it.periods / 2 } ?: false
+
     /** The break that comes before [next] under period rules: halftime after the middle period. */
     fun breakBeforeMs(next: Int): Long {
         val rules = checkNotNull(rules.periods) { "Breaks need period rules" }
-        return if (next - 1 == rules.periods / 2) rules.halftimeMs else rules.breakMs
+        return if (halftimeBefore(next)) rules.halftimeMs else rules.breakMs
     }
 
     /** The clock [period] starts from: the game length, or the overtime length past the last period. */

@@ -54,6 +54,23 @@
     <string name="time_up_tie">Tie %1$d–%2$d</string>
     <string name="time_up_new_game">NEW GAME</string>
     <string name="time_up_reset_clock">RESET CLOCK · KEEP SCORE</string>
+    <!-- Under FIBA rules, at the end of a period (%1$d is the period, or the overtime): who leads, as in time_up_wins,
+         and the break before the next period (%1$s is its length, 2:00) or straight on to it. -->
+    <string name="time_up_period_end">END OF PERIOD %1$d</string>
+    <string name="time_up_overtime_end">END OF OT %1$d</string>
+    <string name="time_up_leads">%1$s leads %2$d–%3$d</string>
+    <string name="time_up_break">BREAK · %1$s</string>
+    <string name="time_up_halftime">HALFTIME · %1$s</string>
+    <string name="time_up_skip_break">SKIP BREAK</string>
+
+    <!-- Under FIBA rules, the bar over the status bar while a break counts down on the game clock: the break, then
+         which period (%1$d) or overtime starts when it ends. The number names the period, it counts nothing. -->
+    <string name="break_title">BREAK</string>
+    <string name="break_halftime">HALFTIME</string>
+    <string name="break_next_period" tools:ignore="PluralsCandidate">Period %1$d starts at 0:00</string>
+    <string name="break_next_overtime" tools:ignore="PluralsCandidate">OT %1$d starts at 0:00</string>
+    <string name="hint_adjust">ADJUST</string>
+    <string name="hint_end_break">END BREAK</string>
 
     <!-- Key hints: the remote key's label in a keycap, then what it does. -->
     <string name="key_back">BACK</string>

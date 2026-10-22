@@ -79,7 +79,7 @@ class MainActivity : Activity() {
             exitToAndroidTv = { AndroidTv.open(this) },
             onChange = { scoreboard.showMenu(it) },
         )
-        keys = RemoteKeyAdapter({ dispatch(it) }, clockAdjust, foulBar, timeUp, menu)
+        keys = RemoteKeyAdapter({ dispatch(it) }, { engine.snapshot.value.inBreak }, clockAdjust, foulBar, timeUp, menu)
         savedInstanceState?.getString(STATE_MENU_ROW)
             ?.let { saved -> MenuRow.entries.firstOrNull { it.name == saved } }
             ?.let(menu::open)
@@ -106,7 +106,7 @@ class MainActivity : Activity() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         scope.launch {
             engine.snapshot.collect { snapshot ->
-                timeUp.onTimeUp(snapshot.timeUp)
+                timeUp.onTimeUp(snapshot)
                 scoreboard.render(snapshot)
             }
         }

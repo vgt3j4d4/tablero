@@ -40,6 +40,8 @@ interface ClockAdjustKeys {
  */
 class RemoteKeyAdapter(
     private val dispatch: (Command) -> Unit,
+    /** The game clock counts a break between periods, which OK ends. */
+    private val inBreak: () -> Boolean,
     private val clockAdjust: ClockAdjustKeys,
     private val fouls: FoulKeys,
     private val timeUp: TimeUpKeys,
@@ -74,6 +76,7 @@ class RemoteKeyAdapter(
                 swallowed += key
                 timeUp.reopen() // The clock can't start at time up anyway.
             }
+            key == Key.OK && inBreak() -> dispatch(Command.EndBreak)
             key == Key.OK -> dispatch(Command.ToggleClock) // On key-down: no delay.
         }
         return true
@@ -139,8 +142,8 @@ class RemoteKeyAdapter(
     }
 
     private fun timeUpKey(key: Key) = when (key) {
-        Key.LEFT -> timeUp.focus(TimeUpChoice.NEW_GAME)
-        Key.RIGHT -> timeUp.focus(TimeUpChoice.RESET_CLOCK)
+        Key.LEFT -> timeUp.left()
+        Key.RIGHT -> timeUp.right()
         Key.OK -> timeUp.pick()
         Key.BACK -> timeUp.close()
         Key.UP, Key.DOWN -> Unit
