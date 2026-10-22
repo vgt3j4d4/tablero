@@ -25,6 +25,10 @@ BOARDS=(
   17-outdoor-action-feedback
   18-outdoor-quick-clock-adjust
   19-outdoor-menu
+  20-possession
+  21-large-possession
+  22-outdoor-possession
+  23-possession-feedback
 )
 LANGS=(en es)
 

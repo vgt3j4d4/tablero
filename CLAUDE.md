@@ -26,8 +26,8 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
 
 - Phase 1 (TV app + stick remote) — design agreed; Gradle scaffold and the `shared` engine (clock, scores, undo,
   display rounding, persisted state) are done with unit tests. `tv-app`: one activity, the final scoreboard look
-  (`ScoreboardView`: LED clock and scores, HOME / AWAY labels, status bar, action confirmations; Classic and Large
-  layouts; Indoor and Outdoor modes), quick clock adjust,
+  (`ScoreboardView`: LED clock and scores, HOME / AWAY labels, possession arrow, status bar, action confirmations;
+  Classic and Large layouts; Indoor and Outdoor modes), quick clock adjust,
   time-up bar, menu (with the set game clock dialog), buzzer at time up (synthesized horn), remote key adapter,
   persistence, fonts, launcher banner and icon, localization (English + Spanish, in-app language via `AppLanguage`), `HOME` intent filter and
   guarded exit to Android TV (menu → hold OK 2 s → the stock launcher).
@@ -37,10 +37,11 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
 ## Phase 1 scope
 
 **In:** two teams, HOME on the left and AWAY on the right (fixed, no swap), with scores; game clock (tenths under
-1:00), buzzer at 0, undo, quick clock adjust, time-up bar with a new game (0–0), menu, guarded exit to Android TV.
+1:00), buzzer at 0, undo, quick clock adjust, possession arrow, time-up bar with a new game (0–0), menu, guarded exit
+to Android TV.
 
-**Out for now (designed for, not built):** shot clock, team fouls, timeouts, periods, possession arrow,
-FIBA/NBA/NCAA presets. Keep the engine open to them, but don't implement or render them.
+**Out for now (designed for, not built):** shot clock, team fouls, timeouts, periods, FIBA/NBA/NCAA presets. Keep
+the engine open to them, but don't implement or render them.
 ## Repository layout (planned)
 
 ```
@@ -102,6 +103,9 @@ tablero/
   that file.
 - Game clock LED red, scores LED amber. Each team column is labelled `HOME` / `AWAY` (white text). UI text in
   Barlow Condensed (OFL).
+- Possession arrow between the scores: a `POS` label in line with the team names over two arrows, the one pointing
+  to the team with the next alternating possession lit in the score color, the other drawn like an unlit segment.
+  Hidden after a new game until the first ↑.
 - Layout (1920×1080): clock across the top; left/right team columns below; a thin status bar at the bottom
   (clock running/stopped, action confirmations like `HOME +3 · 48 → 51`). Two layouts, chosen in the menu
   (`BoardLayout`): **Classic** (default; clock in a box, 330 px digits) and **Large** (no clock box, 410 px digits,
@@ -122,7 +126,7 @@ via HDMI-CEC (verify with a key logger).
 | OK | Start/stop game clock — **fires on key-down** (no long press on OK, so no delay) | — |
 | ← | Home +1 | Home −1 |
 | → | Away +1 | Away −1 |
-| ↑ | — (unused) | — |
+| ↑ | Flip the possession arrow (first press points to HOME) | Hide the arrow |
 | ↓ | Quick clock adjust mode | — |
 | Back | Undo last action | Open menu |
 

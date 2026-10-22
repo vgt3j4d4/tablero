@@ -123,7 +123,15 @@ class GameEngine(
                 right = TeamState(),
                 timeUp = false,
                 gameStarted = false,
+                possession = null,
             )
+            Command.TogglePossession -> s.copy(
+                possession = when (s.possession) {
+                    null, Side.RIGHT -> Side.LEFT
+                    Side.LEFT -> Side.RIGHT
+                },
+            )
+            Command.ClearPossession -> s.copy(possession = null)
             is Command.SetGameLength -> {
                 val range = GameRules.MIN_GAME_LENGTH_MS..GameRules.MAX_GAME_LENGTH_MS
                 if (command.gameLengthMs !in range) return Step.Reject(RejectReason.INVALID_ARGUMENT)
@@ -155,13 +163,9 @@ class GameEngine(
                 s.withTeam(command.side, s.team(command.side).copy(score = score))
             }
             is Command.AdjustGameClock -> adjust(s.gameClock, -entry.appliedDeltaNanos, now).first.withTimeUp(s)
-            Command.NewGame -> s.copy(
-                gameClock = before.gameClock.stopAt(entry.appliedAtNanos),
-                left = before.left,
-                right = before.right,
-                timeUp = before.timeUp,
-                gameStarted = before.gameStarted,
-            )
+            // Everything since the new game has been undone already, so the whole previous game comes back.
+            Command.NewGame -> before.copy(gameClock = before.gameClock.stopAt(entry.appliedAtNanos))
+            Command.TogglePossession, Command.ClearPossession -> s.copy(possession = before.possession)
             is Command.SetGameLength -> s.copy(rules = before.rules)
             Command.ToggleClock, Command.Undo -> error("$command is never recorded")
         }

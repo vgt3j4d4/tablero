@@ -19,11 +19,16 @@ sealed interface Feedback {
 
     data class Undone(val action: UndoneAction) : Feedback
 
+    /** The possession arrow now points to [side], or is hidden when null. */
+    data class Possession(val side: Side?) : Feedback
+
     data object NothingToUndo : Feedback
 }
 
 /** Every recorded command other than a score, as the undo confirmation names it. */
-enum class UndoneAction { START_CLOCK, STOP_CLOCK, ADJUST_CLOCK, SET_CLOCK, RESET_CLOCK, NEW_GAME, GAME_LENGTH }
+enum class UndoneAction {
+    START_CLOCK, STOP_CLOCK, ADJUST_CLOCK, SET_CLOCK, RESET_CLOCK, NEW_GAME, GAME_LENGTH, POSSESSION
+}
 
 /**
  * Turns the engine's events into confirmations, whichever input sent the command. Consecutive score presses on the
@@ -34,19 +39,28 @@ class FeedbackGrouper(private val groupWindowNanos: Long = FEEDBACK_GROUP_WINDOW
     private var lastScore: Feedback.Score? = null
     private var lastScoreAtNanos = 0L
 
-    /** The confirmation for [event] at [nowNanos], or null when it has none (clock start/stop, expiry). */
+    /**
+     * The confirmation for [event] at [nowNanos], or null when it has none (clock start/stop, expiry, and the
+     * commands the menu applies: it shows the values it changes).
+     */
     fun onEvent(event: GameEvent, nowNanos: Long): Feedback? = when (event) {
-        is GameEvent.CommandApplied -> (event.command as? Command.Score)?.let { score(it, event, nowNanos) }
-        is GameEvent.CommandUndone -> undone(event).also { lastScore = null }
+        is GameEvent.CommandApplied -> when (val command = event.command) {
+            is Command.Score -> score(command, event, nowNanos)
+            Command.TogglePossession, Command.ClearPossession -> Feedback.Possession(event.after.possession)
+            else -> null
+        }
+        is GameEvent.CommandUndone -> undone(event)
         GameEvent.ClockStarted, GameEvent.ClockStopped, GameEvent.GameClockExpired -> null
-    }
+    }.endingGroup()
 
     /** The confirmation for a command the engine rejected, or null when the rejection needs none. */
     fun onRejected(command: Command, reason: RejectReason): Feedback? {
         if (command != Command.Undo || reason != RejectReason.NOTHING_TO_UNDO) return null
-        lastScore = null
-        return Feedback.NothingToUndo
+        return Feedback.NothingToUndo.endingGroup()
     }
+
+    /** Any other confirmation shows between score presses, so the next press starts a new one. */
+    private fun Feedback?.endingGroup(): Feedback? = also { if (it != null && it !is Feedback.Score) lastScore = null }
 
     private fun score(command: Command.Score, event: GameEvent.CommandApplied, nowNanos: Long): Feedback.Score {
         val before = event.before.team(command.side)
@@ -82,6 +96,7 @@ class FeedbackGrouper(private val groupWindowNanos: Long = FEEDBACK_GROUP_WINDOW
         Command.ResetGameClock -> Feedback.Undone(UndoneAction.RESET_CLOCK)
         Command.NewGame -> Feedback.Undone(UndoneAction.NEW_GAME)
         is Command.SetGameLength -> Feedback.Undone(UndoneAction.GAME_LENGTH)
+        Command.TogglePossession, Command.ClearPossession -> Feedback.Undone(UndoneAction.POSSESSION)
         Command.ToggleClock, Command.Undo -> null // Never recorded: a toggle is recorded as what it resolved to.
     }
 }

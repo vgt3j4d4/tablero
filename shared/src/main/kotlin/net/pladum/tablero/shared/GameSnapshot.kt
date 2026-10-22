@@ -27,6 +27,11 @@ data class GameSnapshot(
      * started, so a restored game never takes its length from a paused clock.
      */
     val gameStarted: Boolean = true,
+    /**
+     * The team the possession arrow points to, the one with the next alternating possession; null while the arrow is
+     * hidden, as it is after a new game and in states saved before this field existed.
+     */
+    val possession: Side? = null,
 ) {
     fun team(side: Side): TeamState = when (side) {
         Side.LEFT -> left

@@ -86,6 +86,16 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
 .board.large .teams { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .board.large .team { gap: 14px; }
 .board.large .team-name { font-size: 56px; }
+/* Possession arrow (boards 20–23): centred between the scores, on the same rows as the team columns; the label lines
+   up with the team names and the arrow pair with the score digits. The lit arrow uses the score color, the other one
+   its unlit ghost. */
+.teams { position: relative; }
+.poss { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; }
+.poss .label { height: 84px; display: flex; align-items: center; font-size: 56px; font-weight: 700; line-height: 1; letter-spacing: 0.08em; }
+.poss .arrows { height: 330px; display: flex; align-items: center; gap: 28px; }
+.board.large .poss { gap: 14px; }
+.board.large .poss .label { height: 56px; }
+.board.large .poss .arrows { height: 410px; gap: 24px; }
 .status { height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; padding: 0 48px;
   border-top: 2px solid var(--status-line); font-size: 28px; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); }
 .status .state { display: flex; align-items: center; gap: 12px; color: var(--board-text); }
@@ -133,7 +143,7 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
 .dpad > div { position: absolute; }
 .map { display: grid; grid-template-columns: 180px minmax(0, 1fr) minmax(0, 1fr); border-top: 2px solid #2A2E35; }
 .map .th { padding: 18px 0; font-size: 26px; font-weight: 600; letter-spacing: 0.2em; color: var(--muted); border-bottom: 2px solid #2A2E35; }
-.map .td { padding: 20px 24px 20px 0; border-bottom: 2px solid #1C1F24; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.map .td { padding: 15px 24px 15px 0; border-bottom: 2px solid #1C1F24; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
 .map .main { font-size: 38px; font-weight: 600; }
 .map .main.none { color: var(--faint); }
 .map .note { font-size: 26px; font-weight: 500; color: var(--muted); }
@@ -174,7 +184,7 @@ const STRINGS = {
       ['OK', 'Start / stop clock', 'Fires on key-down: no delay', '—', ''],
       ['←', 'Home +1', 'Repeated presses add up: HOME +3', 'Home −1', ''],
       ['→', 'Away +1', 'Repeated presses add up: AWAY +2', 'Away −1', ''],
-      ['↑', 'Unused', '', '—', ''],
+      ['↑', 'Flip possession arrow', 'The first press points to HOME', 'Hide arrow', ''],
       ['↓', 'Adjust clock', 'Then ↑↓ ±1 min, ←→ ±1 s, OK done, BACK cancel', '—', ''],
       ['BACK', 'Undo last action', 'Shows what was undone', 'Open menu', ''],
     ],
@@ -182,6 +192,7 @@ const STRINGS = {
     rk: { power: 'POWER', assist: 'ASSIST.', back: 'BACK', home: 'HOME', volume: 'VOLUME' },
     schematic: 'Schematic, not to scale',
     feedbackTeam: 'HOME +3',
+    poss: 'POS', feedbackPoss: 'POS → AWAY',
   },
   es: {
     home: 'LOCAL', away: 'VISITA',
@@ -209,7 +220,7 @@ const STRINGS = {
       ['OK', 'Iniciar / detener reloj', 'Actúa al presionar: sin demora', '—', ''],
       ['←', 'Local +1', 'Pulsaciones seguidas se suman: LOCAL +3', 'Local −1', ''],
       ['→', 'Visita +1', 'Pulsaciones seguidas se suman: VISITA +2', 'Visita −1', ''],
-      ['↑', 'Sin uso', '', '—', ''],
+      ['↑', 'Cambiar flecha de posesión', 'La primera vez apunta a LOCAL', 'Ocultar flecha', ''],
       ['↓', 'Ajustar reloj', 'Luego ↑↓ ±1 min, ←→ ±1 s, OK listo, ATRÁS cancela', '—', ''],
       ['ATRÁS', 'Deshacer última acción', 'Muestra qué se deshizo', 'Abrir menú', ''],
     ],
@@ -217,6 +228,7 @@ const STRINGS = {
     rk: { power: 'ENCENDER', assist: 'ASIST.', back: 'ATRÁS', home: 'INICIO', volume: 'VOLUMEN' },
     schematic: 'Esquema, no a escala',
     feedbackTeam: 'LOCAL +3',
+    poss: 'POS', feedbackPoss: 'POS → VISITA',
   },
 };
 
@@ -234,6 +246,25 @@ const RUN_ICON = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="t
 const CHEVRON_L = '<svg width="24" height="24" viewBox="0 0 22 22" aria-hidden="true"><path d="M14 4 L7 11 L14 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const CHEVRON_R = '<svg width="24" height="24" viewBox="0 0 22 22" aria-hidden="true"><path d="M8 4 L15 11 L8 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+/* A possession arrow, pointing left or right; lit in the score color or dim like an unlit segment. */
+function arrow(dir, lit, h) {
+  const w = Math.round(h * 0.8);
+  const points = dir === 'left' ? `${w},0 ${w},${h} 0,${h / 2}` : `0,0 0,${h} ${w},${h / 2}`;
+  const color = lit ? 'var(--score)' : 'var(--score-ghost)';
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" overflow="visible" aria-hidden="true"><polygon points="${points}" fill="${color}" stroke="${color}" stroke-width="10" stroke-linejoin="round"/></svg>`;
+}
+
+/* possession: 'home', 'away' or '' (hidden, the default after a new game). */
+function possession(side, large) {
+  if (!side) return '';
+  const h = large ? 100 : 120;
+  return `
+    <div class="poss">
+      <div class="label">${esc(T.poss)}</div>
+      <div class="arrows">${arrow('left', side === 'home', h)}${arrow('right', side === 'away', h)}</div>
+    </div>`;
+}
+
 function team(name, score) {
   return `
     <div class="team">
@@ -242,19 +273,31 @@ function team(name, score) {
     </div>`;
 }
 
-function scoreboard({ leftScore = '48', rightScore = '45', clock = '07:42', running = true, large = false } = {}) {
+function scoreboard({ leftScore = '48', rightScore = '45', clock = '07:42', running = true, large = false, poss = '' } = {}) {
   const state = running ? `${RUN_ICON}<span>${T.running}</span>` : `${PAUSE_ICON}<span>${T.stopped}</span>`;
   const led = `<div class="led clock"><span class="ghost">${ghost(clock)}</span><span>${esc(clock)}</span></div>`;
   return large ? `
     <div class="board large">
       <div class="clock-row">${led}</div>
-      <div class="teams">${team(T.home, leftScore)}${team(T.away, rightScore)}</div>
+      <div class="teams">${team(T.home, leftScore)}${team(T.away, rightScore)}${possession(poss, true)}</div>
       <div class="status"><div class="state">${state}</div></div>
     </div>` : `
     <div class="board">
       <div class="clock-row"><div class="clock-box">${led}</div></div>
-      <div class="teams">${team(T.home, leftScore)}<div></div>${team(T.away, rightScore)}</div>
+      <div class="teams">${team(T.home, leftScore)}<div></div>${team(T.away, rightScore)}${possession(poss, false)}</div>
       <div class="status"><div class="state">${state}</div></div>
+    </div>`;
+}
+
+/* The confirmation after an action, with the Undo hint. */
+function toast(main, detail = '') {
+  return `
+    <div class="toast">
+      <div style="display:flex;align-items:center;gap:16px">
+        <span style="font-size:40px;font-weight:800;letter-spacing:0.04em">${esc(main)}</span>
+        ${detail ? `<span style="font-size:32px;font-weight:600;color:var(--toast-off)">${esc(detail)}</span>` : ''}
+      </div>
+      <div class="hint" style="font-size:28px;font-weight:600;letter-spacing:0.06em;color:var(--toast-off)"><span class="keycap">${esc(T.back)}</span>${esc(T.undo)}</div>
     </div>`;
 }
 
@@ -279,13 +322,7 @@ const BOARDS = {
 
   'action-feedback': () => `
     ${scoreboard({ leftScore: '51', clock: '06:58', running: false })}
-    <div class="toast">
-      <div style="display:flex;align-items:center;gap:16px">
-        <span style="font-size:40px;font-weight:800;letter-spacing:0.04em">${esc(T.feedbackTeam)}</span>
-        <span style="font-size:32px;font-weight:600;color:var(--toast-off)">48 → 51</span>
-      </div>
-      <div class="hint" style="font-size:28px;font-weight:600;letter-spacing:0.06em;color:var(--toast-off)"><span class="keycap">${esc(T.back)}</span>${esc(T.undo)}</div>
-    </div>`,
+    ${toast(T.feedbackTeam, '48 → 51')}`,
 
   'menu': () => {
     const groups = T.menuRows.map((rows) => `<div class="menu-group">${rows.map(([label, value, adjust]) => `
@@ -386,7 +423,7 @@ const BOARDS = {
               <div class="rkey"><div class="dot" style="width:52px;height:52px"></div>${esc(T.rk.assist)}</div>
             </div>
             <div class="dpad">
-              <div style="top:10px;left:0;right:0;text-align:center;color:var(--faint)">↑</div>
+              <div style="top:10px;left:0;right:0;text-align:center">↑</div>
               <div style="bottom:10px;left:0;right:0;text-align:center">↓</div>
               <div style="left:16px;top:0;bottom:0;display:flex;align-items:center">←</div>
               <div style="right:16px;top:0;bottom:0;display:flex;align-items:center">→</div>
@@ -437,6 +474,13 @@ for (const board of ['time-up', 'action-feedback', 'quick-clock-adjust', 'menu']
 /* A 1, a short clock and one-digit scores: what the unlit segments have to hold in place. */
 BOARDS['outdoor-live-game'] = () => scoreboard({ leftScore: '3', rightScore: '0', clock: '9:21' });
 BOARDS['outdoor-large-live-game'] = () => scoreboard({ leftScore: '3', rightScore: '0', clock: '9:21', large: true });
+
+BOARDS['possession'] = () => scoreboard({ poss: 'home' });
+BOARDS['large-possession'] = () => scoreboard({ poss: 'home', large: true });
+BOARDS['outdoor-possession'] = () => scoreboard({ leftScore: '3', rightScore: '0', clock: '9:21', poss: 'away' });
+BOARDS['possession-feedback'] = () => `
+  ${scoreboard({ clock: '06:58', running: false, poss: 'away' })}
+  ${toast(T.feedbackPoss)}`;
 
 const id = BOARDS[params.get('board')] ? params.get('board') : 'live-game';
 document.title = `tablero — ${id} (${lang})`;

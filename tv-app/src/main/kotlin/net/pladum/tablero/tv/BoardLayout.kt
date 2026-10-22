@@ -6,8 +6,8 @@ private const val PREF_LAYOUT = "layout"
 data class DesignBox(val left: Float, val top: Float, val right: Float, val bottom: Float)
 
 /**
- * Where the scoreboard's parts sit, in design pixels (docs/design/boards.html): Classic is design 01–10, Large is
- * design 11–13. The menu's Layout row chooses one; [ScoreboardView] and [ClockAdjustOverlay] read these values
+ * Where the scoreboard's parts sit, in design pixels (docs/design/boards.html): Classic is design 01–10 and 20,
+ * Large is design 11–13 and 21. The menu's Layout row chooses one; [ScoreboardView] and [ClockAdjustOverlay] read these values
  * instead of branching on the layout. Names and scores are placed by their visual centers.
  */
 enum class BoardLayout(
@@ -21,6 +21,9 @@ enum class BoardLayout(
     val nameCenterY: Float,
     val nameSize: Float,
     val scoreCenterY: Float,
+    /** The possession arrows' height, and the gap between the two; they sit centered on [scoreCenterY]. */
+    val possessionArrowHeight: Float,
+    val possessionArrowGap: Float,
     /** Quick clock adjust's ring around the clock, outer edge. */
     val adjustRing: DesignBox,
 ) {
@@ -37,6 +40,8 @@ enum class BoardLayout(
         nameCenterY = 567f,
         nameSize = 84f,
         scoreCenterY = 802f,
+        possessionArrowHeight = 120f,
+        possessionArrowGap = 28f,
         adjustRing = DesignBox(326f, 22f, 1594f, 490f),
     ),
 
@@ -54,6 +59,8 @@ enum class BoardLayout(
         nameCenterY = 519f,
         nameSize = 56f,
         scoreCenterY = 766f,
+        possessionArrowHeight = 100f, // Clears the bigger scores.
+        possessionArrowGap = 24f,
         adjustRing = DesignBox(259f, 12f, 1661f, 470f),
     ),
 }

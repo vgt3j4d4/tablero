@@ -25,6 +25,13 @@
     <string name="undone_reset_clock">RESET CLOCK</string>
     <string name="undone_new_game">NEW GAME</string>
     <string name="undone_game_length">GAME LENGTH</string>
+    <string name="undone_possession">POSSESSION ARROW</string>
+
+    <!-- Possession arrow (↑): the label over the arrows between the scores, then its confirmations. %1$s is the team
+         the arrow now points to (HOME, AWAY). -->
+    <string name="possession_label">POS</string>
+    <string name="feedback_possession">POS → %1$s</string>
+    <string name="feedback_possession_hidden">POS HIDDEN</string>
 
     <!-- Time-up bar over the status bar. The result is in sentence case: %1$s is the winning team (Home, Away),
          %2$d its score and %3$d the other team's; a tie gives both scores. -->

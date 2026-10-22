@@ -24,8 +24,8 @@
 
 ## Phase 1 scope
 
-Two teams, HOME (left) and AWAY (right), scores, one game clock, buzzer, undo, new game. Shot clock, fouls, timeouts,
-periods and the possession arrow are **out of scope for now** (see "Later" at the end); keep the model open to them
+Two teams, HOME (left) and AWAY (right), scores, one game clock, buzzer, undo, new game, possession arrow. Shot
+clock, fouls, timeouts and periods are **out of scope for now** (see "Later" at the end); keep the model open to them
 but don't implement them.
 
 ## Time model
@@ -56,6 +56,7 @@ data class GameSnapshot(
     val right: TeamState,
     val timeUp: Boolean,               // clock reached 0; UI shows the time-up bar
     val gameStarted: Boolean,          // the clock ran since the last new game (see Game length)
+    val possession: Side?,             // where the possession arrow points; null = hidden
 )
 data class TeamState(val score: Int)       // room for team fouls, timeouts later
 enum class Side { LEFT, RIGHT }            // LEFT = home, RIGHT = away; names localized in tv-app
@@ -70,7 +71,9 @@ enum class Side { LEFT, RIGHT }            // LEFT = home, RIGHT = away; names l
 | `AdjustGameClock(deltaMs)`                 | Relative; allowed running or stopped; result clamped to 0–60:00            |
 | `SetGameClock(ms)`                         | Absolute correction (0–60:00), only while stopped                          |
 | `ResetGameClock`                           | Back to the game length, stopped, scores kept                              |
-| `NewGame`                                  | Scores 0–0, clock at game length, stopped                                  |
+| `NewGame`                                  | Scores 0–0, clock at game length, stopped, possession arrow hidden         |
+| `TogglePossession`                         | Flips the possession arrow; a hidden arrow shows, pointing to HOME         |
+| `ClearPossession`                          | Hides the possession arrow                                                 |
 | `SetGameLength(ms)`                        | 1–60 min; applies from the next reset / new game                           |
 | `Undo`                                     | Reverts the last applied command (history of 20)                           |
 
@@ -102,8 +105,9 @@ Undo reverts the **effect** of the last command, not the passage of time:
 - `AdjustGameClock` → applies the opposite of the delta actually applied (after clamping); a running clock
   keeps running.
 - `SetGameClock` / `ResetGameClock` → the previous clock (and time-up state) comes back.
-- `NewGame` → restores the previous game's scores and clock (stopped), the time-up state, and whether it had
-  started.
+- `NewGame` → restores the previous game's scores and clock (stopped), the time-up state, whether it had
+  started, and its possession arrow.
+- `TogglePossession` / `ClearPossession` → the arrow points where it did before (or hides again).
 
 The quick-adjust overlay's Back ("cancel") undoes every adjustment made since the overlay opened. Each key is its own
 `AdjustGameClock`, so Cancel sends one `Undo` per adjustment the session applied: they leave the history, and a later
@@ -167,7 +171,8 @@ Whether Back has closed it is UI state only (`TimeUpBar` in `tv-app`), so after 
 
 `CommandApplied(command, before, after)` and `CommandUndone(command, before, after)` report every change with the
 snapshots around it, whichever input sent the command (a toggle is reported as the start or stop it resolved to).
-`tv-app` turns them into the confirmation over the status bar (`HOME +3 · 48 → 51`, `UNDONE · START CLOCK`):
+`tv-app` turns them into the confirmation over the status bar (`HOME +3 · 48 → 51`, `POS → AWAY`,
+`UNDONE · START CLOCK`):
 consecutive score presses on one side and in one direction, each within 1.5 s of the previous one, add up into one
 confirmation, while staying separate commands. A command event comes before the clock events it causes.
 
@@ -260,8 +265,9 @@ No Kotlin changes are needed.
 
 ## Later (out of Phase 1 scope)
 
-Kept for when the scope grows again: shot clock, team fouls / bonus, timeouts, periods, possession arrow and
-league presets.
+Kept for when the scope grows again: shot clock, team fouls / bonus, timeouts, periods and league presets. (The
+possession arrow moved into Phase 1. It never flips by itself: the scorer flips it with ↑ after each alternating
+possession.)
 
 - Shot clock display: whole seconds, tenths below 5.0 s; hidden when the game clock has less time remaining than
   the shot clock (FIBA behavior). Events `ShotClockExpired`, `PeriodEnded`.

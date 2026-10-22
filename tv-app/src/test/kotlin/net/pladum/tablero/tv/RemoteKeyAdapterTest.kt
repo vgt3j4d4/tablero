@@ -10,10 +10,12 @@ import android.view.KeyEvent.KEYCODE_ENTER
 import android.view.KeyEvent.KEYCODE_NUMPAD_ENTER
 import android.view.KeyEvent.KEYCODE_VOLUME_UP
 import net.pladum.tablero.shared.Command
+import net.pladum.tablero.shared.Command.ClearPossession
 import net.pladum.tablero.shared.Command.NewGame
 import net.pladum.tablero.shared.Command.ResetGameClock
 import net.pladum.tablero.shared.Command.Score
 import net.pladum.tablero.shared.Command.ToggleClock
+import net.pladum.tablero.shared.Command.TogglePossession
 import net.pladum.tablero.shared.Command.Undo
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
@@ -159,10 +161,10 @@ class RemoteKeyAdapterTest {
     }
 
     @Test
-    fun `up is consumed but does nothing`() {
+    fun `up short press flips the possession arrow, long press hides it with no flip on release`() {
         shortPress(KEYCODE_DPAD_UP)
-        assertFalse(longPress(KEYCODE_DPAD_UP))
-        assertEquals(emptyList(), dispatched)
+        assertTrue(longPress(KEYCODE_DPAD_UP))
+        assertEquals(listOf<Command>(TogglePossession, ClearPossession), dispatched)
         assertEquals(emptyList(), clockAdjust.calls)
     }
 

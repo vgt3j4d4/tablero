@@ -2,8 +2,8 @@
 
 ## Phase 1 — TV app + stick remote
 
-Scope: two teams (HOME / AWAY), scores, game clock, buzzer, undo, new game (see `CLAUDE.md` →
-Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred.
+Scope: two teams (HOME / AWAY), scores, game clock, buzzer, undo, new game, possession arrow (see `CLAUDE.md` →
+Phase 1 scope). Shot clock, fouls, timeouts and periods are deferred.
 
 - [x] Gradle multi-module scaffold (`shared`, `tv-app`), version catalog, CI-friendly `./gradlew test`
 - [x] `shared`: `TimeSource`, `GameEngine`, `Command`, `GameSnapshot`, `GameEvent`, undo history (+ undo semantics tests)
@@ -29,6 +29,7 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
 - [x] `tv-app`: run on the Fire TV Stick 2nd gen (`minSdk 22`, fonts as assets, pre-24 boot detection)
 - [x] `tv-app`: Large layout (bigger clock and scores, no clock box), chosen in the menu next to Classic
 - [x] `tv-app`: Outdoor mode (a light board for daylight courts), chosen in the menu next to Indoor
+- [x] `shared` + `tv-app`: possession arrow between the scores (↑ flips it, long ↑ hides it)
 - [ ] Test the Outdoor mode on a real outdoor court in daylight
 - [ ] Test the full Phase 1 flow on the Xiaomi stick
 - [ ] `scripts/setup-stick.sh` / `restore-stick.sh`
@@ -51,7 +52,7 @@ Phase 1 scope). Shot clock, fouls, timeouts, periods and possession are deferred
 
 ## Phase 4 — Polish, full basketball & more sports
 
-- [ ] Shot clock (24/14), team fouls / bonus, timeouts, periods, possession arrow, league presets
+- [ ] Shot clock (24/14), team fouls / bonus, timeouts, periods, league presets
       (see `docs/architecture.md` → Later)
 - [ ] Multiple controllers with roles and conflict rules
 - [ ] Custom team names, themes

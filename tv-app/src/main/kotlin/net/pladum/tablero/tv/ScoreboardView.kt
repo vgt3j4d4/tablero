@@ -38,7 +38,7 @@ private const val STATUS_ICON_SIZE = 18f
 private const val STATUS_ICON_GAP = 12f
 
 /**
- * The scoreboard surface: one Canvas view (design screens 01 to 03, 05 to 09, 11 to 19). Renders the latest
+ * The scoreboard surface: one Canvas view (design screens 01 to 03, 05 to 09, 11 to 23). Renders the latest
  * [GameSnapshot] given to [render], confirmations given to [show], the time-up bar, the quick clock adjust overlay,
  * the menu, its set game clock dialog and its exit confirm screen.
  *
@@ -46,9 +46,10 @@ private const val STATUS_ICON_GAP = 12f
  * the view. Text is built and measured when the state or the layout changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
  * redraws only when the reading changes (1 Hz above the tenths threshold, 10 Hz below).
  *
- * Only the clock digits change at 10 Hz, so everything else (box, unlit segments, teams, status bar, overlays)
- * is drawn into a screen-sized [layer] bitmap when it changes, and a tick draws that bitmap plus one text. On the
- * stick's slow CPU, recording and issuing the full scene on every tick missed about half the frame deadlines.
+ * Only the clock digits change at 10 Hz, so everything else (box, unlit segments, teams, possession arrow, status
+ * bar, overlays) is drawn into a screen-sized [layer] bitmap when it changes, and a tick draws that bitmap plus one
+ * text. On the stick's slow CPU, recording and issuing the full scene on every tick missed about half the frame
+ * deadlines.
  * With the menu open, the board is dimmed in the layer and a tick draws the digits in a dimmed color, clipped to the
  * left of the panel, and the menu's Game clock value; the set game clock dialog and the exit confirm screen only
  * open while the clock is stopped, so they go into the layer with the clock digits under them. Holding OK on EXIT
@@ -93,6 +94,7 @@ class ScoreboardView(
 
     private val left = TeamSlot(Side.LEFT)
     private val right = TeamSlot(Side.RIGHT)
+    private val possession = PossessionArrow(context, fonts)
 
     private val statusLinePaint = fillPaint()
     private val clockStatePaint = textPaint(fonts.barlow(600), STATUS_SIZE, 0, 0.08f, Paint.Align.RIGHT)
@@ -153,6 +155,7 @@ class ScoreboardView(
         snapshot = next
         var changed = left.update(next.left)
         changed = right.update(next.right) || changed
+        changed = possession.update(next.possession) || changed
         changed = updateStatus(next) || changed
         changed = updateTimeUp() || changed
         changed = updateMenu() || changed
@@ -244,6 +247,7 @@ class ScoreboardView(
         }
         left.place(layout.leftTeamX)
         right.place(layout.rightTeamX)
+        possession.place(layout)
         clockAdjust.place(layout)
         // Measured again at the new size on the next refresh.
         reading = null
@@ -269,6 +273,7 @@ class ScoreboardView(
         val scoreUnlit = context.color(mode.scoreUnlit)
         left.setColors(text, score, scoreUnlit)
         right.setColors(text, score, scoreUnlit)
+        possession.setColors(text, score, scoreUnlit)
         toast.setMode(mode)
     }
 
@@ -382,6 +387,7 @@ class ScoreboardView(
 
         left.draw(canvas)
         right.draw(canvas)
+        possession.draw(canvas)
 
         canvas.drawRect(0f, STATUS_TOP, DESIGN_WIDTH, STATUS_TOP + STATUS_LINE, statusLinePaint)
         canvas.drawText(clockStateText, DESIGN_WIDTH - STATUS_PADDING, statusBaseline, clockStatePaint)

@@ -82,11 +82,12 @@ class RemoteKeyAdapter(
         return when (key) {
             Key.LEFT -> true.also { dispatch(Command.Score(Side.LEFT, -1)) }
             Key.RIGHT -> true.also { dispatch(Command.Score(Side.RIGHT, -1)) }
+            Key.UP -> true.also { dispatch(Command.ClearPossession) }
             Key.BACK -> true.also {
                 swallowed += key
                 menu.open()
             }
-            Key.OK, Key.UP, Key.DOWN -> false
+            Key.OK, Key.DOWN -> false
         }
     }
 
@@ -100,8 +101,9 @@ class RemoteKeyAdapter(
         when (key) {
             Key.LEFT -> dispatch(Command.Score(Side.LEFT, 1))
             Key.RIGHT -> dispatch(Command.Score(Side.RIGHT, 1))
+            Key.UP -> dispatch(Command.TogglePossession)
             Key.BACK -> dispatch(Command.Undo)
-            Key.OK, Key.UP, Key.DOWN -> Unit // ↑ unused; OK acted on key-down; ↓ opened quick adjust on key-down.
+            Key.OK, Key.DOWN -> Unit // OK acted on key-down; ↓ opened quick adjust on key-down.
         }
         return true
     }

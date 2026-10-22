@@ -24,6 +24,10 @@ and [`architecture.md`](../architecture.md); these images show how it looks.
 | 17 | [Outdoor: action feedback](en/17-outdoor-action-feedback.png) | The confirmation turns dark so it stands out on the white board |
 | 18 | [Outdoor: quick clock adjust](en/18-outdoor-quick-clock-adjust.png) | Quick clock adjust in Outdoor: amber ring and bar as indoors |
 | 19 | [Outdoor: menu](en/19-outdoor-menu.png) | The menu over the Outdoor board, Mode row focused; the menu and dialogs stay dark in both modes |
+| 20 | [Possession arrow](en/20-possession.png) | ↑ flips the arrow between the scores (the first press points to HOME), long ↑ hides it; hidden after a new game, as in 01–19 |
+| 21 | [Large: possession arrow](en/21-large-possession.png) | The arrow in the Large layout, a little smaller so it clears the bigger scores |
+| 22 | [Outdoor: possession arrow](en/22-outdoor-possession.png) | The arrow in Outdoor: deep red like the scores, faint when unlit |
+| 23 | [Possession feedback](en/23-possession-feedback.png) | The confirmation after ↑ (`POS → AWAY`), undone with Back like any action |
 
 Screens 01–13 show the *Indoor* mode and 01–10 the *Classic* layout, the defaults; the other screens look the same
 in every layout and mode (the menu, dialogs and bars only differ in the board behind them). Spanish versions use the same file names under [`es/`](es/).
@@ -39,6 +43,9 @@ Numbers are fixed because issues link to the files; 04 (a next-game team picker)
   (`#EEEFF1` clock, `#F6E7E8` scores). Without them a lit 1 drifts right of its cell and a short reading (`9:21`,
   `3`) looks off-centre. The confirmation becomes a dark panel; menu, dialogs, time-up and adjust bars keep
   their colors.
+- **Possession arrow:** a `POS` label in line with the team names (`POS` in Spanish too) over a pair of arrows
+  between the scores. The lit one points to the team with the next alternating possession, in the score color; the
+  other is drawn like an unlit segment. Hidden until the first ↑ of a game.
 - Teams are named by side, in white: `HOME` (left) and `AWAY` (right), `LOCAL` / `VISITA` in Spanish.
 - UI text in **Barlow Condensed**; key hints drawn as outlined keycaps.
 - Highlight / focus: inverted rows (light background, dark text) or a thick light outline; amber marks the

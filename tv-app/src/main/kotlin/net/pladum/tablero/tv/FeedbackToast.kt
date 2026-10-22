@@ -22,7 +22,7 @@ private const val HINT_SIZE = 28f
 private const val HINT_GAP = 24f
 
 /**
- * The confirmation over the status bar (design 05, 17: `HOME +3`, `48 → 51`, then the `BACK UNDO` hint), in the
+ * The confirmation over the status bar (design 05, 17, 23: `HOME +3`, `48 → 51`, then the `BACK UNDO` hint), in the
  * colors of the board's [BoardMode]: [mode] until [setMode] changes it. Text is built and measured in [show]; [draw]
  * only draws. Coordinates are design pixels.
  */
@@ -78,6 +78,9 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
             }
             is Feedback.Undone ->
                 context.getString(R.string.feedback_undone, context.getString(feedback.action.labelRes()))
+            is Feedback.Possession -> feedback.side?.let {
+                context.getString(R.string.feedback_possession, teamTitle(it, locale))
+            } ?: context.getString(R.string.feedback_possession_hidden)
             Feedback.NothingToUndo -> {
                 hasHint = false
                 context.getString(R.string.feedback_nothing_to_undo)
@@ -116,8 +119,12 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
         } else {
             context.getString(R.string.feedback_minus, -delta)
         }
-        return context.getString(R.string.feedback_score, context.getString(side.teamNameRes()).uppercase(locale), change)
+        return context.getString(R.string.feedback_score, teamTitle(side, locale), change)
     }
+
+    /** The team name as the board shows it: `HOME`, `LOCAL`. */
+    private fun teamTitle(side: Side, locale: Locale): String =
+        context.getString(side.teamNameRes()).uppercase(locale)
 
     private fun UndoneAction.labelRes(): Int = when (this) {
         UndoneAction.START_CLOCK -> R.string.undone_start_clock
@@ -127,5 +134,6 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
         UndoneAction.RESET_CLOCK -> R.string.undone_reset_clock
         UndoneAction.NEW_GAME -> R.string.undone_new_game
         UndoneAction.GAME_LENGTH -> R.string.undone_game_length
+        UndoneAction.POSSESSION -> R.string.undone_possession
     }
 }
