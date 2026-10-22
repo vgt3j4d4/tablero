@@ -79,10 +79,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
         fontFeatureSettings = "tnum"
     }
     private val rowBaseline = ROW_HEIGHT / 2 + labelPaint.centerToBaselinePerPx("H") * ROW_SIZE
-    private val chevronPaint = strokePaint(soft, 3f * CHEVRON_UNIT).apply {
-        strokeCap = Paint.Cap.ROUND
-        strokeJoin = Paint.Join.ROUND
-    }
+    private val chevronPaint = roundStrokePaint(soft, 3f * CHEVRON_UNIT)
     private val chevronLeft = chevron(14f, 7f)
     private val chevronRight = chevron(8f, 15f)
 
@@ -133,7 +130,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
         left = s.left.score
         right = s.right.score
         gameLengthMs = gameLength
-        visible = state != null && state.setClock == null && state.exitConfirm == null
+        visible = state?.showsRows == true
         if (state != null) layout(state)
         return true
     }
@@ -197,6 +194,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
             MenuRow.LAYOUT -> context.getString(R.string.menu_layout)
             MenuRow.MODE -> context.getString(R.string.menu_mode)
             MenuRow.LANGUAGE -> context.getString(R.string.menu_language)
+            MenuRow.HELP -> context.getString(R.string.menu_help)
             MenuRow.EXIT -> context.getString(R.string.menu_exit)
         }
 
@@ -210,8 +208,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
 
         fun layout(state: MenuState) {
             focused = state.focused == row
-            // Set the clock and exit only while it is stopped.
-            enabled = row !in STOPPED_ONLY || running != true
+            enabled = !row.stoppedOnly || running != true
             value = when (row) {
                 MenuRow.GAME_LENGTH -> durationText(gameLengthMs)
                 MenuRow.HOME_SCORE -> left.toString()
@@ -219,7 +216,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
                 MenuRow.LAYOUT -> context.getString(state.layout.labelRes())
                 MenuRow.MODE -> context.getString(state.mode.labelRes())
                 MenuRow.LANGUAGE -> state.language.nativeName()
-                MenuRow.GAME_CLOCK, MenuRow.NEW_GAME, MenuRow.EXIT -> ""
+                MenuRow.GAME_CLOCK, MenuRow.NEW_GAME, MenuRow.HELP, MenuRow.EXIT -> ""
             }
             hasLeftChevron = row in CHANGEABLE
             hasRightChevron = enabled
@@ -267,8 +264,5 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
             MenuRow.MODE,
             MenuRow.LANGUAGE,
         )
-
-        /** Rows that only open while the clock is stopped; muted, without a chevron, while it runs. */
-        val STOPPED_ONLY = setOf(MenuRow.GAME_CLOCK, MenuRow.EXIT)
     }
 }

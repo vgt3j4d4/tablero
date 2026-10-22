@@ -8,7 +8,7 @@
 | Rules           | `shared/`               | Data: game length, tenths threshold                                                  |
 | Protocol DTOs   | `shared/`               | Messages exchanged with controllers (Phase 2)                                        |
 | Scoreboard view | `tv-app/`               | Renders the latest `GameSnapshot` and confirmations with `Canvas`                   |
-| Overlays        | `tv-app/`               | Menu, quick clock adjust, set clock, time up, exit confirm                           |
+| Overlays        | `tv-app/`               | Menu, quick clock adjust, set clock, time up, how to use, exit confirm               |
 | Buzzer          | `tv-app/`               | Plays the time-up horn in response to engine events (`SoundPool`)                    |
 | Persistence     | `tv-app/`               | Saves/restores engine state after every applied command                              |
 | Input adapters  | `tv-app/`               | Remote keys → `Command`; WebSocket messages → `Command` (Phase 2)                    |
@@ -143,6 +143,12 @@ value, OK opens the focused row.
   field (minutes stop at 0 and 60, seconds wrap without carrying), ←/→ switch field, OK sends one `SetGameClock`
   (nothing when the time wasn't changed), Back cancels; both return to the menu.
 - **New game** sends `NewGame` and closes the menu; Back on the scoreboard undoes it.
+- **How to use** (design 10) opens only while the clock is stopped, since it covers the whole board: a generic remote
+  (every Android TV remote has the D-pad, its center button and Back, whatever their labels) next to what each key
+  does when pressed or held. Only OK and Back act there, both returning to the menu. The first time tablero starts
+  with the clock stopped it opens the screen by itself, without the menu, so that a new scorer learns that holding
+  Back opens the menu; closing it then goes straight to the board. Preferences remember that it was shown
+  (`HelpShown`).
 - **Exit** (design 09) opens only while the clock is stopped (muted while it runs, like Game clock):
   a confirm screen with CANCEL focused. ←/→ move between CANCEL and EXIT, OK on CANCEL or Back returns to the menu.
   OK held on EXIT for 2 s fills the button in red and then closes the menu and opens the stock launcher (Android TV

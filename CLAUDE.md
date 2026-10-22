@@ -30,15 +30,16 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
   Classic and Large layouts; Indoor and Outdoor modes), quick clock adjust,
   time-up bar, menu (with the set game clock dialog), buzzer at time up (synthesized horn), remote key adapter,
   persistence, fonts, launcher banner and icon, localization (English + Spanish, in-app language via `AppLanguage`), `HOME` intent filter and
-  guarded exit to Android TV (menu → hold OK 2 s → the stock launcher).
+  guarded exit to Android TV (menu → hold OK 2 s → the stock launcher), and a how to use screen (menu, and once on
+  the first launch).
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
 ## Phase 1 scope
 
 **In:** two teams, HOME on the left and AWAY on the right (fixed, no swap), with scores; game clock (tenths under
-1:00), buzzer at 0, undo, quick clock adjust, possession arrow, time-up bar with a new game (0–0), menu, guarded exit
-to Android TV.
+1:00), buzzer at 0, undo, quick clock adjust, possession arrow, time-up bar with a new game (0–0), menu, how to use
+screen, guarded exit to Android TV.
 
 **Out for now (designed for, not built):** shot clock, team fouls, timeouts, periods, FIBA/NBA/NCAA presets. Keep
 the engine open to them, but don't implement or render them.
@@ -142,10 +143,14 @@ via HDMI-CEC (verify with a key logger).
   so a score can still be fixed); OK opens it again.
 
 Menu overlay (Back long press; D-pad navigable): game clock (set exact time, stopped only), game length, left/right
-score, new game, layout, mode, language, exit (only while stopped; confirm screen with Cancel focused; exit requires
-holding OK 2 s). Open until Back. Scores, layout and mode change with every ←/→ press; game length and language apply
-when focus leaves their row or the menu closes (one undo for game length, one activity recreate for language). Layout,
-mode and language are saved in preferences and survive restarts.
+score, new game, layout, mode, language, how to use (stopped only), exit (only while stopped; confirm screen with
+Cancel focused; exit requires holding OK 2 s). Open until Back. Scores, layout and mode change with every ←/→ press;
+game length and language apply when focus leaves their row or the menu closes (one undo for game length, one activity
+recreate for language). Layout, mode and language are saved in preferences and survive restarts.
+
+**How to use** (design 10) shows this table in user wording next to a generic remote: the D-pad, its center button and
+Back exist on every Android TV remote, whatever their labels. It also opens once by itself, without the menu, the
+first time the app starts with the clock stopped; OK or Back closes it.
 
 ## Tech stack
 

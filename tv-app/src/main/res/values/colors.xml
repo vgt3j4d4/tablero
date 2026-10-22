@@ -39,6 +39,9 @@
     <color name="field_outline">#FF2A2E35</color>
     <color name="text_soft">#FFB4B9C0</color>
     <color name="text_muted">#FF8B919B</color>
+    <!-- How to use: keys tablero doesn't use, and the lines between the table's rows. -->
+    <color name="text_faint">#FF6B717A</color>
+    <color name="help_row_line">#FF1C1F24</color>
     <!-- Destructive actions: the exit confirm's EXIT fills with it while OK is held. -->
     <color name="destructive">#FFD92D20</color>
 </resources>

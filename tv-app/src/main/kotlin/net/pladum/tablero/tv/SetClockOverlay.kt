@@ -76,10 +76,7 @@ class SetClockOverlay(private val context: Context, fonts: BoardFonts) {
     private val focusedFill = fillPaint(context.color(R.color.panel_raised))
     private val focusedOutline = strokePaint(adjust, FOCUSED_BORDER)
     private val unfocusedOutline = strokePaint(context.color(R.color.field_outline), UNFOCUSED_BORDER)
-    private val arrowPaint = strokePaint(adjust, ARROW_STROKE).apply {
-        strokeCap = Paint.Cap.ROUND
-        strokeJoin = Paint.Join.ROUND
-    }
+    private val arrowPaint = roundStrokePaint(adjust, ARROW_STROKE)
     private val arrowUp = Path().apply {
         moveTo(8f, 32f)
         lineTo(28f, 10f)

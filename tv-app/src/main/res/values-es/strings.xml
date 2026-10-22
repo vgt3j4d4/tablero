@@ -63,6 +63,7 @@
     <string name="mode_indoor">Interior</string>
     <string name="mode_outdoor">Exterior</string>
     <string name="menu_language">Idioma</string>
+    <string name="menu_help">Cómo se usa</string>
     <string name="menu_exit">Salir</string>
     <string name="hint_move">MOVER</string>
     <string name="hint_change">CAMBIAR</string>
@@ -86,4 +87,29 @@
     <string name="exit_cancel">CANCELAR</string>
     <string name="exit_confirm">SALIR</string>
     <string name="exit_hold">MANTÉN OK · %1$d S</string>
+
+    <!-- How to use (menu → How to use, and once on the first launch): a generic remote and what each key does when
+         pressed or held. Row texts are in sentence case; %1$s is the team name (Local, Visita), uppercased in the
+         possession note. The legend's %1$s is the BACK key label, %2$s the menu row (Cómo se usa). -->
+    <string name="help_eyebrow">CÓMO SE USA</string>
+    <string name="help_title">Control remoto</string>
+    <string name="help_column_key">TECLA</string>
+    <string name="help_column_press">PRESIONAR</string>
+    <string name="help_column_hold">MANTENER</string>
+    <string name="help_clock">Iniciar / detener reloj</string>
+    <string name="help_clock_note">El botón del centro</string>
+    <string name="help_score_up">%1$s +1</string>
+    <string name="help_score_down">%1$s −1</string>
+    <string name="help_score_note">Presiona dos veces para 2 puntos, tres para 3</string>
+    <string name="help_possession">Cambiar flecha de posesión</string>
+    <string name="help_possession_note">La primera vez apunta a %1$s</string>
+    <string name="help_possession_hide">Ocultar flecha</string>
+    <string name="help_adjust">Ajustar reloj</string>
+    <string name="help_adjust_note">Funciona con el reloj en marcha</string>
+    <string name="help_undo">Deshacer última acción</string>
+    <string name="help_undo_note">Corrige errores, incluso un nuevo partido</string>
+    <string name="help_menu">Abrir menú</string>
+    <string name="help_legend">Las teclas grises no se usan. Para volver a verla: Menú (mantén %1$s) → %2$s.</string>
+    <string name="help_remote">Tu control puede verse distinto</string>
+    <string name="key_home">INICIO</string>
 </resources>

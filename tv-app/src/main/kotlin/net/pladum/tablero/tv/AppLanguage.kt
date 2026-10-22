@@ -6,8 +6,10 @@ import android.content.res.Configuration
 import android.content.res.XmlResourceParser
 import java.util.Locale
 
-/** Preferences holding what is chosen in the menu: the language, the layout and the mode. */
-internal const val SETTINGS_PREFS = "settings"
+private const val SETTINGS_PREFS = "settings"
+
+/** Preferences holding what is chosen in the menu (the language, the layout and the mode) and [HelpShown]. */
+internal fun settingsPrefs(context: Context) = context.getSharedPreferences(SETTINGS_PREFS, Context.MODE_PRIVATE)
 
 private const val PREF_LANGUAGE = "language"
 private const val ANDROID_NS = "http://schemas.android.com/apk/res/android"
@@ -35,7 +37,7 @@ object AppLanguage {
 
     /** The language chosen in the app, or null to follow the device. */
     fun chosen(context: Context): Locale? =
-        resolveChosen(prefs(context).getString(PREF_LANGUAGE, null), available(context))
+        resolveChosen(settingsPrefs(context).getString(PREF_LANGUAGE, null), available(context))
 
     /** The bundled language [activity] shows, as the menu names it. */
     fun inUse(activity: Activity): Locale =
@@ -43,7 +45,7 @@ object AppLanguage {
 
     /** Saves [locale] (null = follow the device) and recreates [activity] so it shows the new language. */
     fun set(activity: Activity, locale: Locale?) {
-        val edit = prefs(activity).edit()
+        val edit = settingsPrefs(activity).edit()
         if (locale == null) edit.remove(PREF_LANGUAGE) else edit.putString(PREF_LANGUAGE, locale.toLanguageTag())
         edit.apply()
         activity.recreate()
@@ -57,8 +59,6 @@ object AppLanguage {
         val locale = chosen(base) ?: return null
         return Configuration().apply { setLocale(locale) }
     }
-
-    private fun prefs(context: Context) = context.getSharedPreferences(SETTINGS_PREFS, Context.MODE_PRIVATE)
 }
 
 /** The saved language [tag] if it is still bundled, else null (follow the device). */

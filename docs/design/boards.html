@@ -131,22 +131,25 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
 .menu-row.focused { background: var(--text); color: var(--bg); }
 .menu-row.focused .value { color: var(--bg); }
 
-/* Remote mapping */
-.spec { padding: 72px 96px; display: flex; gap: 112px; background: #0E1013; height: 100%; }
-.remote { width: 300px; height: 900px; background: #1B1E23; border: 2px solid #2A2E35; border-radius: 120px 120px 80px 80px;
-  display: flex; flex-direction: column; align-items: center; padding-top: 56px; gap: 40px; }
-.rkey { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 20px; font-weight: 600; letter-spacing: 0.1em; color: var(--faint); }
+/* How to use (menu → How to use, and once on the first launch): a generic remote, since every Android TV remote has
+   the D-pad, its center button and BACK, and what each key does. */
+.help { padding: 72px 96px 56px; display: flex; gap: 112px; background: var(--panel); height: 100%; }
+.help-side { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; }
+.remote { width: 300px; height: 640px; background: var(--panel-raised); border: 2px solid #2A2E35; border-radius: 150px 150px 100px 100px;
+  display: flex; flex-direction: column; align-items: center; padding-top: 30px; gap: 44px; }
+.rkey { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 22px; font-weight: 600; letter-spacing: 0.1em; color: var(--faint); }
 .rkey.live { color: var(--text); font-weight: 700; }
-.dot { border-radius: 50%; border: 3px solid var(--off); }
-.rkey.live .dot { border: 4px solid var(--text); display: flex; align-items: center; justify-content: center; }
-.dpad { position: relative; width: 236px; height: 236px; border-radius: 50%; border: 4px solid var(--text); font-size: 30px; font-weight: 700; }
+.dot { border-radius: 50%; border: 3px solid var(--off); display: flex; align-items: center; justify-content: center; }
+.rkey.live .dot { border: 4px solid var(--text); }
+.dpad { position: relative; width: 236px; height: 236px; flex-shrink: 0; border-radius: 50%; border: 4px solid var(--text); font-size: 30px; font-weight: 700; }
 .dpad > div { position: absolute; }
-.map { display: grid; grid-template-columns: 180px minmax(0, 1fr) minmax(0, 1fr); border-top: 2px solid #2A2E35; }
-.map .th { padding: 18px 0; font-size: 26px; font-weight: 600; letter-spacing: 0.2em; color: var(--muted); border-bottom: 2px solid #2A2E35; }
-.map .td { padding: 15px 24px 15px 0; border-bottom: 2px solid #1C1F24; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
-.map .main { font-size: 38px; font-weight: 600; }
+.help-main { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; }
+.map { display: grid; grid-template-columns: 180px minmax(0, 1.4fr) minmax(0, 1fr); margin-top: 36px; border-top: 2px solid #2A2E35; }
+.map .th { padding: 16px 0; font-size: 26px; font-weight: 600; letter-spacing: 0.2em; color: var(--muted); border-bottom: 2px solid #2A2E35; }
+.map .td { height: 108px; padding-right: 24px; border-bottom: 2px solid #1C1F24; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.map .main { font-size: 38px; font-weight: 600; line-height: 1.15; }
 .map .main.none { color: var(--faint); }
-.map .note { font-size: 26px; font-weight: 500; color: var(--muted); }
+.map .note { font-size: 26px; font-weight: 500; line-height: 1.2; color: var(--muted); }
 .map .kc { align-self: flex-start; min-width: 76px; text-align: center; border: 3px solid var(--text); border-radius: 12px; padding: 2px 14px; font-size: 34px; font-weight: 700; }
 </style>
 </head>
@@ -168,7 +171,7 @@ const STRINGS = {
     menuRows: [
       [['Game clock', '07:42', false], ['Game length', '10:00', true]],
       [['Home score', '48', true], ['Away score', '45', true]],
-      [['New game', '', false], ['Layout', 'Classic', true], ['Mode', outdoor ? 'Outdoor' : 'Indoor', true], ['Language', 'English', true], ['Exit', '', false]],
+      [['New game', '', false], ['Layout', 'Classic', true], ['Mode', outdoor ? 'Outdoor' : 'Indoor', true], ['Language', 'English', true], ['How to use', '', false], ['Exit', '', false]],
     ],
     menuFocused: outdoor ? 'Mode' : 'Home score',
     move: 'MOVE', change: 'CHANGE', open: 'OPEN', close: 'CLOSE',
@@ -178,19 +181,19 @@ const STRINGS = {
     admin: 'ADMIN', exitTitle: 'Exit the scoreboard?',
     exitBody: 'Score and clock are saved. Open tablero from the apps row to come back to the scoreboard.',
     exit: 'EXIT', holdOk: 'HOLD OK · 2 S',
-    remoteEyebrow: 'PHASE 1 · XIAOMI MI TV STICK REMOTE', remoteTitle: 'Remote mapping',
-    keyCol: 'KEY', shortCol: 'SHORT PRESS', longCol: 'LONG PRESS',
-    remoteRows: [
-      ['OK', 'Start / stop clock', 'Fires on key-down: no delay', '—', ''],
-      ['←', 'Home +1', 'Repeated presses add up: HOME +3', 'Home −1', ''],
-      ['→', 'Away +1', 'Repeated presses add up: AWAY +2', 'Away −1', ''],
-      ['↑', 'Flip possession arrow', 'The first press points to HOME', 'Hide arrow', ''],
-      ['↓', 'Adjust clock', 'Then ↑↓ ±1 min, ←→ ±1 s, OK done, BACK cancel', '—', ''],
-      ['BACK', 'Undo last action', 'Shows what was undone', 'Open menu', ''],
+    helpEyebrow: 'HOW TO USE', helpTitle: 'Remote control',
+    keyCol: 'KEY', pressCol: 'PRESS', holdCol: 'HOLD',
+    helpRows: [
+      ['OK', 'Start / stop clock', 'The center button', '—'],
+      ['←', 'Home +1', 'Press twice for 2 points, three times for 3', 'Home −1'],
+      ['→', 'Away +1', 'Press twice for 2 points, three times for 3', 'Away −1'],
+      ['↑', 'Flip possession arrow', 'The first press points to HOME', 'Hide arrow'],
+      ['↓', 'Adjust clock', 'Works while the clock runs', '—'],
+      ['BACK', 'Undo last action', 'Fixes mistakes, even a new game', 'Open menu'],
     ],
-    remoteLegend: 'Grey keys are handled by the system or the TV. HOME goes to the stick\'s home screen; the clock keeps running.',
-    rk: { power: 'POWER', assist: 'ASSIST.', back: 'BACK', home: 'HOME', volume: 'VOLUME' },
-    schematic: 'Schematic, not to scale',
+    helpLegend: 'Grey keys aren\'t used. To see this again: Menu (hold BACK) → How to use.',
+    rk: { back: 'BACK', home: 'HOME' },
+    helpRemote: 'Your remote may look different',
     feedbackTeam: 'HOME +3',
     poss: 'POS', feedbackPoss: 'POS → AWAY',
   },
@@ -204,7 +207,7 @@ const STRINGS = {
     menuRows: [
       [['Reloj de juego', '07:42', false], ['Duración del partido', '10:00', true]],
       [['Puntos Local', '48', true], ['Puntos Visita', '45', true]],
-      [['Nuevo partido', '', false], ['Diseño', 'Clásico', true], ['Modo', outdoor ? 'Exterior' : 'Interior', true], ['Idioma', 'Español', true], ['Salir', '', false]],
+      [['Nuevo partido', '', false], ['Diseño', 'Clásico', true], ['Modo', outdoor ? 'Exterior' : 'Interior', true], ['Idioma', 'Español', true], ['Cómo se usa', '', false], ['Salir', '', false]],
     ],
     menuFocused: outdoor ? 'Modo' : 'Puntos Local',
     move: 'MOVER', change: 'CAMBIAR', open: 'ABRIR', close: 'CERRAR',
@@ -214,19 +217,19 @@ const STRINGS = {
     admin: 'ADMINISTRACIÓN', exitTitle: '¿Salir del marcador?',
     exitBody: 'El puntaje y el reloj quedan guardados. Abre tablero desde la fila de apps para volver al marcador.',
     exit: 'SALIR', holdOk: 'MANTÉN OK · 2 S',
-    remoteEyebrow: 'FASE 1 · CONTROL DEL XIAOMI MI TV STICK', remoteTitle: 'Mapeo del control',
-    keyCol: 'TECLA', shortCol: 'PULSACIÓN CORTA', longCol: 'PULSACIÓN LARGA',
-    remoteRows: [
-      ['OK', 'Iniciar / detener reloj', 'Actúa al presionar: sin demora', '—', ''],
-      ['←', 'Local +1', 'Pulsaciones seguidas se suman: LOCAL +3', 'Local −1', ''],
-      ['→', 'Visita +1', 'Pulsaciones seguidas se suman: VISITA +2', 'Visita −1', ''],
-      ['↑', 'Cambiar flecha de posesión', 'La primera vez apunta a LOCAL', 'Ocultar flecha', ''],
-      ['↓', 'Ajustar reloj', 'Luego ↑↓ ±1 min, ←→ ±1 s, OK listo, ATRÁS cancela', '—', ''],
-      ['ATRÁS', 'Deshacer última acción', 'Muestra qué se deshizo', 'Abrir menú', ''],
+    helpEyebrow: 'CÓMO SE USA', helpTitle: 'Control remoto',
+    keyCol: 'TECLA', pressCol: 'PRESIONAR', holdCol: 'MANTENER',
+    helpRows: [
+      ['OK', 'Iniciar / detener reloj', 'El botón del centro', '—'],
+      ['←', 'Local +1', 'Presiona dos veces para 2 puntos, tres para 3', 'Local −1'],
+      ['→', 'Visita +1', 'Presiona dos veces para 2 puntos, tres para 3', 'Visita −1'],
+      ['↑', 'Cambiar flecha de posesión', 'La primera vez apunta a LOCAL', 'Ocultar flecha'],
+      ['↓', 'Ajustar reloj', 'Funciona con el reloj en marcha', '—'],
+      ['ATRÁS', 'Deshacer última acción', 'Corrige errores, incluso un nuevo partido', 'Abrir menú'],
     ],
-    remoteLegend: 'Teclas grises: las maneja el sistema o la TV. INICIO va a la pantalla de inicio del stick; el reloj sigue corriendo.',
-    rk: { power: 'ENCENDER', assist: 'ASIST.', back: 'ATRÁS', home: 'INICIO', volume: 'VOLUMEN' },
-    schematic: 'Esquema, no a escala',
+    helpLegend: 'Las teclas grises no se usan. Para volver a verla: Menú (mantén ATRÁS) → Cómo se usa.',
+    rk: { back: 'ATRÁS', home: 'INICIO' },
+    helpRemote: 'Tu control puede verse distinto',
     feedbackTeam: 'LOCAL +3',
     poss: 'POS', feedbackPoss: 'POS → VISITA',
   },
@@ -410,18 +413,16 @@ const BOARDS = {
     </div>`,
 
   'remote-mapping': () => {
-    const rows = T.remoteRows.map(([key, short, note, long]) => `
+    const rows = T.helpRows.map(([key, press, note, hold]) => `
       <div class="td"><span class="kc">${esc(key)}</span></div>
-      <div class="td"><span class="main ${short === 'Unused' || short === 'Sin uso' ? 'none' : ''}">${esc(short)}</span><span class="note">${esc(note)}</span></div>
-      <div class="td"><span class="main ${long === '—' ? 'none' : ''}">${esc(long)}</span></div>`).join('');
+      <div class="td"><span class="main">${esc(press)}</span><span class="note">${esc(note)}</span></div>
+      <div class="td"><span class="main ${hold === '—' ? 'none' : ''}">${esc(hold)}</span></div>`).join('');
+    const pill = '<div style="width:96px;height:40px;border-radius:20px;border:3px solid var(--off)"></div>';
+    const small = '<div class="dot" style="width:48px;height:48px"></div>';
     return `
-      <div class="spec">
-        <div style="width:340px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:20px">
+      <div class="help">
+        <div class="help-side">
           <div class="remote">
-            <div style="display:flex;gap:120px">
-              <div class="rkey"><div class="dot" style="width:52px;height:52px"></div>${esc(T.rk.power)}</div>
-              <div class="rkey"><div class="dot" style="width:52px;height:52px"></div>${esc(T.rk.assist)}</div>
-            </div>
             <div class="dpad">
               <div style="top:10px;left:0;right:0;text-align:center">↑</div>
               <div style="bottom:10px;left:0;right:0;text-align:center">↓</div>
@@ -430,34 +431,33 @@ const BOARDS = {
               <div style="left:58px;top:58px;width:112px;height:112px;border-radius:50%;background:var(--text);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800">OK</div>
             </div>
             <div style="display:flex;gap:72px">
-              <div class="rkey live"><div class="dot" style="width:72px;height:72px">
+              <div class="rkey live"><div class="dot" style="width:76px;height:76px">
                 <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><path d="M12 8 L5 15 L12 22 M5 15 H20 a7 7 0 0 1 0 14 H14" fill="none" stroke="#F5F2EA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </div>${esc(T.rk.back)}</div>
-              <div class="rkey"><div class="dot" style="width:72px;height:72px"></div>${esc(T.rk.home)}</div>
+              <div class="rkey"><div class="dot" style="width:76px;height:76px">
+                <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 16 L16 6 L27 16 M9 13 V26 H23 V13" fill="none" stroke="#3A3F47" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>${esc(T.rk.home)}</div>
             </div>
-            <div class="rkey">
-              <div style="width:64px;height:150px;border-radius:32px;border:3px solid var(--off);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:12px 0;font-size:30px;font-weight:700"><span>+</span><span>−</span></div>
-              ${esc(T.rk.volume)}
-            </div>
-            <div style="display:flex;gap:20px">
-              <div style="width:104px;height:44px;border-radius:22px;border:3px solid var(--off)"></div>
-              <div style="width:104px;height:44px;border-radius:22px;border:3px solid var(--off)"></div>
-            </div>
+            <div style="display:flex;gap:28px">${small}${small}${small}</div>
+            <div style="display:flex;gap:20px">${pill}${pill}</div>
           </div>
-          <div style="font-size:24px;font-weight:500;color:var(--muted)">${esc(T.schematic)}</div>
+          <div style="font-size:26px;font-weight:500;color:var(--muted)">${esc(T.helpRemote)}</div>
         </div>
-        <div style="flex-grow:1;display:flex;flex-direction:column;gap:32px;min-width:0">
+        <div class="help-main">
           <div style="display:flex;flex-direction:column;gap:8px">
-            <div class="eyebrow">${esc(T.remoteEyebrow)}</div>
-            <div style="font-size:72px;font-weight:700;line-height:1">${esc(T.remoteTitle)}</div>
+            <div class="eyebrow">${esc(T.helpEyebrow)}</div>
+            <div style="font-size:72px;font-weight:700;line-height:1">${esc(T.helpTitle)}</div>
           </div>
           <div class="map">
-            <div class="th">${esc(T.keyCol)}</div><div class="th">${esc(T.shortCol)}</div><div class="th">${esc(T.longCol)}</div>
+            <div class="th">${esc(T.keyCol)}</div><div class="th">${esc(T.pressCol)}</div><div class="th">${esc(T.holdCol)}</div>
             ${rows}
           </div>
-          <div style="display:flex;align-items:center;gap:14px;font-size:28px;font-weight:500;color:var(--soft)">
-            <span style="width:18px;height:18px;flex-shrink:0;border-radius:4px;border:3px solid var(--off)"></span>
-            <span>${esc(T.remoteLegend)}</span>
+          <div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:48px">
+            <div style="display:flex;align-items:center;gap:14px;font-size:28px;font-weight:500;color:var(--soft);min-width:0">
+              <span style="width:18px;height:18px;flex-shrink:0;border-radius:4px;border:3px solid var(--off)"></span>
+              <span>${esc(T.helpLegend)}</span>
+            </div>
+            <div class="hints" style="flex-shrink:0">${hint(T.back, T.close)}</div>
           </div>
         </div>
       </div>`;
