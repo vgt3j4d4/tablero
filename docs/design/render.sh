@@ -29,6 +29,16 @@ BOARDS=(
   21-large-possession
   22-outdoor-possession
   23-possession-feedback
+  24-fiba-live-game
+  25-fiba-large-live-game
+  26-outdoor-fiba-live-game
+  27-fiba-team-foul
+  28-fiba-foul-feedback
+  29-fiba-period-end
+  30-fiba-halftime
+  31-fiba-overtime
+  32-fiba-menu
+  33-fiba-remote-mapping
 )
 LANGS=(en es)
 

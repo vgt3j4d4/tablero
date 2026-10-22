@@ -10,7 +10,7 @@ and [`architecture.md`](../architecture.md); these images show how it looks.
 | 02 | [Final minute](en/02-final-minute.png) | Below 1:00 the clock shows tenths (`38.4`) |
 | 03 | [Time up](en/03-time-up.png) | Buzzer state: red frame, result, and the choice between *New game* (default: 0–0) and *Reset clock · keep score* |
 | 05 | [Action feedback](en/05-action-feedback.png) | Confirmation after each action (`HOME +3 · 48 → 51`) with the Undo hint |
-| 06 | [Menu](en/06-menu.png) | Long-press Back: game clock, game length, scores, new game, layout, mode, language, how to use, exit |
+| 06 | [Menu](en/06-menu.png) | Long-press Back: game clock, game length, scores, new game, rules, layout, mode, language, how to use, exit |
 | 07 | [Quick clock adjust](en/07-quick-clock-adjust.png) | ↓ opens it: ↑/↓ ±1 min, ←/→ ±1 s, OK done, Back cancel; works while the clock runs |
 | 08 | [Set game clock](en/08-set-game-clock.png) | Exact time entry from the menu, only while the clock is stopped |
 | 09 | [Exit confirm](en/09-exit-confirm.png) | Guarded exit to Android TV: Cancel focused by default, exit needs OK held for 2 s |
@@ -28,9 +28,19 @@ and [`architecture.md`](../architecture.md); these images show how it looks.
 | 21 | [Large: possession arrow](en/21-large-possession.png) | The arrow in the Large layout, a little smaller so it clears the bigger scores |
 | 22 | [Outdoor: possession arrow](en/22-outdoor-possession.png) | The arrow in Outdoor: deep red like the scores, faint when unlit |
 | 23 | [Possession feedback](en/23-possession-feedback.png) | The confirmation after ↑ (`POS → AWAY`), undone with Back like any action |
+| 24 | [FIBA: live game](en/24-fiba-live-game.png) | Menu → Rules → FIBA: team fouls in the corners beside the clock, the period between the scores with the possession arrows on either side; AWAY's 5th foul (the first with free throws) turns red |
+| 25 | [FIBA: Large](en/25-fiba-large-live-game.png) | FIBA in the Large layout: a smaller period and arrows clear the bigger scores |
+| 26 | [FIBA: Outdoor](en/26-outdoor-fiba-live-game.png) | FIBA in Outdoor: fouls deep red like the scores, the penalty and the period black like the clock |
+| 27 | [FIBA: team foul](en/27-fiba-team-foul.png) | Hold ↓: rings on both foul corners and a bar; ← or → adds the foul and closes it, Back cancels |
+| 28 | [FIBA: foul feedback](en/28-fiba-foul-feedback.png) | The confirmation after a foul (`AWAY FOUL · 4 → 5`), undone with Back |
+| 29 | [FIBA: end of period](en/29-fiba-period-end.png) | The clock reached 0 in period 2: the time-up frame and a bar with the break (`HALFTIME · 15:00`, focused) or `SKIP BREAK` |
+| 30 | [FIBA: halftime](en/30-fiba-halftime.png) | The break counts down on the game clock; the board is already on period 3 with no fouls. ↓ adjusts the break, OK ends it |
+| 31 | [FIBA: overtime](en/31-fiba-overtime.png) | A tie after period 4: overtime 1 (`OT`), 5:00; overtime fouls count as period 4 fouls, so HOME's 5 carry over |
+| 32 | [FIBA: menu](en/32-fiba-menu.png) | The menu under FIBA rules adds period, period length and fouls rows; the list scrolls with the focus and fades out where it is cut |
+| 33 | [FIBA: how to use](en/33-fiba-remote-mapping.png) | How to use under FIBA rules: holding ↓ adds a team foul |
 
-Screens 01–13 show the *Indoor* mode and 01–10 the *Classic* layout, the defaults; the other screens look the same
-in every layout and mode (the menu, dialogs and bars only differ in the board behind them). Spanish versions use the same file names under [`es/`](es/).
+Screens 01–23 show the *Pickup* rules, 01–13 the *Indoor* mode and 01–10 the *Classic* layout, the defaults; the other
+screens look the same in every layout and mode (the menu, dialogs and bars only differ in the board behind them). Spanish versions use the same file names under [`es/`](es/).
 Numbers are fixed because issues link to the files; 04 (a next-game team picker) was dropped.
 
 ## Visual language
@@ -46,6 +56,12 @@ Numbers are fixed because issues link to the files; 04 (a next-game team picker)
 - **Possession arrow:** a `POS` label in line with the team names (`POS` in Spanish too) over a pair of arrows
   between the scores. The lit one points to the team with the next alternating possession, in the score color; the
   other is drawn like an unlit segment. Hidden until the first ↑ of a game.
+- **FIBA rules** (menu → Rules): each team's fouls sit in the corner beside the clock on its side, which is empty
+  under Pickup rules, with a `FOULS` label over one LED digit (250 px; 230 in Large). They use the score color and
+  switch to the clock color from the first foul with free throws (the 5th of a period). The period is one digit in
+  the clock color between the scores, with a `PERIOD` label (`OT` in overtime) in line with the team names; the
+  possession arrows sit on either side of it and stay drawn, unlit, while the arrow is hidden, so `POS` is not
+  shown. The foul bar uses the confirmation's colors, the break bar the menu's panel.
 - Teams are named by side, in white: `HOME` (left) and `AWAY` (right), `LOCAL` / `VISITA` in Spanish.
 - UI text in **Barlow Condensed**; key hints drawn as outlined keycaps.
 - Highlight / focus: inverted rows (light background, dark text) or a thick light outline; amber marks the

@@ -91,11 +91,30 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
    its unlit ghost. */
 .teams { position: relative; }
 .poss { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; }
-.poss .label { height: 84px; display: flex; align-items: center; font-size: 56px; font-weight: 700; line-height: 1; letter-spacing: 0.08em; }
+.poss .label, .fouls .label { font-size: 56px; font-weight: 700; line-height: 1; letter-spacing: 0.08em; white-space: nowrap; }
+.poss .label { height: 84px; display: flex; align-items: center; }
 .poss .arrows { height: 330px; display: flex; align-items: center; gap: 28px; }
 .board.large .poss { gap: 14px; }
 .board.large .poss .label { height: 56px; }
 .board.large .poss .arrows { height: 410px; gap: 24px; }
+/* FIBA rules (boards 24–33): team fouls in the corners beside the clock, the period between the scores with the
+   possession arrows on either side of it (drawn unlit while the arrow is hidden). Fouls are `led score` digits,
+   `led clock` from the first foul with free throws (the 5th of a period); the period is a `led clock` digit. The
+   size rules below come after .led.clock / .led.score, so they win. */
+.fouls { position: absolute; top: 36px; width: 268px; height: 440px; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 24px; }
+.fouls.left { left: 36px; }
+.fouls.right { right: 36px; }
+.led.fouls-n, .led.period-n { font-size: 250px; }
+.board.large .fouls { width: 218px; height: 410px; }
+.board.large .fouls .label { font-size: 48px; }
+.board.large .led.fouls-n { font-size: 230px; }
+.board.large .period .arrows { gap: 14px; }
+.board.large .led.period-n { font-size: 180px; }
+/* Hold ↓: the foul corners get a ring, like quick clock adjust's around the clock. */
+.foul-ring { position: absolute; top: 22px; width: 296px; height: 468px; border: 6px solid var(--board-text); border-radius: 32px; }
+.foul-ring.left { left: 22px; }
+.foul-ring.right { right: 22px; }
 .status { height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; padding: 0 48px;
   border-top: 2px solid var(--status-line); font-size: 28px; font-weight: 600; letter-spacing: 0.08em; color: var(--muted); }
 .status .state { display: flex; align-items: center; gap: 12px; color: var(--board-text); }
@@ -112,13 +131,17 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
 .toast { position: absolute; left: 500px; bottom: 0; width: 920px; height: 64px; padding: 0 28px; display: flex; align-items: center;
   justify-content: space-between; background: var(--toast-bg); color: var(--toast-ink); border-radius: 16px 16px 0 0; }
 .time-up-frame { position: absolute; inset: 0; border: 14px solid var(--alert-frame); }
-.time-up-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 88px; padding: 0 48px; display: flex; align-items: center;
-  justify-content: space-between; gap: 24px; background: var(--alert); color: #FFFFFF; }
+/* .bar is 64 px tall, .bar.tall 88 px; each kind only sets its colors. */
+.bar { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; padding: 0 48px; display: flex; align-items: center;
+  justify-content: space-between; gap: 24px; }
+.bar.tall { height: 88px; }
+.time-up-bar { background: var(--alert); color: #FFFFFF; }
 .btn { height: 64px; padding: 0 24px; border-radius: 12px; font-family: inherit; font-weight: 800; letter-spacing: 0.04em; }
 .adjust-ring { position: absolute; left: 326px; top: 22px; width: 1268px; height: 468px; border: 8px solid var(--adjust); border-radius: 40px; }
 .adjust-ring.large { left: 259px; top: 12px; width: 1402px; height: 458px; }
-.adjust-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; padding: 0 48px; display: flex; align-items: center;
-  justify-content: space-between; background: var(--adjust); color: var(--bg); }
+.adjust-bar { background: var(--adjust); color: var(--bg); }
+.foul-bar { background: var(--toast-bg); color: var(--toast-ink); }
+.break-bar { background: var(--panel); border-top: 2px solid var(--line); color: var(--text); }
 
 /* Menu */
 .menu { position: absolute; top: 0; right: 0; width: 820px; height: 1080px; background: var(--panel); border-left: 2px solid var(--line);
@@ -130,6 +153,10 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Barlo
 .menu-row .value span { min-width: 120px; text-align: center; }
 .menu-row.focused { background: var(--text); color: var(--bg); }
 .menu-row.focused .value { color: var(--bg); }
+/* Under FIBA rules the rows outgrow the panel: the list scrolls with the focus and fades out where it is cut. */
+.menu-list { flex-grow: 1; display: flex; flex-direction: column; gap: 14px; position: relative; overflow: hidden; }
+.menu-list.cut::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 120px;
+  background: linear-gradient(transparent, var(--panel)); }
 
 /* How to use (menu → How to use, and once on the first launch): a generic remote, since every Android TV remote has
    the D-pad, its center button and BACK, and what each key does. */
@@ -168,12 +195,12 @@ const STRINGS = {
     timeUp: 'TIME UP', result: 'Home wins 62–58',
     newGameBtn: 'NEW GAME', resetBtn: 'RESET CLOCK · KEEP SCORE',
     menu: 'Menu',
-    menuRows: [
-      [['Game clock', '07:42', false], ['Game length', '10:00', true]],
-      [['Home score', '48', true], ['Away score', '45', true]],
-      [['New game', '', false], ['Layout', 'Classic', true], ['Mode', outdoor ? 'Outdoor' : 'Indoor', true], ['Language', 'English', true], ['How to use', '', false], ['Exit', '', false]],
-    ],
-    menuFocused: outdoor ? 'Mode' : 'Home score',
+    menuLabels: {
+      gameClock: 'Game clock', gameLength: 'Game length', period: 'Period', periodLength: 'Period length',
+      homeScore: 'Home score', awayScore: 'Away score', homeFouls: 'Home fouls', awayFouls: 'Away fouls',
+      newGame: 'New game', rules: 'Rules', layout: 'Layout', mode: 'Mode', language: 'Language', help: 'How to use', exit: 'Exit',
+    },
+    menuValues: { pickup: 'Pickup', classic: 'Classic', indoor: 'Indoor', outdoor: 'Outdoor', language: 'English' },
     move: 'MOVE', change: 'CHANGE', open: 'OPEN', close: 'CLOSE',
     adjust: 'ADJUST CLOCK', was: 'was 07:42', min: '±1 MIN', sec: '±1 SEC', done: 'DONE',
     setClock: 'SET GAME CLOCK', setClockSub: 'Was 07:42 · clock stopped', minLabel: 'MIN', secLabel: 'SEC',
@@ -196,6 +223,11 @@ const STRINGS = {
     helpRemote: 'Your remote may look different',
     feedbackTeam: 'HOME +3',
     poss: 'POS', feedbackPoss: 'POS → AWAY',
+    fouls: 'FOULS', period: 'PERIOD', ot: 'OT',
+    teamFoul: 'TEAM FOUL', feedbackFoul: 'AWAY FOUL',
+    periodEnd: 'END OF PERIOD 2', leads: 'Home leads 48–45', halftimeBtn: 'HALFTIME · 15:00', skipBreak: 'SKIP BREAK',
+    halftime: 'HALFTIME', breakNext: 'Period 3 starts at 0:00', adjustShort: 'ADJUST', endBreak: 'END BREAK',
+    helpFoul: ['↓', 'Adjust clock', 'Works while the clock runs, and in breaks', 'Team foul', 'Then ← home or → away'],
   },
   es: {
     home: 'LOCAL', away: 'VISITA',
@@ -204,12 +236,12 @@ const STRINGS = {
     timeUp: 'FIN DEL PARTIDO', result: 'Gana Local 62–58',
     newGameBtn: 'NUEVO PARTIDO', resetBtn: 'REINICIAR RELOJ · MISMO PUNTAJE',
     menu: 'Menú',
-    menuRows: [
-      [['Reloj de juego', '07:42', false], ['Duración del partido', '10:00', true]],
-      [['Puntos Local', '48', true], ['Puntos Visita', '45', true]],
-      [['Nuevo partido', '', false], ['Diseño', 'Clásico', true], ['Modo', outdoor ? 'Exterior' : 'Interior', true], ['Idioma', 'Español', true], ['Cómo se usa', '', false], ['Salir', '', false]],
-    ],
-    menuFocused: outdoor ? 'Modo' : 'Puntos Local',
+    menuLabels: {
+      gameClock: 'Reloj de juego', gameLength: 'Duración del partido', period: 'Periodo', periodLength: 'Duración del periodo',
+      homeScore: 'Puntos Local', awayScore: 'Puntos Visita', homeFouls: 'Faltas Local', awayFouls: 'Faltas Visita',
+      newGame: 'Nuevo partido', rules: 'Reglas', layout: 'Diseño', mode: 'Modo', language: 'Idioma', help: 'Cómo se usa', exit: 'Salir',
+    },
+    menuValues: { pickup: 'Recreativo', classic: 'Clásico', indoor: 'Interior', outdoor: 'Exterior', language: 'Español' },
     move: 'MOVER', change: 'CAMBIAR', open: 'ABRIR', close: 'CERRAR',
     adjust: 'AJUSTAR RELOJ', was: 'antes 07:42', min: '±1 MIN', sec: '±1 SEG', done: 'LISTO',
     setClock: 'FIJAR RELOJ DE JUEGO', setClockSub: 'Antes 07:42 · reloj detenido', minLabel: 'MIN', secLabel: 'SEG',
@@ -232,6 +264,11 @@ const STRINGS = {
     helpRemote: 'Tu control puede verse distinto',
     feedbackTeam: 'LOCAL +3',
     poss: 'POS', feedbackPoss: 'POS → VISITA',
+    fouls: 'FALTAS', period: 'PERIODO', ot: 'TIEMPO EXTRA',
+    teamFoul: 'FALTA DE EQUIPO', feedbackFoul: 'FALTA VISITA',
+    periodEnd: 'FIN DEL PERIODO 2', leads: 'Local va ganando 48–45', halftimeBtn: 'MEDIO TIEMPO · 15:00', skipBreak: 'SIN DESCANSO',
+    halftime: 'MEDIO TIEMPO', breakNext: 'El periodo 3 empieza en 0:00', adjustShort: 'AJUSTAR', endBreak: 'TERMINAR DESCANSO',
+    helpFoul: ['↓', 'Ajustar reloj', 'Funciona con el reloj en marcha y en los descansos', 'Falta de equipo', 'Luego ← local o → visita'],
   },
 };
 
@@ -257,14 +294,28 @@ function arrow(dir, lit, h) {
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" overflow="visible" aria-hidden="true"><polygon points="${points}" fill="${color}" stroke="${color}" stroke-width="10" stroke-linejoin="round"/></svg>`;
 }
 
-/* possession: 'home', 'away' or '' (hidden, the default after a new game). */
-function possession(side, large) {
-  if (!side) return '';
-  const h = large ? 100 : 120;
+/* possession: 'home', 'away' or '' (hidden, the default after a new game). Under FIBA rules ({ period, label }) the
+   period sits between the arrows and its label replaces POS; the arrows then always show, both unlit while hidden. */
+function possession(side, large, fiba = null) {
+  if (!side && !fiba) return '';
+  const h = large ? (fiba ? 84 : 100) : 120;
+  const period = fiba ? `<div class="led clock period-n"><span class="ghost">8</span><span>${fiba.period}</span></div>` : '';
   return `
-    <div class="poss">
-      <div class="label">${esc(T.poss)}</div>
-      <div class="arrows">${arrow('left', side === 'home', h)}${arrow('right', side === 'away', h)}</div>
+    <div class="poss ${fiba ? 'period' : ''}">
+      <div class="label">${esc(fiba ? fiba.label || T.period : T.poss)}</div>
+      <div class="arrows">${arrow('left', side === 'home', h)}${period}${arrow('right', side === 'away', h)}</div>
+    </div>`;
+}
+
+/* FIBA: the 5th team foul of a period is the first with free throws. */
+const PENALTY_FOULS = 5;
+
+/* A team's fouls in the corner beside the clock on its side. */
+function fouls(side, n) {
+  return `
+    <div class="fouls ${side}">
+      <div class="label">${esc(T.fouls)}</div>
+      <div class="led ${n >= PENALTY_FOULS ? 'clock' : 'score'} fouls-n"><span class="ghost">8</span><span>${n}</span></div>
     </div>`;
 }
 
@@ -276,21 +327,51 @@ function team(name, score) {
     </div>`;
 }
 
-function scoreboard({ leftScore = '48', rightScore = '45', clock = '07:42', running = true, large = false, poss = '' } = {}) {
+/* fiba: { fouls: [home, away], period, label } shows the board under FIBA rules; null under Pickup rules. */
+function scoreboard({ leftScore = '48', rightScore = '45', clock = '07:42', running = true, large = false, poss = '', fiba = null } = {}) {
   const state = running ? `${RUN_ICON}<span>${T.running}</span>` : `${PAUSE_ICON}<span>${T.stopped}</span>`;
   const led = `<div class="led clock"><span class="ghost">${ghost(clock)}</span><span>${esc(clock)}</span></div>`;
+  const middle = possession(poss, large, fiba);
+  const corners = fiba ? fouls('left', fiba.fouls[0]) + fouls('right', fiba.fouls[1]) : '';
   return large ? `
     <div class="board large">
       <div class="clock-row">${led}</div>
-      <div class="teams">${team(T.home, leftScore)}${team(T.away, rightScore)}${possession(poss, true)}</div>
+      <div class="teams">${team(T.home, leftScore)}${team(T.away, rightScore)}${middle}</div>
       <div class="status"><div class="state">${state}</div></div>
+      ${corners}
     </div>` : `
     <div class="board">
       <div class="clock-row"><div class="clock-box">${led}</div></div>
-      <div class="teams">${team(T.home, leftScore)}<div></div>${team(T.away, rightScore)}${possession(poss, false)}</div>
+      <div class="teams">${team(T.home, leftScore)}<div></div>${team(T.away, rightScore)}${middle}</div>
       <div class="status"><div class="state">${state}</div></div>
+      ${corners}
     </div>`;
 }
+
+/* A tall bar's title and its detail. */
+function barTitle(title, detail, detailColor = 'inherit') {
+  return `
+      <div style="display:flex;align-items:baseline;gap:20px;min-width:0">
+        <span style="font-size:48px;font-weight:800;letter-spacing:0.06em;white-space:nowrap">${esc(title)}</span>
+        <span style="font-size:30px;font-weight:600;white-space:nowrap;color:${detailColor}">${esc(detail)}</span>
+      </div>`;
+}
+
+/* The time-up bar: a title and detail, the focused choice and the other one. */
+function timeUpBar(title, detail, focused, other) {
+  return `
+    <div class="time-up-frame"></div>
+    <div class="bar tall time-up-bar">
+      ${barTitle(title, detail)}
+      <div style="display:flex;align-items:center;gap:16px;flex-shrink:0">
+        <button class="btn" style="border:4px solid #fff;background:#fff;color:#A3180E;font-size:32px">${esc(focused)}</button>
+        <button class="btn" style="border:3px solid rgba(255,255,255,0.7);background:transparent;color:#fff;font-size:28px;font-weight:700">${esc(other)}</button>
+      </div>
+    </div>`;
+}
+
+/* A FIBA game in period 2: AWAY's 5th foul gives HOME free throws from now on. */
+const FIBA_GAME = { poss: 'home', fiba: { fouls: [3, 5], period: '2' } };
 
 /* The confirmation after an action, with the Undo hint. */
 function toast(main, detail = '') {
@@ -311,37 +392,37 @@ const BOARDS = {
 
   'time-up': (large = false) => `
     ${scoreboard({ leftScore: '62', rightScore: '58', clock: '0.0', running: false, large })}
-    <div class="time-up-frame"></div>
-    <div class="time-up-bar">
-      <div style="display:flex;align-items:baseline;gap:20px;min-width:0">
-        <span style="font-size:48px;font-weight:800;letter-spacing:0.06em;white-space:nowrap">${esc(T.timeUp)}</span>
-        <span style="font-size:30px;font-weight:600">${esc(T.result)}</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:16px;flex-shrink:0">
-        <button class="btn" style="border:4px solid #fff;background:#fff;color:#A3180E;font-size:32px">${esc(T.newGameBtn)}</button>
-        <button class="btn" style="border:3px solid rgba(255,255,255,0.7);background:transparent;color:#fff;font-size:28px;font-weight:700">${esc(T.resetBtn)}</button>
-      </div>
-    </div>`,
+    ${timeUpBar(T.timeUp, T.result, T.newGameBtn, T.resetBtn)}`,
 
   'action-feedback': () => `
     ${scoreboard({ leftScore: '51', clock: '06:58', running: false })}
     ${toast(T.feedbackTeam, '48 → 51')}`,
 
-  'menu': () => {
-    const groups = T.menuRows.map((rows) => `<div class="menu-group">${rows.map(([label, value, adjust]) => `
-      <div class="menu-row ${label === T.menuFocused ? 'focused' : ''}">
-        <span>${esc(label)}</span>
+  /* Rows are [label key, value, ←/→ adjusts it]. Under FIBA rules the period and the fouls join, and game length
+     becomes period length. */
+  'menu': (fiba = false) => {
+    const V = T.menuValues;
+    const rowGroups = [
+      [['gameClock', '07:42', false], ...(fiba ? [['period', '2', true], ['periodLength', '10:00', true]] : [['gameLength', '10:00', true]])],
+      [['homeScore', '48', true], ['awayScore', '45', true], ...(fiba ? [['homeFouls', '3', true], ['awayFouls', '5', true]] : [])],
+      [['newGame', '', false], ['rules', fiba ? 'FIBA' : V.pickup, true], ['layout', V.classic, true],
+        ['mode', outdoor ? V.outdoor : V.indoor, true], ['language', V.language, true], ['help', '', false], ['exit', '', false]],
+    ];
+    const focused = fiba ? 'awayFouls' : outdoor ? 'mode' : 'homeScore';
+    const groups = rowGroups.map((rows) => `<div class="menu-group">${rows.map(([key, value, adjust]) => `
+      <div class="menu-row ${key === focused ? 'focused' : ''}">
+        <span>${esc(T.menuLabels[key])}</span>
         <span class="value">${adjust ? CHEVRON_L : ''}<span>${esc(value)}</span>${CHEVRON_R}</span>
       </div>`).join('')}</div>`).join('');
     return `
-      ${scoreboard({ running: false })}
+      ${scoreboard({ running: false, ...(fiba ? FIBA_GAME : {}) })}
       <div class="scrim" style="background:rgba(7,8,10,0.74)"></div>
       <div class="menu">
         <div style="padding:44px 48px 24px;display:flex;align-items:baseline;justify-content:space-between">
           <div style="font-size:60px;font-weight:700">${esc(T.menu)}</div>
           <div style="font-size:28px;font-weight:600;letter-spacing:0.12em;color:var(--muted)">${esc(T.stopped)}</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:14px;flex-grow:1">${groups}</div>
+        <div class="menu-list ${fiba ? 'cut' : ''}">${groups}</div>
         <div class="hints" style="height:80px;padding:0 48px;justify-content:space-between;gap:16px;border-top:2px solid var(--line);font-size:24px">
           ${hint('↑ ↓', T.move)}${hint('← →', T.change)}${hint('OK', T.open)}${hint(T.back, T.close)}
         </div>
@@ -351,7 +432,7 @@ const BOARDS = {
   'quick-clock-adjust': (large = false) => `
     ${scoreboard({ clock: '08:42', large })}
     <div class="adjust-ring ${large ? 'large' : ''}"></div>
-    <div class="adjust-bar">
+    <div class="bar adjust-bar">
       <div style="display:flex;align-items:baseline;gap:18px">
         <span style="font-size:36px;font-weight:800;letter-spacing:0.06em">${esc(T.adjust)}</span>
         <span style="font-size:36px;font-weight:800">+1:00</span>
@@ -412,11 +493,13 @@ const BOARDS = {
       </div>
     </div>`,
 
-  'remote-mapping': () => {
-    const rows = T.helpRows.map(([key, press, note, hold]) => `
+  /* Under FIBA rules the ↓ row gains its hold: a team foul. */
+  'remote-mapping': (fiba = false) => {
+    const helpRows = fiba ? T.helpRows.map((row) => (row[0] === T.helpFoul[0] ? T.helpFoul : row)) : T.helpRows;
+    const rows = helpRows.map(([key, press, note, hold, holdNote]) => `
       <div class="td"><span class="kc">${esc(key)}</span></div>
       <div class="td"><span class="main">${esc(press)}</span><span class="note">${esc(note)}</span></div>
-      <div class="td"><span class="main ${hold === '—' ? 'none' : ''}">${esc(hold)}</span></div>`).join('');
+      <div class="td"><span class="main ${hold === '—' ? 'none' : ''}">${esc(hold)}</span>${holdNote ? `<span class="note">${esc(holdNote)}</span>` : ''}</div>`).join('');
     const pill = '<div style="width:96px;height:40px;border-radius:20px;border:3px solid var(--off)"></div>';
     const small = '<div class="dot" style="width:48px;height:48px"></div>';
     return `
@@ -481,6 +564,40 @@ BOARDS['outdoor-possession'] = () => scoreboard({ leftScore: '3', rightScore: '0
 BOARDS['possession-feedback'] = () => `
   ${scoreboard({ clock: '06:58', running: false, poss: 'away' })}
   ${toast(T.feedbackPoss)}`;
+
+/* FIBA rules (menu → Rules): fouls, periods, breaks and overtime. */
+BOARDS['fiba-live-game'] = () => scoreboard(FIBA_GAME);
+BOARDS['fiba-large-live-game'] = () => scoreboard({ ...FIBA_GAME, large: true });
+BOARDS['outdoor-fiba-live-game'] = BOARDS['fiba-live-game'];
+/* Hold ↓; the whistle has stopped the clock. ← or → adds the foul and closes the bar. */
+BOARDS['fiba-team-foul'] = () => `
+  ${scoreboard({ clock: '06:58', running: false, poss: 'home', fiba: { fouls: [3, 4], period: '2' } })}
+  <div class="foul-ring left"></div><div class="foul-ring right"></div>
+  <div class="bar foul-bar">
+    <span style="font-size:36px;font-weight:800;letter-spacing:0.06em">${esc(T.teamFoul)}</span>
+    <div class="hints" style="gap:28px;font-size:26px;color:var(--toast-off)">
+      ${hint('←', T.home)}${hint('→', T.away)}${hint(T.back, T.cancel)}
+    </div>
+  </div>`;
+BOARDS['fiba-foul-feedback'] = () => `
+  ${scoreboard({ ...FIBA_GAME, clock: '06:58', running: false })}
+  ${toast(T.feedbackFoul, '4 → 5')}`;
+/* The clock reached 0 at the end of period 2: the halftime break, or straight on to period 3. */
+BOARDS['fiba-period-end'] = () => `
+  ${scoreboard({ clock: '0.0', running: false, poss: 'away', fiba: { fouls: [4, 5], period: '2' } })}
+  ${timeUpBar(T.periodEnd, T.leads, T.halftimeBtn, T.skipBreak)}`;
+/* The break counts down on the game clock; the board has moved on to period 3, so the fouls are back to 0. */
+BOARDS['fiba-halftime'] = () => `
+  ${scoreboard({ clock: '14:21', poss: 'away', fiba: { fouls: [0, 0], period: '3' } })}
+  <div class="bar tall break-bar">
+    ${barTitle(T.halftime, T.breakNext, 'var(--soft)')}
+    <div class="hints" style="flex-shrink:0">${hint('↓', T.adjustShort)}${hint('OK', T.endBreak)}</div>
+  </div>`;
+/* Overtime fouls count as period 4 fouls, so HOME's 5 carry over. */
+BOARDS['fiba-overtime'] = () => scoreboard({ leftScore: '74', rightScore: '72', clock: '03:27', poss: 'home',
+  fiba: { fouls: [5, 3], period: '1', label: T.ot } });
+BOARDS['fiba-menu'] = () => BOARDS['menu'](true);
+BOARDS['fiba-remote-mapping'] = () => BOARDS['remote-mapping'](true);
 
 const id = BOARDS[params.get('board')] ? params.get('board') : 'live-game';
 document.title = `tablero — ${id} (${lang})`;

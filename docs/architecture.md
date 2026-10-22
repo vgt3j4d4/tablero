@@ -5,7 +5,7 @@
 | Component       | Where                   | Responsibility                                                                       |
 | --------------- | ----------------------- | ------------------------------------------------------------------------------------ |
 | `GameEngine`    | `shared/` (pure Kotlin) | Owns all game state and the game clock; applies `Command`s; emits snapshots + events |
-| Rules           | `shared/`               | Data: game length, tenths threshold                                                  |
+| Rules           | `shared/`               | Data: game length, tenths threshold (planned: Pickup and FIBA presets)              |
 | Protocol DTOs   | `shared/`               | Messages exchanged with controllers (Phase 2)                                        |
 | Scoreboard view | `tv-app/`               | Renders the latest `GameSnapshot` and confirmations with `Canvas`                   |
 | Overlays        | `tv-app/`               | Menu, quick clock adjust, set clock, time up, how to use, exit confirm               |
@@ -24,9 +24,10 @@
 
 ## Phase 1 scope
 
-Two teams, HOME (left) and AWAY (right), scores, one game clock, buzzer, undo, new game, possession arrow. Shot
-clock, fouls, timeouts and periods are **out of scope for now** (see "Later" at the end); keep the model open to them
-but don't implement them.
+Two teams, HOME (left) and AWAY (right), scores, one game clock, buzzer, undo, new game, possession arrow, under
+Pickup rules or FIBA rules (team fouls, periods, breaks, overtime; see "Rules: Pickup and FIBA"). The shot clock,
+timeouts and other presets are **out of scope for now** (see "Later" at the end); keep the model open to them but
+don't implement them.
 
 ## Time model
 
@@ -269,11 +270,39 @@ No Kotlin changes are needed.
 - OEM battery killers (Xiaomi, Huawei, Samsung): onboarding screen for battery-optimization exemptions; the
   system must tolerate the controller being killed (see invariant: TV owns the clock).
 
+## Rules: Pickup and FIBA (designed, not built)
+
+The menu's *Rules* row chooses how a game is played (design 24–33). **Pickup** is everything above: one clock per
+game, back-to-back games. **FIBA** adds team fouls, periods, breaks and overtime. The rules are data (`GameRules`)
+and part of the game state, not a preference: changing them is one undoable command, applied when focus leaves the
+row, that keeps the scores and the clock and starts FIBA at period 1 with no fouls.
+
+FIBA takes its periods, lengths and bonus from the FIBA row of the presets table (see "Later"). On top of that:
+the period length is set like the Pickup game length (menu, or a game's first start); breaks last 2:00 after
+periods 1 and 3 and before each overtime, and 15:00 (halftime) after period 2; overtimes follow one another while the
+score is tied; and overtime fouls count as period 4 fouls.
+
+- **Team fouls:** holding ↓ opens the foul bar (design 27); ← or → adds a foul to that side and closes it. The menu
+  corrects fouls ±1 like scores.
+- **End of a period:** the clock reaching 0 emits `GameClockExpired` (buzzer) as it does now. After periods 1–3, or
+  after period 4 or an overtime with the score tied, the time-up bar offers the break (focused) or skipping it
+  (design 29). Both move to the next period: period + 1 (or the next overtime), fouls back to 0 (kept going into
+  overtime), clock at the period length (5:00 in overtime). With the break, the game clock first counts the break
+  down (design 30): ↓ adjusts it like any clock and OK ends it early; at 0 the buzzer sounds and the clock shows the
+  period's time, stopped, until OK starts it. After period 4 or an overtime with a winner, the Pickup time-up bar
+  shows (design 03).
+- **Possession arrow:** unchanged; ↑ flips it, and it carries across periods.
+- **New game** under FIBA: 0–0, period 1, no fouls, clock at the period length, arrow hidden.
+- Undo reverts each of these like any command: a foul, moving to the next period, starting or ending a break.
+
+The engine model (period, fouls per team, the break on the clock, their commands and events) settles with the
+implementation. Keep it as data so that NBA, NCAA and FIBA 3x3 (see "Later") are new presets, not new branches.
+
 ## Later (out of Phase 1 scope)
 
-Kept for when the scope grows again: shot clock, team fouls / bonus, timeouts, periods and league presets. (The
-possession arrow moved into Phase 1. It never flips by itself: the scorer flips it with ↑ after each alternating
-possession.)
+Kept for when the scope grows again: shot clock, timeouts and more league presets. (The possession arrow, and team
+fouls and periods as the FIBA rules, moved into Phase 1. The arrow never flips by itself: the scorer flips it with ↑
+after each alternating possession.)
 
 - Shot clock display: whole seconds, tenths below 5.0 s; hidden when the game clock has less time remaining than
   the shot clock (FIBA behavior). Events `ShotClockExpired`, `PeriodEnded`.
