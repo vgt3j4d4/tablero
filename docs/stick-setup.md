@@ -16,45 +16,64 @@ adb shell dumpsys meminfo | head -60
 
 ## 2. Remove unused apps (per-user uninstall)
 
-```bash
-# Typical candidates on Android TV 9/10 — confirm names with `pm list packages` first.
-for p in \
-  com.google.android.youtube.tv \
-  com.netflix.ninja \
-  com.amazon.amazonvideo.livingroom \
-  com.google.android.videos \
-  com.google.android.music \
-  com.google.android.play.games \
-  com.google.android.tvrecommendations \
-  com.google.android.backdrop \
-  com.google.android.apps.mediashell \
-  com.google.android.katniss \
-  com.google.android.feedback
-do adb shell pm uninstall -k --user 0 "$p"; done
+Steps 2–4 are scripted. Install tablero first, or pass its APK:
 
-# Undo one:
-adb shell cmd package install-existing <package>
+```bash
+scripts/setup-stick.sh <stick-ip> [--apk <tablero.apk>] [--no-kiosk]   # apps, settings, kiosk; harmless to rerun
+scripts/restore-stick.sh <stick-ip>                                    # undoes all of it; tablero stays
 ```
 
-Do one batch, reboot, and confirm the remote still works before removing more.
+Both refuse any device but this stick (`ro.product.device` = `aquaman`). The setup removes these apps for user 0
+(`pm uninstall -k --user 0`), the final list for firmware `Xiaomi/aquaman:10/QT/2514`: removed in two batches, each
+followed by a reboot and a check of every remote key. All are system apps, so the APK stays on the stick:
+`adb shell cmd package install-existing <package>` brings one back with its data and its Play Store updates, and
+`restore-stick.sh` brings back all of them (checked: the same 97 packages as before).
 
-**Never remove:** Google Play services (`com.google.android.gms`), TV Settings (`com.android.tv.settings`),
-Bluetooth / remote-related packages, the package installer, the keyboard (`leanback.ime`).
-Keep the Play Store (`com.android.vending`) but turn auto-updates off.
+| Package                                | What it is                                                                   |
+|----------------------------------------|------------------------------------------------------------------------------|
+| `com.google.android.youtube.tv`        | YouTube                                                                      |
+| `com.google.android.youtube.tvmusic`   | YouTube Music                                                                |
+| `com.netflix.ninja`                    | Netflix (~130 MB while it ran in the background)                             |
+| `com.amazon.amazonvideo.livingroom`    | Prime Video                                                                  |
+| `com.google.android.videos`            | Google Play Movies                                                           |
+| `com.google.android.music`             | Google Play Music                                                            |
+| `com.google.android.play.games`        | Google Play Games                                                            |
+| `com.google.android.tvrecommendations` | The launcher's recommendations                                               |
+| `com.google.android.backdrop`          | Ambient Mode screensaver                                                     |
+| `com.google.android.apps.mediashell`   | Chromecast built-in                                                          |
+| `com.google.android.katniss`           | Google app: Assistant and voice search (~40 MB)                              |
+| `com.google.android.feedback`          | Google feedback                                                              |
+| `com.mitv.tvhome.atv`                  | Xiaomi content service (starts on boot)                                      |
+| `com.mitv.tvhome.michannel`            | Xiaomi launcher channels                                                     |
+| `com.mitv.tvhome.mitvplus`             | Mi TV+ channels                                                              |
+| `com.miui.tv.analytics`                | Xiaomi analytics                                                             |
+| `com.xiaomi.statistic`                 | Xiaomi usage statistics                                                      |
+| `com.xiaomi.mitv.updateservice`        | Xiaomi firmware updates (OTA): the firmware stays the one checked here       |
+
+About 320 MB of the 1 GB were available two minutes after a reboot with tablero on screen (about 200 MB before,
+with Netflix running in the background).
+
+Left in place on purpose:
+
+- **Apps that aren't system apps** (`pm list packages -3`): DirecTV, ESPN, Disney+ and a Play auto-install config
+  (`android.autoinstalls.config.xiaomi.mibox3`), installed after the first boot. On this single-user stick, removing
+  one for user 0 deletes it (only the Play Store brings it back), and none of them runs in the background.
+- **Apps that never run** (gallery, camera, print spooler, TalkBack…): they only take storage.
+- **Never remove:** Google Play services (`com.google.android.gms`), TV Settings (`com.android.tv.settings`), the
+  Bluetooth and remote packages (`com.mi.bluetooth`, `com.google.android.tv.remote.service`, and
+  `com.xiaomi.android.tvsetup.partnercustomizer`, which has the remote's pairing screens and handles its Netflix and
+  Prime Video buttons), the package installer and the keyboard (`com.google.android.inputmethod.latin`). Keep the
+  Play Store (`com.android.vending`) but turn auto-updates off (step 4).
+
+To change the list, remove one batch by hand, reboot and check every remote key before adding it to
+`scripts/stick-common.sh`.
 
 ## 3. Opening tablero
 
-**Setup in use:** the stock launcher (`com.google.android.tvlauncher`) stays the home screen, and tablero is an
-ordinary app opened from its apps row. HOME on the remote goes to the launcher; the game keeps going meanwhile (the
-engine and the buzzer live in the app process, and the state is saved on every change), and opening tablero again
-shows it as it is. tablero's menu has **Exit** (clock stopped, hold OK 2 s on EXIT), which opens the
-launcher; its screen tells the scorer to open tablero from the apps row to come back.
-
-### Optional: tablero as the home app (kiosk)
-
-tv-app declares a `HOME` intent filter, so it can be the stick's home app instead: the stick boots into the
-scoreboard and HOME always returns to it. We don't use this, because it leaves no way to reach other apps without
-ADB, but it is what to try if accidental exits become a real problem.
+**Setup in use: tablero is the home app (kiosk).** tv-app declares a `HOME` intent filter, and `setup-stick.sh`
+disables the stock launcher (`com.google.android.tvlauncher`), so the stick boots into the scoreboard and HOME always
+returns to it. tablero's menu has **Exit** (clock stopped, hold OK 2 s on EXIT); its screen tells the scorer how to
+come back.
 
 **Making tablero the default doesn't work on this stick.** The stock launcher, a system app, declares its `HOME`
 filter with priority 2, and Android only looks at the chosen default when the best candidates tie; an app that isn't
@@ -78,10 +97,18 @@ Checked on the stick with the launcher disabled:
   `adb connect` worked right after it).
 - HOME returns to tablero, from Settings too. Two crashes in a row (`adb shell am crash <package>`) just restarted
   tablero on HOME with the game restored.
-- Exit has no launcher to open, so it opens **Android TV Settings** (the side panel), which can't open
-  other apps. The launcher's page (*Apps → See all apps → system apps → Pantalla principal de Android TV*) offers
-  **Enable**, which turns the kiosk off; Settings offers no Disable for the home app, so turning it back on needs
-  `pm disable-user` over ADB.
+- Back is handled by tablero (undo / menu) and never finishes the activity.
+- The remote's other buttons do nothing (checked with a key logger after step 2):
+  - **Assistant** sends `KEYCODE_ASSIST`, and with the Google app removed nothing handles it.
+  - **Netflix** and **Prime Video** send `KEYCODE_BUTTON_6` and `KEYCODE_BUTTON_7`, global keys that the partner
+    customizer's `GlobalKeyReceiver` turns into opening the app. With the apps removed nothing opens (on Netflix the
+    receiver crashes in the background and Android restarts it).
+  - **Apps** (the grid button) sends `KEYCODE_ALL_APPS`. Android opens the system home app's app list, and with the
+    launcher disabled that is TV Settings, which has none.
+- Exit has no launcher to open, so it opens **Android TV Settings** (the side panel). Settings can still open the
+  apps left on the stick (*Apps → See all apps → app → Open*). The launcher's page (*Apps → See all apps → system
+  apps → Pantalla principal de Android TV*) offers **Enable**, which turns the kiosk off; Settings offers no Disable
+  for the home app, so turning it back on needs `pm disable-user` over ADB (or `setup-stick.sh`).
 - With the launcher disabled tablero is the only home app, so if it ever failed on every start there would be
   nothing to fall back to: recovery is `pm enable com.google.android.tvlauncher` or uninstalling tablero over ADB.
 
@@ -91,24 +118,30 @@ A full lock-task kiosk (also blocks HOME) needs a device owner, which requires r
 of the activity next to the home one (Android keeps home activities in their own task); use
 `adb shell input keyevent KEYCODE_HOME` instead.
 
-Accidental exits to check on the stick:
+### Alternative: the stock launcher as home
 
-- HOME → the stock launcher; the clock keeps running and the buzzer still sounds while Android keeps tablero in
-  memory. Open tablero from the apps row.
-- Back → handled by tablero (undo / menu); never finishes the activity.
-- Assistant / Netflix / Prime buttons → should do nothing once their apps are removed in step 2 (verify).
-- App crash or low-memory kill → tablero is gone until it is opened again, then restores the saved game state.
+`setup-stick.sh --no-kiosk` leaves the launcher enabled, and the rollback above turns an existing kiosk off. tablero is
+then an ordinary app opened from the launcher's apps row, for a stick that also runs other apps:
+
+- HOME goes to the launcher. The game keeps going meanwhile (the engine and the buzzer live in the app process, and
+  the state is saved on every change), and opening tablero again shows it as it is.
+- Exit opens the launcher (checked with the remote), and its screen tells the scorer to open tablero from the apps
+  row.
+- An app crash or a low-memory kill closes tablero until it is opened again, with the game restored.
 
 ## 4. Settings
 
-```bash
-adb shell settings put global window_animation_scale 0
-adb shell settings put global transition_animation_scale 0
-adb shell settings put global animator_duration_scale 0
-```
+`setup-stick.sh` turns off the animations and the screensaver, and `restore-stick.sh` puts back the stick's own
+values (both from `STICK_SETTINGS` in `scripts/stick-common.sh`).
 
-In the Settings UI: screensaver **off**, "put device to sleep" **Never**, Play Store auto-update **off**,
-usage & diagnostics **off**. Pair/remember the referee phone's hotspot.
+The sleep timers stay as they are. This firmware's TV Settings has no **Never** for *Put device to sleep* (5 minutes
+to 2 hours), and none is needed: while tablero is on screen its `FLAG_KEEP_SCREEN_ON` holds a screen wake lock
+(`dumpsys power` lists a `SCREEN_BRIGHT_WAKE_LOCK` from `WindowManager` for tablero's uid), so the stick never sleeps
+during a game. Anywhere else, such as Settings after Exit, the screen turns off after 15 idle minutes.
+
+By hand, in the Settings UI: Play Store auto-update **off** (with the kiosk on, open the Play Store from *Settings →
+Apps → See all apps → Google Play Store → Open*) and usage & diagnostics **off**. Pair/remember the referee phone's
+hotspot.
 
 ## 5. Measure
 
@@ -167,10 +200,10 @@ tablero in front, about 200 MB of the 0.9 GB were available after the steps abov
 
 ## TODO
 
-- [ ] `scripts/setup-stick.sh` and `scripts/restore-stick.sh` automating steps 2–4.
-- [ ] Record the final package list for this stick's firmware here.
+- [x] `scripts/setup-stick.sh` and `scripts/restore-stick.sh` automating steps 2–4.
+- [x] Record the final package list for this stick's firmware (step 2).
 - [x] Confirm `cmd package set-home-activity` works on this firmware: it doesn't (see step 3).
 - [x] Hold OK 2 s on EXIT with the remote (checked with the launcher disabled: opens Settings).
-- [ ] Hold OK 2 s on EXIT with the launcher enabled: opens the launcher.
-- [ ] Record what the Assistant / Netflix / Prime buttons do after debloat.
+- [x] Hold OK 2 s on EXIT with the launcher enabled: opens the launcher.
+- [x] Record what the Assistant / Netflix / Prime buttons do after debloat (step 3: nothing).
 - [ ] Fire TV: Back long press and hold OK 2 s on EXIT with the Fire TV remote; EXIT should open the Fire launcher.

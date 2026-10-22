@@ -71,7 +71,8 @@ adb connect <stick-ip>:5555
 ./gradlew :tv-app:installDebug
 ```
 
-Preparing the stick (developer mode, debloat, opening tablero): [`docs/stick-setup.md`](docs/stick-setup.md).
+Preparing the stick (developer mode, debloat, tablero as the home app): [`docs/stick-setup.md`](docs/stick-setup.md);
+[`scripts/setup-stick.sh`](scripts/setup-stick.sh) does it in one go.
 
 ## Docs
 

@@ -39,7 +39,7 @@ are deferred.
 - [ ] Play a full FIBA game on the Xiaomi stick (periods, halftime, overtime)
 - [ ] Test the Outdoor mode on a real outdoor court in daylight
 - [ ] Test the full Phase 1 flow on the Xiaomi stick
-- [ ] `scripts/setup-stick.sh` / `restore-stick.sh`
+- [x] `scripts/setup-stick.sh` / `restore-stick.sh`
 - [ ] Readability test on a real TV from the far corner of a court
 
 ## Phase 2 — Phone controller over Wi-Fi

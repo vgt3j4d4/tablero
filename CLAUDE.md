@@ -53,7 +53,7 @@ tablero/
 ├── shared/       # Pure Kotlin/JVM module: GameEngine, Command model, rules, protocol DTOs. No Android deps.
 ├── tv-app/       # Android TV app: scoreboard view, buzzer, input adapters (remote keys, later WebSocket server)
 ├── remote-app/   # Android phone controller (Phase 2+)
-├── scripts/      # make-buzzer.py (buzzer WAV), make-icons.py (banner + icon); later setup/restore-stick.sh
+├── scripts/      # make-buzzer.py (buzzer WAV), make-icons.py (banner + icon), setup/restore-stick.sh (Xiaomi)
 └── docs/         # architecture.md, hardware.md, stick-setup.md, roadmap.md, design/ (screens)
 ```
 
@@ -92,9 +92,9 @@ tablero/
   a clock runs, only on change otherwise. Everything but the lit clock digits is cached in a bitmap layer redrawn
   on change: the stick's CPU can't re-record the whole scene at 10 Hz without missing frames. Preload buzzer
   sounds with `SoundPool`.
-- Keep screen awake with `FLAG_KEEP_SCREEN_ON`. The stock launcher stays the stick's home screen and tablero is
-  opened from its apps row. The activity also has a `HOME` intent filter for an optional kiosk, which on the stick
-  only works by disabling the launcher (it outranks any other app) — see `docs/stick-setup.md`.
+- Keep screen awake with `FLAG_KEEP_SCREEN_ON`. On the Xiaomi stick tablero is the home app (kiosk: a `HOME` intent
+  filter, and `scripts/setup-stick.sh` disables the stock launcher); elsewhere it is opened from the launcher's apps
+  row. See `docs/stick-setup.md`.
 
 ## Scoreboard look
 
@@ -192,6 +192,7 @@ first time the app starts with the clock stopped; OK or Back closes it.
 ./gradlew :shared:test                     # engine/rules unit tests
 ./gradlew :tv-app:assembleDebug
 adb connect <stick-ip>:5555                # stick: Developer options → network debugging
+scripts/setup-stick.sh <stick-ip>         # Xiaomi: debloat, settings, kiosk (restore-stick.sh undoes it)
 ./gradlew :tv-app:installDebug
 adb shell input keyevent KEYCODE_DPAD_CENTER   # simulate remote keys
 adb shell input keyevent --longpress KEYCODE_DPAD_LEFT
@@ -203,7 +204,9 @@ On-device testing happens **on the stick only**, installed over adb; there is no
 
 - `adb shell input keyevent` can take several seconds on the stick, so judge clock timing from screenshots and
   `logcat` timestamps, not from host-side timing.
-- Right after a fresh install the stock launcher may jump back in front; launch the app again with
+- With tablero as the home app (kiosk), bring it back after an install with `adb shell input keyevent KEYCODE_HOME`;
+  `am start` would open a second copy next to the home one. Without the kiosk the stock launcher may jump back in
+  front after a fresh install; launch the app again with
   `adb shell am start -n net.pladum.tablero.tv.debug/net.pladum.tablero.tv.MainActivity`.
 - `input keyevent --longpress` holds a key for about 0.5 s and `sendevent` is denied, so the 2 s hold on EXIT can
   only be tested with the remote.
@@ -227,6 +230,6 @@ On-device testing happens **on the stick only**, installed over adb; there is no
 
 - `docs/architecture.md` — engine model, commands, clock, persistence, Phase 2 protocol.
 - `docs/hardware.md` — hardware choices, budget, audio, placement.
-- `docs/stick-setup.md` — preparing the Xiaomi stick (ADB, debloat, default launcher, settings).
+- `docs/stick-setup.md` — preparing the Xiaomi stick (ADB, setup/restore scripts, debloat, kiosk, settings).
 - `docs/roadmap.md` — phases and task checklists.
 - `docs/design/` — reference screens for the TV app.
