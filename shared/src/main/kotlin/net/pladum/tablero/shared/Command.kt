@@ -41,10 +41,20 @@ sealed interface Command {
     @SerialName("reset_game_clock")
     data object ResetGameClock : Command
 
-    /** Scores 0–0, clock at the game length, stopped. */
+    /** Scores 0–0, clock at the game length, stopped, possession arrow hidden. */
     @Serializable
     @SerialName("new_game")
     data object NewGame : Command
+
+    /** Points the possession arrow the other way; a hidden arrow shows, pointing to [Side.LEFT]. */
+    @Serializable
+    @SerialName("toggle_possession")
+    data object TogglePossession : Command
+
+    /** Hides the possession arrow. */
+    @Serializable
+    @SerialName("clear_possession")
+    data object ClearPossession : Command
 
     /** Takes effect from the next reset or new game. */
     @Serializable

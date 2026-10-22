@@ -1,6 +1,7 @@
 package net.pladum.tablero.shared
 
 import net.pladum.tablero.shared.Command.AdjustGameClock
+import net.pladum.tablero.shared.Command.ClearPossession
 import net.pladum.tablero.shared.Command.NewGame
 import net.pladum.tablero.shared.Command.ResetGameClock
 import net.pladum.tablero.shared.Command.Score
@@ -9,6 +10,7 @@ import net.pladum.tablero.shared.Command.SetGameLength
 import net.pladum.tablero.shared.Command.StartClock
 import net.pladum.tablero.shared.Command.StopClock
 import net.pladum.tablero.shared.Command.ToggleClock
+import net.pladum.tablero.shared.Command.TogglePossession
 import net.pladum.tablero.shared.Command.Undo
 import net.pladum.tablero.shared.GameEvent.ClockStarted
 import net.pladum.tablero.shared.GameEvent.ClockStopped
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class GameEngineTest {
@@ -30,6 +33,7 @@ class GameEngineTest {
         assertEquals(TeamState(0), state.right)
         assertClock(GAME_MS, running = false)
         assertFalse(state.timeUp)
+        assertNull(state.possession)
         assertEquals(0, state.version)
     }
 
@@ -117,6 +121,46 @@ class GameEngineTest {
         fun `only steps of one`() = engineTest {
             assertRejected(Score(LEFT, 2), RejectReason.INVALID_ARGUMENT)
             assertRejected(Score(LEFT, 0), RejectReason.INVALID_ARGUMENT)
+        }
+    }
+
+    @Nested
+    inner class Possession {
+        @Test
+        fun `the first toggle shows the arrow pointing left, then each toggle flips it`() = engineTest {
+            apply(TogglePossession)
+            assertEquals(LEFT, state.possession)
+            apply(TogglePossession)
+            assertEquals(RIGHT, state.possession)
+            apply(TogglePossession)
+            assertEquals(LEFT, state.possession)
+        }
+
+        @Test
+        fun `clear hides the arrow, and the next toggle points left again`() = engineTest {
+            apply(TogglePossession)
+            apply(TogglePossession)
+            apply(ClearPossession)
+            assertNull(state.possession)
+            apply(TogglePossession)
+            assertEquals(LEFT, state.possession)
+        }
+
+        @Test
+        fun `clearing a hidden arrow is rejected`() = engineTest {
+            assertRejected(ClearPossession, RejectReason.NO_CHANGE)
+        }
+
+        @Test
+        fun `the arrow leaves the clock alone, running or at time up`() = engineTest {
+            apply(StartClock)
+            advance(SECOND_MS)
+            apply(TogglePossession)
+            assertClock(GAME_MS - SECOND_MS, running = true)
+            advance(GAME_MS)
+            apply(TogglePossession)
+            assertEquals(RIGHT, state.possession)
+            assertTrue(state.timeUp)
         }
     }
 
@@ -214,6 +258,14 @@ class GameEngineTest {
         }
 
         @Test
+        fun `reset keeps the possession arrow`() = engineTest {
+            apply(TogglePossession)
+            apply(SetGameClock(MINUTE_MS))
+            apply(ResetGameClock)
+            assertEquals(LEFT, state.possession)
+        }
+
+        @Test
         fun `reset stops a running clock`() = engineTest {
             apply(StartClock)
             advance(SECOND_MS)
@@ -233,6 +285,13 @@ class GameEngineTest {
             assertEquals(TeamState(0), state.right)
             assertClock(GAME_MS, running = false)
             assertFalse(state.timeUp)
+        }
+
+        @Test
+        fun `a new game hides the possession arrow`() = engineTest {
+            apply(TogglePossession)
+            apply(NewGame)
+            assertNull(state.possession)
         }
 
         @Test
@@ -447,6 +506,38 @@ class GameEngineTest {
             apply(AdjustGameClock(-MINUTE_MS))
             apply(StartClock)
             assertEquals(GAME_MS, state.rules.gameLengthMs)
+        }
+
+        @Test
+        fun `a possession toggle or clear goes back`() = engineTest {
+            apply(TogglePossession)
+            apply(TogglePossession)
+            apply(Undo)
+            assertEquals(LEFT, state.possession)
+            apply(ClearPossession)
+            apply(Undo)
+            assertEquals(LEFT, state.possession)
+            apply(Undo)
+            assertNull(state.possession)
+        }
+
+        @Test
+        fun `undoing a possession toggle while running leaves the clock running`() = engineTest {
+            apply(StartClock)
+            apply(TogglePossession)
+            advance(SECOND_MS)
+            apply(Undo)
+            assertNull(state.possession)
+            assertClock(GAME_MS - SECOND_MS, running = true)
+        }
+
+        @Test
+        fun `undoing a new game brings the possession arrow back`() = engineTest {
+            apply(TogglePossession)
+            apply(TogglePossession)
+            apply(NewGame)
+            apply(Undo)
+            assertEquals(RIGHT, state.possession)
         }
 
         @Test

@@ -83,11 +83,34 @@ class FeedbackGrouperTest {
     }
 
     @Test
+    fun `the possession arrow confirms where it points, or that it is hidden`() {
+        val pointed = state.copy(possession = RIGHT)
+        assertEquals(
+            Feedback.Possession(RIGHT),
+            grouper.onEvent(CommandApplied(Command.TogglePossession, state, pointed), 0),
+        )
+        assertEquals(
+            Feedback.Possession(null),
+            grouper.onEvent(CommandApplied(Command.ClearPossession, pointed, state), 0),
+        )
+    }
+
+    @Test
+    fun `a possession change ends the group`() {
+        press(LEFT, 1, atMs = 0)
+        val pointed = state.copy(possession = LEFT)
+        grouper.onEvent(CommandApplied(Command.TogglePossession, state, pointed), 100 * NANOS_PER_MS)
+        assertEquals(Feedback.Score(LEFT, 1, from = 49, to = 50), press(LEFT, 1, atMs = 200))
+    }
+
+    @Test
     fun `other undone commands are named`() {
         val undone = { command: Command -> grouper.onEvent(CommandUndone(command, state, state), 0) }
         assertEquals(Feedback.Undone(UndoneAction.START_CLOCK), undone(Command.StartClock))
         assertEquals(Feedback.Undone(UndoneAction.NEW_GAME), undone(Command.NewGame))
         assertEquals(Feedback.Undone(UndoneAction.ADJUST_CLOCK), undone(Command.AdjustGameClock(1_000)))
+        assertEquals(Feedback.Undone(UndoneAction.POSSESSION), undone(Command.TogglePossession))
+        assertEquals(Feedback.Undone(UndoneAction.POSSESSION), undone(Command.ClearPossession))
     }
 
     @Test

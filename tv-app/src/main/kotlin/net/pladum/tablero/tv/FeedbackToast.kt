@@ -22,7 +22,7 @@ private const val HINT_SIZE = 28f
 private const val HINT_GAP = 24f
 
 /**
- * The confirmation over the status bar (design 05, 17: `HOME +3`, `48 → 51`, then the `BACK UNDO` hint), in the
+ * The confirmation over the status bar (design 05, 17, 23: `HOME +3`, `48 → 51`, then the `BACK UNDO` hint), in the
  * colors of the board's [BoardMode]: [mode] until [setMode] changes it. Text is built and measured in [show]; [draw]
  * only draws. Coordinates are design pixels.
  */
@@ -78,6 +78,9 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
             }
             is Feedback.Undone ->
                 context.getString(R.string.feedback_undone, context.getString(feedback.action.labelRes()))
+            is Feedback.Possession -> feedback.side?.let {
+                context.getString(R.string.feedback_possession, context.getString(it.teamNameRes()).uppercase(locale))
+            } ?: context.getString(R.string.feedback_possession_hidden)
             Feedback.NothingToUndo -> {
                 hasHint = false
                 context.getString(R.string.feedback_nothing_to_undo)
@@ -127,5 +130,6 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
         UndoneAction.RESET_CLOCK -> R.string.undone_reset_clock
         UndoneAction.NEW_GAME -> R.string.undone_new_game
         UndoneAction.GAME_LENGTH -> R.string.undone_game_length
+        UndoneAction.POSSESSION -> R.string.undone_possession
     }
 }

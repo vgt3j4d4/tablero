@@ -2,6 +2,7 @@ package net.pladum.tablero.shared
 
 import kotlinx.serialization.SerializationException
 import net.pladum.tablero.shared.Command.AdjustGameClock
+import net.pladum.tablero.shared.Command.ClearPossession
 import net.pladum.tablero.shared.Command.NewGame
 import net.pladum.tablero.shared.Command.ResetGameClock
 import net.pladum.tablero.shared.Command.Score
@@ -9,6 +10,7 @@ import net.pladum.tablero.shared.Command.SetGameClock
 import net.pladum.tablero.shared.Command.SetGameLength
 import net.pladum.tablero.shared.Command.StartClock
 import net.pladum.tablero.shared.Command.StopClock
+import net.pladum.tablero.shared.Command.TogglePossession
 import net.pladum.tablero.shared.Command.Undo
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class EngineStateTest {
@@ -32,8 +35,12 @@ class EngineStateTest {
         advance(SECOND_MS)
         apply(StopClock)
         apply(StartClock)
+        apply(TogglePossession)
+        apply(ClearPossession)
+        apply(TogglePossession)
         val state = engine.exportState()
-        assertEquals(10, state.history.size)
+        assertEquals(LEFT, state.snapshot.possession)
+        assertEquals(13, state.history.size)
         assertEquals(state, EngineState.fromJson(state.toJson()))
     }
 
@@ -94,6 +101,14 @@ class EngineStateTest {
         val old = json.replace(""","gameStarted":false""", "")
         assertNotEquals(json, old)
         assertTrue(EngineState.fromJson(old).snapshot.gameStarted)
+    }
+
+    @Test
+    fun `a game saved before possession existed has the arrow hidden`() = engineTest {
+        val json = engine.exportState().let { it.copy(snapshot = it.snapshot.copy(possession = LEFT)) }.toJson()
+        val old = json.replace(""","possession":"LEFT"""", "")
+        assertNotEquals(json, old)
+        assertNull(EngineState.fromJson(old).snapshot.possession)
     }
 
     @Test
