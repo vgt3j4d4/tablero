@@ -36,7 +36,6 @@ data class GameRules(
  * A game played in periods: a break after each one, overtime while the score is tied after the last, and team
  * fouls counted per period.
  */
-@Serializable
 data class PeriodRules(
     val periods: Int,
     val overtimeLengthMs: Long,
@@ -67,7 +66,10 @@ data class PeriodRules(
     }
 }
 
-/** The rule sets the menu offers; each one names its data. */
+/**
+ * The rule sets the menu offers; each one names its data. Saves store these names, so renaming one loses the rules of
+ * games saved with it.
+ */
 @Serializable
 enum class RulesPreset(val periods: PeriodRules?) {
     PICKUP(null),

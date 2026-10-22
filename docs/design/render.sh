@@ -8,7 +8,7 @@ set -euo pipefail
 
 CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 DIR="$(cd "$(dirname "$0")" && pwd)"
-JOBS="${JOBS:-$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)}"
+JOBS="${JOBS:-$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)}"
 # Numbers are fixed: issues and docs link to the files, so a removed board leaves a gap (04 was the next-game picker).
 BOARDS=(
   01-live-game
@@ -52,7 +52,10 @@ if (($#)); then
   for wanted in "$@"; do
     found=""
     for entry in "${BOARDS[@]}"; do
-      if [[ "$wanted" == "${entry%%-*}" || "$wanted" == "${entry#*-}" || "$wanted" == "$entry" ]]; then found="$entry"; fi
+      if [[ "$wanted" == "${entry%%-*}" || "$wanted" == "${entry#*-}" || "$wanted" == "$entry" ]]; then
+        found="$entry"
+        break
+      fi
     done
     if [[ -z "$found" ]]; then
       echo "No board $wanted" >&2
@@ -77,7 +80,7 @@ render() {
 export -f render
 export CHROME DIR
 
+for lang in "${LANGS[@]}"; do mkdir -p "$DIR/$lang"; done
 for lang in "${LANGS[@]}"; do
-  mkdir -p "$DIR/$lang"
   for entry in "${selected[@]}"; do echo "$lang $entry"; done
 done | xargs -n 2 -P "$JOBS" bash -c 'render "$@"' _
