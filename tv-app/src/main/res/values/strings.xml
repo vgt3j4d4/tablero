@@ -26,6 +26,12 @@
     <string name="undone_new_game">NEW GAME</string>
     <string name="undone_game_length">GAME LENGTH</string>
     <string name="undone_possession">POSSESSION ARROW</string>
+    <string name="undone_rules">RULES</string>
+    <string name="undone_next_period">NEXT PERIOD</string>
+    <string name="undone_end_break">END BREAK</string>
+    <string name="undone_period">PERIOD</string>
+    <!-- Under FIBA rules, after a foul (and as undone: UNDONE · AWAY FOUL). %1$s is the team name (HOME, AWAY). -->
+    <string name="feedback_foul">%1$s FOUL</string>
 
     <!-- Possession arrow (↑): the label over the arrows between the scores, then its confirmations. %1$s is the team
          the arrow now points to (HOME, AWAY). -->
@@ -38,6 +44,8 @@
     <string name="fouls_label">FOULS</string>
     <string name="period_label">PERIOD</string>
     <string name="overtime_label">OT</string>
+    <!-- Team foul bar (hold ↓): the keys pick the team (← HOME, → AWAY). -->
+    <string name="foul_title">TEAM FOUL</string>
 
     <!-- Time-up bar over the status bar. The result is in sentence case: %1$s is the winning team (Home, Away),
          %2$d its score and %3$d the other team's; a tie gives both scores. -->

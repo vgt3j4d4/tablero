@@ -114,6 +114,7 @@ class ScoreboardView(
         invalidateLayer()
     }
     private val clockAdjust = ClockAdjustOverlay(context, fonts)
+    private val foulBar = FoulBarOverlay(context, fonts)
     private val timeUp = TimeUpOverlay(context, fonts)
     private var timeUpFocus: TimeUpChoice? = null
     private val menu = MenuOverlay(context, fonts)
@@ -198,6 +199,20 @@ class ScoreboardView(
     }
 
     /**
+     * Shows the team foul bar, or hides it. Like quick clock adjust, its bar takes the status bar's place: a
+     * confirmation showing when it opens is dropped, and one arriving while it is open waits for it to close.
+     */
+    fun showFoulBar(open: Boolean) {
+        if (open == foulBar.visible) return
+        if (open) {
+            removeCallbacks(hideToast)
+            toast.hide()
+        }
+        foulBar.visible = open
+        invalidateLayer()
+    }
+
+    /**
      * Shows the time-up bar with [focused] highlighted, or hides it when null; the red frame follows the snapshot.
      * Like quick clock adjust, the bar covers the status bar: a confirmation showing when it opens is dropped.
      */
@@ -254,6 +269,7 @@ class ScoreboardView(
         possession.place(layout)
         fouls.place(layout)
         clockAdjust.place(layout)
+        foulBar.place(layout)
         // Measured again at the new size on the next refresh.
         reading = null
         clockGhost = ""
@@ -282,6 +298,7 @@ class ScoreboardView(
         possession.setColors(text, score, scoreUnlit, clock, clockUnlit)
         fouls.setColors(text, score, scoreUnlit, clock, clockUnlit)
         toast.setMode(mode)
+        foulBar.setMode(context, mode)
     }
 
     private fun invalidateLayer() {
@@ -415,6 +432,7 @@ class ScoreboardView(
         timeUp.draw(canvas)
         when {
             clockAdjust.visible -> clockAdjust.draw(canvas)
+            foulBar.visible -> foulBar.draw(canvas)
             !timeUp.barVisible -> toast.draw(canvas)
         }
         menu.draw(canvas)
@@ -453,7 +471,7 @@ class ScoreboardView(
         private var score = -1
         private var centerX = 0f
 
-        private val name = context.getString(side.teamNameRes()).uppercase(resources.configuration.primaryLocale)
+        private val name = context.teamTitle(side)
         private val namePaint = textPaint(fonts.barlow(700), layout.nameSize, 0, 0.03f, Paint.Align.CENTER)
         private val nameCenterPerPx = namePaint.centerToBaselinePerPx("H")
         private var nameBaseline = 0f

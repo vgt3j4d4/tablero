@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.RectF
 import net.pladum.tablero.shared.Side
-import java.util.Locale
 
 // Design pixels, from docs/design/boards.html (.toast).
 private const val LEFT = 500f
@@ -64,22 +63,26 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
     }
 
     fun show(feedback: Feedback) {
-        val locale = context.resources.configuration.primaryLocale
         detail = ""
         hasHint = true
         title = when (feedback) {
             is Feedback.Score -> {
                 detail = context.getString(R.string.feedback_score_change, feedback.from, feedback.to)
-                scoreTitle(feedback.side, feedback.delta, locale)
+                scoreTitle(feedback.side, feedback.delta)
             }
             is Feedback.UndoneScore -> {
                 detail = context.getString(R.string.feedback_score_change, feedback.from, feedback.to)
-                context.getString(R.string.feedback_undone, scoreTitle(feedback.side, feedback.delta, locale))
+                context.getString(R.string.feedback_undone, scoreTitle(feedback.side, feedback.delta))
+            }
+            is Feedback.Foul -> {
+                detail = context.getString(R.string.feedback_score_change, feedback.from, feedback.to)
+                val foul = context.getString(R.string.feedback_foul, context.teamTitle(feedback.side))
+                if (feedback.undone) context.getString(R.string.feedback_undone, foul) else foul
             }
             is Feedback.Undone ->
                 context.getString(R.string.feedback_undone, context.getString(feedback.action.labelRes()))
             is Feedback.Possession -> feedback.side?.let {
-                context.getString(R.string.feedback_possession, teamTitle(it, locale))
+                context.getString(R.string.feedback_possession, context.teamTitle(it))
             } ?: context.getString(R.string.feedback_possession_hidden)
             Feedback.NothingToUndo -> {
                 hasHint = false
@@ -113,18 +116,14 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
     }
 
     /** `HOME +3`, `LOCAL −1`. */
-    private fun scoreTitle(side: Side, delta: Int, locale: Locale): String {
+    private fun scoreTitle(side: Side, delta: Int): String {
         val change = if (delta >= 0) {
             context.getString(R.string.feedback_plus, delta)
         } else {
             context.getString(R.string.feedback_minus, -delta)
         }
-        return context.getString(R.string.feedback_score, teamTitle(side, locale), change)
+        return context.getString(R.string.feedback_score, context.teamTitle(side), change)
     }
-
-    /** The team name as the board shows it: `HOME`, `LOCAL`. */
-    private fun teamTitle(side: Side, locale: Locale): String =
-        context.getString(side.teamNameRes()).uppercase(locale)
 
     private fun UndoneAction.labelRes(): Int = when (this) {
         UndoneAction.START_CLOCK -> R.string.undone_start_clock
@@ -135,5 +134,9 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
         UndoneAction.NEW_GAME -> R.string.undone_new_game
         UndoneAction.GAME_LENGTH -> R.string.undone_game_length
         UndoneAction.POSSESSION -> R.string.undone_possession
+        UndoneAction.RULES -> R.string.undone_rules
+        UndoneAction.NEXT_PERIOD -> R.string.undone_next_period
+        UndoneAction.END_BREAK -> R.string.undone_end_break
+        UndoneAction.PERIOD -> R.string.undone_period
     }
 }

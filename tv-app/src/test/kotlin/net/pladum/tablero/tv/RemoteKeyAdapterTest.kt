@@ -17,6 +17,7 @@ import net.pladum.tablero.shared.Command.Score
 import net.pladum.tablero.shared.Command.ToggleClock
 import net.pladum.tablero.shared.Command.TogglePossession
 import net.pladum.tablero.shared.Command.Undo
+import net.pladum.tablero.shared.Side
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
 import org.junit.jupiter.api.BeforeEach
@@ -45,6 +46,30 @@ private class FakeClockAdjust : ClockAdjustKeys {
     override fun done() {
         isOpen = false
         calls += "done"
+    }
+
+    override fun cancel() {
+        isOpen = false
+        calls += "cancel"
+    }
+}
+
+/** Records what the keys asked of the team foul bar; [rules] says whether period rules let it open. */
+private class FakeFouls : FoulKeys {
+    val calls = mutableListOf<String>()
+    var rules = true
+    override var isOpen = false
+
+    override fun open(): Boolean {
+        if (!rules) return false
+        isOpen = true
+        calls += "open"
+        return true
+    }
+
+    override fun foul(side: Side) {
+        isOpen = false
+        calls += "foul $side"
     }
 
     override fun cancel() {
@@ -97,9 +122,10 @@ private class FakeMenu : MenuKeys {
 class RemoteKeyAdapterTest {
     private val dispatched = mutableListOf<Command>()
     private val clockAdjust = FakeClockAdjust()
+    private val fouls = FakeFouls()
     private val timeUp = TimeUpBar({ dispatched += it }, {})
     private val menu = FakeMenu()
-    private val keys = RemoteKeyAdapter({ dispatched += it }, clockAdjust, timeUp, menu)
+    private val keys = RemoteKeyAdapter({ dispatched += it }, clockAdjust, fouls, timeUp, menu)
 
     private fun shortPress(keyCode: Int) {
         assertTrue(keys.onKeyDown(keyCode, repeatCount = 0))
@@ -171,9 +197,9 @@ class RemoteKeyAdapterTest {
     @Nested
     inner class QuickClockAdjust {
         @Test
-        fun `down opens it on key-down, and its release does nothing more`() {
+        fun `down opens it on release, since down also has a long press`() {
             assertTrue(keys.onKeyDown(KEYCODE_DPAD_DOWN, repeatCount = 0))
-            assertEquals(listOf("open"), clockAdjust.calls)
+            assertEquals(emptyList(), clockAdjust.calls)
             assertTrue(keys.onKeyUp(KEYCODE_DPAD_DOWN, canceled = false))
             assertEquals(listOf("open"), clockAdjust.calls)
         }
@@ -229,6 +255,51 @@ class RemoteKeyAdapterTest {
             shortPress(KEYCODE_DPAD_LEFT)
             shortPress(KEYCODE_BACK)
             assertEquals(listOf<Command>(Score(LEFT, 1), Undo), dispatched)
+        }
+    }
+
+    @Nested
+    inner class TeamFouls {
+        @Test
+        fun `down held opens the foul bar, and its release opens nothing else`() {
+            assertTrue(longPress(KEYCODE_DPAD_DOWN))
+            assertEquals(listOf("open"), fouls.calls)
+            assertEquals(emptyList(), clockAdjust.calls)
+        }
+
+        @Test
+        fun `left or right gives that team the foul, on key-down, and their release does not score`() {
+            longPress(KEYCODE_DPAD_DOWN)
+            shortPress(KEYCODE_DPAD_RIGHT)
+            longPress(KEYCODE_DPAD_DOWN)
+            shortPress(KEYCODE_DPAD_LEFT)
+            assertEquals(listOf("open", "foul RIGHT", "open", "foul LEFT"), fouls.calls)
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `back cancels without undoing, the other keys do nothing`() {
+            longPress(KEYCODE_DPAD_DOWN)
+            listOf(KEYCODE_DPAD_UP, KEYCODE_DPAD_DOWN, KEYCODE_DPAD_CENTER, KEYCODE_BACK).forEach(::shortPress)
+            assertEquals(listOf("open", "cancel"), fouls.calls)
+            assertEquals(emptyList(), dispatched)
+            assertEquals(emptyList(), clockAdjust.calls)
+        }
+
+        @Test
+        fun `under Pickup rules a held down opens quick clock adjust on release`() {
+            fouls.rules = false
+            assertFalse(longPress(KEYCODE_DPAD_DOWN))
+            assertEquals(emptyList(), fouls.calls)
+            assertEquals(listOf("open"), clockAdjust.calls)
+        }
+
+        @Test
+        fun `down held does nothing over another overlay`() {
+            shortPress(KEYCODE_DPAD_DOWN)
+            assertTrue(longPress(KEYCODE_DPAD_DOWN))
+            assertEquals(emptyList(), fouls.calls)
+            assertEquals(listOf("open", "adjust -60000"), clockAdjust.calls)
         }
     }
 

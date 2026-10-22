@@ -288,7 +288,7 @@ No Kotlin changes are needed.
 - OEM battery killers (Xiaomi, Huawei, Samsung): onboarding screen for battery-optimization exemptions; the
   system must tolerate the controller being killed (see invariant: TV owns the clock).
 
-## Rules: Pickup and FIBA (engine built, tv-app screens not yet)
+## Rules: Pickup and FIBA (end of period and breaks not on screen yet)
 
 The menu's *Rules* row chooses how a game is played (design 24–33). **Pickup** is everything above: one clock per
 game, back-to-back games. **FIBA** adds team fouls, periods, breaks and overtime. The rules are data (`GameRules`)
@@ -300,8 +300,10 @@ the period length is set like the Pickup game length (menu, or a game's first st
 periods 1 and 3 and before each overtime, and 15:00 (halftime) after period 2; overtimes follow one another while the
 score is tied; and overtime fouls count as period 4 fouls.
 
-- **Team fouls:** holding ↓ opens the foul bar (design 27); ← or → adds a foul to that side and closes it. The menu
-  corrects fouls ±1 like scores.
+- **Team fouls:** holding ↓ opens the foul bar (design 27); ← or → adds a foul to that side and closes it, Back
+  cancels, and it closes by itself after 5 s without a key. So that ↓ can be held, its press opens quick clock adjust
+  on release, like ←/→ score on release; under Pickup a held ↓ does the same. The menu corrects fouls ±1 like scores.
+  A foul is confirmed like a score (`AWAY FOUL · 4 → 5`).
 - **End of a period:** the clock reaching 0 emits `GameClockExpired` (buzzer) as it does now. After periods 1–3, or
   after period 4 or an overtime with the score tied, the time-up bar offers the break (focused) or skipping it
   (design 29). Both move to the next period: period + 1 (or the next overtime), fouls back to 0 (kept going into

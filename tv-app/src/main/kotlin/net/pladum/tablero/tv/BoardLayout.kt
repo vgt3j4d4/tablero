@@ -39,6 +39,8 @@ enum class BoardLayout(
     val periodSize: Float,
     val periodArrowHeight: Float,
     val periodArrowGap: Float,
+    /** The team foul bar's ring around the home team's fouls, outer edge; the away one mirrors it. */
+    val foulRing: DesignBox,
 ) {
     /**
      * The clock in a box; team columns around a 260 px gap. The team block (84 px name row, 28 px gap, 330 px score)
@@ -65,6 +67,7 @@ enum class BoardLayout(
         periodSize = 250f,
         periodArrowHeight = 120f,
         periodArrowGap = 28f,
+        foulRing = DesignBox(22f, 22f, 318f, 490f),
     ),
 
     /**
@@ -93,6 +96,7 @@ enum class BoardLayout(
         periodSize = 180f,
         periodArrowHeight = 84f,
         periodArrowGap = 14f,
+        foulRing = DesignBox(22f, 22f, 268f, 460f), // 14 px around the corner, as in Classic.
     ),
 }
 

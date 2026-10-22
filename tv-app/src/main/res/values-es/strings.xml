@@ -21,6 +21,11 @@
     <string name="undone_new_game">NUEVO PARTIDO</string>
     <string name="undone_game_length">DURACIÓN DEL PARTIDO</string>
     <string name="undone_possession">FLECHA DE POSESIÓN</string>
+    <string name="undone_rules">REGLAS</string>
+    <string name="undone_next_period">SIGUIENTE PERIODO</string>
+    <string name="undone_end_break">FIN DEL DESCANSO</string>
+    <string name="undone_period">PERIODO</string>
+    <string name="feedback_foul">FALTA %1$s</string>
 
     <!-- Possession arrow (↑): the label over the arrows between the scores, then its confirmations. %1$s is the team
          the arrow now points to (LOCAL, VISITA). -->
@@ -31,6 +36,7 @@
     <string name="fouls_label">FALTAS</string>
     <string name="period_label">PERIODO</string>
     <string name="overtime_label">TIEMPO EXTRA</string>
+    <string name="foul_title">FALTA DE EQUIPO</string>
 
     <!-- Time-up bar over the status bar. The result is in sentence case: %1$s is the winning team (Local, Visita),
          %2$d its score and %3$d the other team's; a tie gives both scores. -->

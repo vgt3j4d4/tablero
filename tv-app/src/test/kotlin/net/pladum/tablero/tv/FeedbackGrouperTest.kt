@@ -8,6 +8,7 @@ import net.pladum.tablero.shared.GameEvent.CommandUndone
 import net.pladum.tablero.shared.GameSnapshot
 import net.pladum.tablero.shared.NANOS_PER_MS
 import net.pladum.tablero.shared.RejectReason
+import net.pladum.tablero.shared.RulesPreset
 import net.pladum.tablero.shared.Side
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
@@ -110,6 +111,29 @@ class FeedbackGrouperTest {
         assertEquals(Feedback.Undone(UndoneAction.ADJUST_CLOCK), undone(Command.AdjustGameClock(1_000)))
         assertEquals(Feedback.Undone(UndoneAction.POSSESSION), undone(Command.TogglePossession))
         assertEquals(Feedback.Undone(UndoneAction.POSSESSION), undone(Command.ClearPossession))
+        assertEquals(Feedback.Undone(UndoneAction.RULES), undone(Command.SetRules(RulesPreset.FIBA)))
+        assertEquals(Feedback.Undone(UndoneAction.NEXT_PERIOD), undone(Command.NextPeriod(withBreak = true)))
+        assertEquals(Feedback.Undone(UndoneAction.END_BREAK), undone(Command.EndBreak))
+        assertEquals(Feedback.Undone(UndoneAction.PERIOD), undone(Command.ChangePeriod(1)))
+    }
+
+    @Test
+    fun `a foul confirms the team and its fouls, and so does its undo`() {
+        val before = state
+        val after = before.copy(right = before.right.copy(fouls = 5))
+        val foul = Command.Foul(RIGHT, 1)
+        assertEquals(Feedback.Foul(RIGHT, from = 0, to = 5), grouper.onEvent(CommandApplied(foul, before, after), 0))
+        assertEquals(
+            Feedback.Foul(RIGHT, from = 5, to = 0, undone = true),
+            grouper.onEvent(CommandUndone(foul, after, before), 0),
+        )
+    }
+
+    @Test
+    fun `a foul ends the group`() {
+        press(LEFT, 1, atMs = 0)
+        grouper.onEvent(CommandApplied(Command.Foul(LEFT, 1), state, state), 100 * NANOS_PER_MS)
+        assertEquals(Feedback.Score(LEFT, 1, from = 49, to = 50), press(LEFT, 1, atMs = 200))
     }
 
     @Test
@@ -117,6 +141,7 @@ class FeedbackGrouperTest {
         assertNull(grouper.onEvent(CommandApplied(Command.StartClock, state, state), 0))
         assertNull(grouper.onEvent(GameEvent.ClockStarted, 0))
         assertNull(grouper.onEvent(GameEvent.GameClockExpired, 0))
+        assertNull(grouper.onEvent(GameEvent.BreakEnded, 0))
     }
 
     @Test

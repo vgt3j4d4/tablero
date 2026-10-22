@@ -2,6 +2,7 @@ package net.pladum.tablero.tv
 
 import net.pladum.tablero.shared.Command
 import net.pladum.tablero.shared.GameEvent
+import net.pladum.tablero.shared.GameSnapshot
 import net.pladum.tablero.shared.RejectReason
 import net.pladum.tablero.shared.Side
 import kotlin.math.sign
@@ -19,6 +20,9 @@ sealed interface Feedback {
 
     data class Undone(val action: UndoneAction) : Feedback
 
+    /** A foul for [side], fouls [from] → [to]; [undone] when Back took it away again. */
+    data class Foul(val side: Side, val from: Int, val to: Int, val undone: Boolean = false) : Feedback
+
     /** The possession arrow now points to [side], or is hidden when null. */
     data class Possession(val side: Side?) : Feedback
 
@@ -27,7 +31,8 @@ sealed interface Feedback {
 
 /** Every recorded command other than a score, as the undo confirmation names it. */
 enum class UndoneAction {
-    START_CLOCK, STOP_CLOCK, ADJUST_CLOCK, SET_CLOCK, RESET_CLOCK, NEW_GAME, GAME_LENGTH, POSSESSION
+    START_CLOCK, STOP_CLOCK, ADJUST_CLOCK, SET_CLOCK, RESET_CLOCK, NEW_GAME, GAME_LENGTH, POSSESSION,
+    RULES, NEXT_PERIOD, END_BREAK, PERIOD,
 }
 
 /**
@@ -46,6 +51,7 @@ class FeedbackGrouper(private val groupWindowNanos: Long = FEEDBACK_GROUP_WINDOW
     fun onEvent(event: GameEvent, nowNanos: Long): Feedback? = when (event) {
         is GameEvent.CommandApplied -> when (val command = event.command) {
             is Command.Score -> score(command, event, nowNanos)
+            is Command.Foul -> foul(command, event.before, event.after, undone = false)
             Command.TogglePossession, Command.ClearPossession -> Feedback.Possession(event.after.possession)
             else -> null
         }
@@ -82,6 +88,9 @@ class FeedbackGrouper(private val groupWindowNanos: Long = FEEDBACK_GROUP_WINDOW
         return next
     }
 
+    private fun foul(command: Command.Foul, before: GameSnapshot, after: GameSnapshot, undone: Boolean) =
+        Feedback.Foul(command.side, before.team(command.side).fouls, after.team(command.side).fouls, undone)
+
     private fun undone(event: GameEvent.CommandUndone): Feedback? = when (val command = event.command) {
         is Command.Score -> Feedback.UndoneScore(
             side = command.side,
@@ -97,8 +106,11 @@ class FeedbackGrouper(private val groupWindowNanos: Long = FEEDBACK_GROUP_WINDOW
         Command.NewGame -> Feedback.Undone(UndoneAction.NEW_GAME)
         is Command.SetGameLength -> Feedback.Undone(UndoneAction.GAME_LENGTH)
         Command.TogglePossession, Command.ClearPossession -> Feedback.Undone(UndoneAction.POSSESSION)
-        // No input sends the period rules' commands yet.
-        is Command.SetRules, is Command.Foul, is Command.NextPeriod, Command.EndBreak, is Command.ChangePeriod -> null
+        is Command.Foul -> foul(command, event.before, event.after, undone = true)
+        is Command.SetRules -> Feedback.Undone(UndoneAction.RULES)
+        is Command.NextPeriod -> Feedback.Undone(UndoneAction.NEXT_PERIOD)
+        Command.EndBreak -> Feedback.Undone(UndoneAction.END_BREAK)
+        is Command.ChangePeriod -> Feedback.Undone(UndoneAction.PERIOD)
         Command.ToggleClock, Command.Undo -> null // Never recorded: a toggle is recorded as what it resolved to.
     }
 }
