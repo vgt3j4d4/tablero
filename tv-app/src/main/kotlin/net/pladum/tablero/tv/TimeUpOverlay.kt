@@ -44,8 +44,8 @@ class TimeUpOverlay(private val context: Context, fonts: BoardFonts) {
     private val focusedText =
         textPaint(fonts.barlow(800), FOCUSED_SIZE, context.color(R.color.time_up_ink), 0.04f, Paint.Align.CENTER)
     private val unfocusedText = textPaint(fonts.barlow(700), UNFOCUSED_SIZE, white, 0.04f, Paint.Align.CENTER)
-    private val focusedBaseline = TALL_BAR_CENTER_Y + focusedText.centerToBaselinePerPx("H") * FOCUSED_SIZE
-    private val unfocusedBaseline = TALL_BAR_CENTER_Y + unfocusedText.centerToBaselinePerPx("H") * UNFOCUSED_SIZE
+    private val focusedBaseline = focusedText.baselineAt(TALL_BAR_CENTER_Y)
+    private val unfocusedBaseline = unfocusedText.baselineAt(TALL_BAR_CENTER_Y)
 
     private val first = Button()
     private val second = Button()

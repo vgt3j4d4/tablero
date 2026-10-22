@@ -5,17 +5,12 @@ import android.graphics.Canvas
 import android.graphics.RectF
 import kotlin.math.abs
 
-// Design pixels, from docs/design/boards.html (.adjust-ring, .adjust-bar); the ring's place comes from the layout.
+// Design pixels, from docs/design/boards.html (.adjust-ring, .adjust-bar); the ring's place comes from the layout,
+// the title and hint sizes and gaps are the short bars' (BoardPaint.kt).
 private const val RING_WIDTH = 8f
 private const val RING_RADIUS = 40f
-private const val TITLE_SIZE = 36f
 private const val WAS_SIZE = 30f
 private const val TEXT_GAP = 18f
-private const val HINT_SIZE = 26f
-private const val HINT_GAP = 28f
-
-/** Minimum space between the title group and the key hints. */
-private const val GROUP_GAP = 40f
 
 /**
  * Quick clock adjust (design 07, 13): an amber ring around the clock and an amber bar over the status bar with
@@ -32,19 +27,18 @@ class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
     private val barPaint = fillPaint(adjustColor)
 
     private val title = context.getString(R.string.adjust_title)
-    private val titlePaint = textPaint(fonts.barlow(800), TITLE_SIZE, context.color(R.color.board_background), 0.06f)
-    private val netPaint = textPaint(fonts.barlow(800), TITLE_SIZE, context.color(R.color.board_background))
+    private val titlePaint =
+        textPaint(fonts.barlow(800), SHORT_BAR_TITLE_SIZE, context.color(R.color.board_background), 0.06f)
+    private val netPaint = textPaint(fonts.barlow(800), SHORT_BAR_TITLE_SIZE, context.color(R.color.board_background))
     private val wasPaint = textPaint(fonts.barlow(600), WAS_SIZE, ink)
-    private val titleCenter = titlePaint.centerToBaselinePerPx("H")
     private var net = ""
     private var was = ""
     private var netX = 0f
     private var wasX = 0f
     private var baseline = 0f
 
-    private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, ink, 0.06f)
+    private val hintPaint = textPaint(fonts.barlow(600), SHORT_BAR_HINT_SIZE, ink, 0.06f)
     private val keycapPaint = keycapPaint(ink)
-    private val hintBaseline = STATUS_BAR_CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
     private val hints = listOf(
         KeyHint(context.getString(R.string.key_up_down), context.getString(R.string.hint_minute)),
         KeyHint(context.getString(R.string.key_left_right), context.getString(R.string.hint_second)),
@@ -53,7 +47,8 @@ class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
     )
 
     /** Left edge of the hints, laid out from the right. */
-    private val hintsLeft = hints.layoutEndingAt(DESIGN_WIDTH - BAR_PADDING, HINT_GAP, STATUS_BAR_CENTER_Y, hintPaint)
+    private val hintsLeft =
+        hints.layoutEndingAt(DESIGN_WIDTH - BAR_PADDING, SHORT_BAR_HINT_GAP, STATUS_BAR_CENTER_Y, hintPaint)
 
     /** Puts the ring where [layout] has it. */
     fun place(layout: BoardLayout) {
@@ -86,20 +81,20 @@ class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
         canvas.drawText(title, BAR_PADDING, baseline, titlePaint)
         canvas.drawText(net, netX, baseline, netPaint)
         canvas.drawText(was, wasX, baseline, wasPaint)
-        for (hint in hints) hint.draw(canvas, hintBaseline, hintPaint, keycapPaint)
+        for (hint in hints) hint.draw(canvas, hintPaint, keycapPaint)
     }
 
     /** Places title, change and `was` on one baseline; the group shrinks if a translation would reach the hints. */
     private fun layout() {
-        val sizes = floatArrayOf(TITLE_SIZE, TITLE_SIZE, WAS_SIZE)
+        val sizes = floatArrayOf(SHORT_BAR_TITLE_SIZE, SHORT_BAR_TITLE_SIZE, WAS_SIZE)
         val paints = arrayOf(titlePaint, netPaint, wasPaint)
         paints.forEachIndexed { i, paint -> paint.textSize = sizes[i] }
         val width = titlePaint.measureText(title) + netPaint.measureText(net) + wasPaint.measureText(was) + 2 * TEXT_GAP
-        val available = hintsLeft - GROUP_GAP - BAR_PADDING
+        val available = hintsLeft - SHORT_BAR_GROUP_GAP - BAR_PADDING
         if (width > available) paints.forEachIndexed { i, paint -> paint.textSize = sizes[i] * available / width }
-        val gap = TEXT_GAP * titlePaint.textSize / TITLE_SIZE
+        val gap = TEXT_GAP * titlePaint.textSize / SHORT_BAR_TITLE_SIZE
         netX = BAR_PADDING + titlePaint.measureText(title) + gap
         wasX = netX + netPaint.measureText(net) + gap
-        baseline = STATUS_BAR_CENTER_Y + titleCenter * titlePaint.textSize
+        baseline = titlePaint.baselineAt(STATUS_BAR_CENTER_Y)
     }
 }

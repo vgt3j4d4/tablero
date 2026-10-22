@@ -25,7 +25,6 @@ class TeamFouls(context: Context, private val fonts: BoardFonts) {
 
     private val label = context.getString(R.string.fouls_label)
     private val labelPaint = textPaint(fonts.barlow(700), LABEL_SIZE, 0, 0.08f, Paint.Align.CENTER)
-    private val labelCenterPerPx = labelPaint.centerToBaselinePerPx("H")
     private var labelBaseline = 0f
 
     private var lit = 0
@@ -36,7 +35,7 @@ class TeamFouls(context: Context, private val fonts: BoardFonts) {
     /** Puts the corners where [layout] has them. */
     fun place(layout: BoardLayout) {
         labelPaint.textSize = layout.foulsLabelSize
-        labelBaseline = layout.foulsLabelCenterY + labelCenterPerPx * layout.foulsLabelSize
+        labelBaseline = labelPaint.baselineAt(layout.foulsLabelCenterY)
         left.place(layout.foulsCenterX, layout)
         right.place(DESIGN_WIDTH - layout.foulsCenterX, layout)
     }

@@ -35,16 +35,14 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
     private var titleX = 0f
     private var titleBaseline = 0f
     private val titlePaint = textPaint(fonts.barlow(800), TITLE_SIZE, 0, 0.04f)
-    private val titleCenter = titlePaint.centerToBaselinePerPx("H")
 
     private var detail = ""
     private var detailX = 0f
     private val detailPaint = textPaint(fonts.barlow(600), DETAIL_SIZE, 0)
-    private val detailBaseline = STATUS_BAR_CENTER_Y + detailPaint.centerToBaselinePerPx("0") * DETAIL_SIZE
+    private val detailBaseline = detailPaint.baselineAt(STATUS_BAR_CENTER_Y, "0")
 
     private var hasHint = false
     private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, 0, 0.06f)
-    private val hintBaseline = STATUS_BAR_CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
     private val keycapPaint = keycapPaint(0)
     private val hint = KeyHint(context.getString(R.string.key_back), context.getString(R.string.hint_undo))
     private val hintLeft = hint.layoutEndingAt(RIGHT - PADDING, STATUS_BAR_CENTER_Y, hintPaint)
@@ -101,7 +99,7 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
         canvas.drawRoundRect(panel, RADIUS, RADIUS, panelPaint)
         canvas.drawText(title, titleX, titleBaseline, titlePaint)
         if (detail.isNotEmpty()) canvas.drawText(detail, detailX, detailBaseline, detailPaint)
-        if (hasHint) hint.draw(canvas, hintBaseline, hintPaint, keycapPaint)
+        if (hasHint) hint.draw(canvas, hintPaint, keycapPaint)
     }
 
     private fun layout() {
@@ -110,7 +108,7 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
         val detailWidth = if (detail.isEmpty()) 0f else GAP + detailPaint.measureText(detail)
         titleX = x
         val titleWidth = titlePaint.fitText(title, TITLE_SIZE, right - x - detailWidth)
-        titleBaseline = STATUS_BAR_CENTER_Y + titleCenter * titlePaint.textSize
+        titleBaseline = titlePaint.baselineAt(STATUS_BAR_CENTER_Y)
         detailX = x + titleWidth + GAP
     }
 

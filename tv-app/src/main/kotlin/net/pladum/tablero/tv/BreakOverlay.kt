@@ -28,7 +28,6 @@ class BreakOverlay(private val context: Context, fonts: BoardFonts) {
     private val muted = context.color(R.color.text_muted)
     private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, muted, 0.06f)
     private val keycapPaint = keycapPaint(muted)
-    private val hintBaseline = TALL_BAR_CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
     private val hints = listOf(
         KeyHint(context.getString(R.string.key_down), context.getString(R.string.hint_adjust)),
         KeyHint(context.getString(R.string.key_ok), context.getString(R.string.hint_end_break)),
@@ -50,7 +49,7 @@ class BreakOverlay(private val context: Context, fonts: BoardFonts) {
         canvas.drawRect(0f, TALL_BAR_TOP, DESIGN_WIDTH, DESIGN_HEIGHT, barPaint)
         canvas.drawRect(0f, TALL_BAR_TOP, DESIGN_WIDTH, TALL_BAR_TOP + BORDER, linePaint)
         title.draw(canvas)
-        for (hint in hints) hint.draw(canvas, hintBaseline, hintPaint, keycapPaint)
+        for (hint in hints) hint.draw(canvas, hintPaint, keycapPaint)
     }
 
     private fun layout(shown: Shown) {

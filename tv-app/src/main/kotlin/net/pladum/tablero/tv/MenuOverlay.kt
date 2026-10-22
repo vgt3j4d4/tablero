@@ -87,7 +87,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
     private val valuePaint = textPaint(fonts.barlow(600), ROW_SIZE, soft, align = Paint.Align.CENTER).apply {
         fontFeatureSettings = "tnum"
     }
-    private val rowBaseline = ROW_HEIGHT / 2 + labelPaint.centerToBaselinePerPx("H") * ROW_SIZE
+    private val rowBaseline = labelPaint.baselineAt(ROW_HEIGHT / 2)
     private val chevronPaint = roundStrokePaint(soft, 3f * CHEVRON_UNIT)
     private val chevronLeft = chevron(14f, 7f)
     private val chevronRight = chevron(8f, 15f)
@@ -105,7 +105,6 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
 
     private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, muted, 0.06f)
     private val keycapPaint = keycapPaint(muted)
-    private val hintBaseline = FOOTER_CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
     private val hints = listOf(
         KeyHint(context.getString(R.string.key_up_down), context.getString(R.string.hint_move)),
         KeyHint(context.getString(R.string.key_left_right), context.getString(R.string.hint_change)),
@@ -174,7 +173,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
             canvas.drawRect(PANEL_LEFT, FOOTER_TOP - FADE_BOTTOM, DESIGN_WIDTH, FOOTER_TOP, fadeBottomPaint)
         }
         canvas.drawRect(PANEL_LEFT, FOOTER_TOP, DESIGN_WIDTH, FOOTER_TOP + BORDER, linePaint)
-        for (hint in hints) hint.draw(canvas, hintBaseline, hintPaint, keycapPaint)
+        for (hint in hints) hint.draw(canvas, hintPaint, keycapPaint)
     }
 
     /** Drawn on every frame: the Game clock row's value, [clock] as the scoreboard shows it, unless scrolled away. */

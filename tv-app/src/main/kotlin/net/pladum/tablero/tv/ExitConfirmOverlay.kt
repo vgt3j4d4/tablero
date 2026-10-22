@@ -64,25 +64,25 @@ class ExitConfirmOverlay(private val context: Context, fonts: BoardFonts) {
 
     private val eyebrow = context.getString(R.string.exit_eyebrow)
     private val eyebrowPaint = textPaint(fonts.barlow(600), EYEBROW_SIZE, context.color(R.color.text_muted), 0.24f)
-    private val eyebrowBaseline = EYEBROW_CENTER_Y + eyebrowPaint.centerToBaselinePerPx("H") * EYEBROW_SIZE
+    private val eyebrowBaseline = eyebrowPaint.baselineAt(EYEBROW_CENTER_Y)
     private val title = context.getString(R.string.exit_title)
     private val titlePaint = textPaint(fonts.barlow(700), TITLE_SIZE, text).apply {
         fitText(title, TITLE_SIZE, CONTENT_WIDTH)
     }
-    private val titleBaseline = TITLE_CENTER_Y + titlePaint.centerToBaselinePerPx("H") * titlePaint.textSize
+    private val titleBaseline = titlePaint.baselineAt(TITLE_CENTER_Y)
     private val bodyPaint = textPaint(fonts.barlow(500), BODY_SIZE, context.color(R.color.text_soft))
-    private val bodyBaseline = BODY_FIRST_CENTER_Y + bodyPaint.centerToBaselinePerPx("H") * BODY_SIZE
+    private val bodyBaseline = bodyPaint.baselineAt(BODY_FIRST_CENTER_Y)
     private var bodyLines = emptyList<String>()
 
     private val cancel = Button(CONTENT_LEFT, context.getString(R.string.exit_cancel))
     private val exit = Button(CONTENT_LEFT + BUTTON_WIDTH + BUTTON_GAP, context.getString(R.string.exit_confirm))
     private val cancelPaint = textPaint(fonts.barlow(700), LABEL_SIZE, text, 0.04f, Paint.Align.CENTER)
-    private val cancelBaseline = CENTER_Y + cancelPaint.centerToBaselinePerPx("H") * LABEL_SIZE
+    private val cancelBaseline = cancelPaint.baselineAt(CENTER_Y)
     private val exitPaint = textPaint(fonts.barlow(700), LABEL_SIZE, text, 0.06f, Paint.Align.CENTER)
-    private val exitBaseline = EXIT_CENTER_Y + exitPaint.centerToBaselinePerPx("H") * LABEL_SIZE
+    private val exitBaseline = exitPaint.baselineAt(EXIT_CENTER_Y)
     private val hold = context.getString(R.string.exit_hold, EXIT_HOLD_MS / 1_000)
     private val holdPaint = textPaint(fonts.barlow(600), HOLD_SIZE, text, 0.12f, Paint.Align.CENTER)
-    private val holdBaseline = HOLD_CENTER_Y + holdPaint.centerToBaselinePerPx("H") * HOLD_SIZE
+    private val holdBaseline = holdPaint.baselineAt(HOLD_CENTER_Y)
     private val focusedFill = fillPaint(context.color(R.color.panel_raised))
     private val focusedOutline = strokePaint(text, FOCUSED_BORDER)
     private val unfocusedOutline = strokePaint(off, UNFOCUSED_BORDER)

@@ -41,7 +41,6 @@ class PossessionArrow(context: Context, fonts: BoardFonts) {
     private val overtimeLabel = context.getString(R.string.overtime_label)
     private var label = possessionLabel
     private val labelPaint = textPaint(fonts.barlow(700), LABEL_SIZE, 0, 0.08f, Paint.Align.CENTER)
-    private val labelBaselineOffset = labelPaint.centerToBaselinePerPx("H") * LABEL_SIZE
     private var labelBaseline = 0f
 
     /** The arrows around the gap between the scores, and around the period digit; [update] picks the pair. */
@@ -57,7 +56,7 @@ class PossessionArrow(context: Context, fonts: BoardFonts) {
 
     /** Puts the label, the arrows and the period where [layout] has them. */
     fun place(layout: BoardLayout) {
-        labelBaseline = layout.nameCenterY + labelBaselineOffset
+        labelBaseline = labelPaint.baselineAt(layout.nameCenterY)
         left.arrow(-layout.possessionArrowGap / 2, layout.possessionArrowHeight, layout)
         right.arrow(layout.possessionArrowGap / 2, layout.possessionArrowHeight, layout)
         digit.place(CENTER_X, layout.scoreCenterY, layout.periodSize)

@@ -82,7 +82,6 @@ class ScoreboardView(
     private val clockBoxBorderPaint = strokePaint(0, CLOCK_BOX_BORDER)
     private val clockPaint = ledPaint(Paint.Align.RIGHT)
     private val clockGhostPaint = ledPaint(Paint.Align.LEFT)
-    private var ledBaselineOffset = 0f
     private var clockBaseline = 0f
     private var reading: ClockReading? = null
     private var clockText = ""
@@ -97,7 +96,7 @@ class ScoreboardView(
 
     private val statusLinePaint = fillPaint()
     private val clockStatePaint = textPaint(fonts.barlow(600), STATUS_SIZE, 0, 0.08f, Paint.Align.RIGHT)
-    private val statusBaseline = STATUS_BAR_CENTER_Y + clockStatePaint.centerToBaselinePerPx("H") * STATUS_SIZE
+    private val statusBaseline = clockStatePaint.baselineAt(STATUS_BAR_CENTER_Y)
     private val statusIconPaint = fillPaint()
     private val pauseBarLeft = RectF()
     private val pauseBarRight = RectF()
@@ -249,8 +248,7 @@ class ScoreboardView(
     /** Places the clock, its box, the team columns and the adjust ring where [layout] has them. */
     private fun applyLayout() {
         for (paint in arrayOf(clockPaint, clockGhostPaint, clockDimPaint)) paint.textSize = layout.ledSize
-        ledBaselineOffset = fonts.ledCenterPerPx * layout.ledSize
-        clockBaseline = layout.clockCenterY + ledBaselineOffset
+        clockBaseline = fonts.ledBaseline(layout.clockCenterY, layout.ledSize)
         val box = layout.clockBox
         if (box != null) {
             clockBox.set(box.left, box.top, box.right, box.bottom)
@@ -474,7 +472,6 @@ class ScoreboardView(
 
         private val name = context.teamTitle(side)
         private val namePaint = textPaint(fonts.barlow(700), layout.nameSize, 0, 0.03f, Paint.Align.CENTER)
-        private val nameCenterPerPx = namePaint.centerToBaselinePerPx("H")
         private var nameBaseline = 0f
 
         private val digits = LedDigits(fonts)
@@ -483,7 +480,7 @@ class ScoreboardView(
         fun place(x: Float) {
             centerX = x
             namePaint.fitText(name, layout.nameSize, NAME_MAX_WIDTH)
-            nameBaseline = layout.nameCenterY + nameCenterPerPx * namePaint.textSize
+            nameBaseline = namePaint.baselineAt(layout.nameCenterY)
             digits.place(x, layout.scoreCenterY, layout.ledSize)
         }
 
