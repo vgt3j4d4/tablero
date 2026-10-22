@@ -5,11 +5,9 @@ import android.graphics.Canvas
 import android.graphics.RectF
 import net.pladum.tablero.shared.Side
 
-// Design pixels, from docs/design/boards.html (.toast).
+// Design pixels, from docs/design/boards.html (.toast); the bar's place is in BoardPaint.kt.
 private const val LEFT = 500f
 private const val RIGHT = 1420f
-private const val TOP = 1016f
-private const val CENTER_Y = 1048f
 private const val RADIUS = 16f
 private const val PADDING = 28f
 private const val GAP = 16f
@@ -29,7 +27,8 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
     var visible = false
         private set
 
-    private val panel = RectF(LEFT, TOP, RIGHT, DESIGN_HEIGHT + RADIUS) // Square bottom: its corners are off screen.
+    /** Square bottom: its rounded corners are off screen. */
+    private val panel = RectF(LEFT, STATUS_BAR_TOP, RIGHT, DESIGN_HEIGHT + RADIUS)
     private val panelPaint = fillPaint()
 
     private var title = ""
@@ -41,14 +40,14 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
     private var detail = ""
     private var detailX = 0f
     private val detailPaint = textPaint(fonts.barlow(600), DETAIL_SIZE, 0)
-    private val detailBaseline = CENTER_Y + detailPaint.centerToBaselinePerPx("0") * DETAIL_SIZE
+    private val detailBaseline = STATUS_BAR_CENTER_Y + detailPaint.centerToBaselinePerPx("0") * DETAIL_SIZE
 
     private var hasHint = false
     private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, 0, 0.06f)
-    private val hintBaseline = CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
+    private val hintBaseline = STATUS_BAR_CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
     private val keycapPaint = keycapPaint(0)
     private val hint = KeyHint(context.getString(R.string.key_back), context.getString(R.string.hint_undo))
-    private val hintLeft = hint.layoutEndingAt(RIGHT - PADDING, CENTER_Y, hintPaint)
+    private val hintLeft = hint.layoutEndingAt(RIGHT - PADDING, STATUS_BAR_CENTER_Y, hintPaint)
 
     init {
         setMode(mode)
@@ -111,7 +110,7 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
         val detailWidth = if (detail.isEmpty()) 0f else GAP + detailPaint.measureText(detail)
         titleX = x
         val titleWidth = titlePaint.fitText(title, TITLE_SIZE, right - x - detailWidth)
-        titleBaseline = CENTER_Y + titleCenter * titlePaint.textSize
+        titleBaseline = STATUS_BAR_CENTER_Y + titleCenter * titlePaint.textSize
         detailX = x + titleWidth + GAP
     }
 

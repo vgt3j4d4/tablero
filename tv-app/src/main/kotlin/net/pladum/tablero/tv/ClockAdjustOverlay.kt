@@ -8,9 +8,6 @@ import kotlin.math.abs
 // Design pixels, from docs/design/boards.html (.adjust-ring, .adjust-bar); the ring's place comes from the layout.
 private const val RING_WIDTH = 8f
 private const val RING_RADIUS = 40f
-private const val BAR_TOP = 1016f
-private const val BAR_CENTER_Y = 1048f
-private const val PADDING = 48f
 private const val TITLE_SIZE = 36f
 private const val WAS_SIZE = 30f
 private const val TEXT_GAP = 18f
@@ -47,7 +44,7 @@ class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
 
     private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, ink, 0.06f)
     private val keycapPaint = keycapPaint(ink)
-    private val hintBaseline = BAR_CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
+    private val hintBaseline = STATUS_BAR_CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
     private val hints = listOf(
         KeyHint(context.getString(R.string.key_up_down), context.getString(R.string.hint_minute)),
         KeyHint(context.getString(R.string.key_left_right), context.getString(R.string.hint_second)),
@@ -56,7 +53,7 @@ class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
     )
 
     /** Left edge of the hints, laid out from the right. */
-    private val hintsLeft = hints.layoutEndingAt(DESIGN_WIDTH - PADDING, HINT_GAP, BAR_CENTER_Y, hintPaint)
+    private val hintsLeft = hints.layoutEndingAt(DESIGN_WIDTH - BAR_PADDING, HINT_GAP, STATUS_BAR_CENTER_Y, hintPaint)
 
     /** Puts the ring where [layout] has it. */
     fun place(layout: BoardLayout) {
@@ -85,8 +82,8 @@ class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
     fun draw(canvas: Canvas) {
         if (!visible) return
         canvas.drawRoundRect(ring, RING_RADIUS - RING_WIDTH / 2, RING_RADIUS - RING_WIDTH / 2, ringPaint)
-        canvas.drawRect(0f, BAR_TOP, DESIGN_WIDTH, DESIGN_HEIGHT, barPaint)
-        canvas.drawText(title, PADDING, baseline, titlePaint)
+        canvas.drawRect(0f, STATUS_BAR_TOP, DESIGN_WIDTH, DESIGN_HEIGHT, barPaint)
+        canvas.drawText(title, BAR_PADDING, baseline, titlePaint)
         canvas.drawText(net, netX, baseline, netPaint)
         canvas.drawText(was, wasX, baseline, wasPaint)
         for (hint in hints) hint.draw(canvas, hintBaseline, hintPaint, keycapPaint)
@@ -98,11 +95,11 @@ class ClockAdjustOverlay(private val context: Context, fonts: BoardFonts) {
         val paints = arrayOf(titlePaint, netPaint, wasPaint)
         paints.forEachIndexed { i, paint -> paint.textSize = sizes[i] }
         val width = titlePaint.measureText(title) + netPaint.measureText(net) + wasPaint.measureText(was) + 2 * TEXT_GAP
-        val available = hintsLeft - GROUP_GAP - PADDING
+        val available = hintsLeft - GROUP_GAP - BAR_PADDING
         if (width > available) paints.forEachIndexed { i, paint -> paint.textSize = sizes[i] * available / width }
         val gap = TEXT_GAP * titlePaint.textSize / TITLE_SIZE
-        netX = PADDING + titlePaint.measureText(title) + gap
+        netX = BAR_PADDING + titlePaint.measureText(title) + gap
         wasX = netX + netPaint.measureText(net) + gap
-        baseline = BAR_CENTER_Y + titleCenter * titlePaint.textSize
+        baseline = STATUS_BAR_CENTER_Y + titleCenter * titlePaint.textSize
     }
 }

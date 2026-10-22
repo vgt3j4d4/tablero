@@ -12,6 +12,16 @@ import android.graphics.Typeface
 const val DESIGN_WIDTH = 1920f
 const val DESIGN_HEIGHT = 1080f
 
+/**
+ * The status bar along the bottom of the board, and the bars that take its place: quick clock adjust, the foul bar
+ * and the confirmation cover it, the time-up and break bars rise above it. [BAR_PADDING] is the space at both ends.
+ */
+const val STATUS_BAR_TOP = 1016f
+const val STATUS_BAR_CENTER_Y = 1048f
+const val TALL_BAR_TOP = 992f
+const val TALL_BAR_CENTER_Y = 1036f
+const val BAR_PADDING = 48f
+
 private const val LED_FONT = "fonts/DSEG7Classic-Bold.ttf"
 
 /** Glyph bounds come in whole pixels, so the LED digits' center is measured at a size larger than any on screen. */

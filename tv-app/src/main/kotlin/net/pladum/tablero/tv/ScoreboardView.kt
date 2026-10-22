@@ -29,10 +29,7 @@ private const val CLOCK_BOX_BORDER = 2f
 /** Longer team names shrink to fit. */
 private const val NAME_MAX_WIDTH = 800f
 
-private const val STATUS_TOP = 1016f
-private const val STATUS_CENTER_Y = 1048f
 private const val STATUS_LINE = 2f
-private const val STATUS_PADDING = 48f
 private const val STATUS_SIZE = 28f
 private const val STATUS_ICON_SIZE = 18f
 private const val STATUS_ICON_GAP = 12f
@@ -100,7 +97,7 @@ class ScoreboardView(
 
     private val statusLinePaint = fillPaint()
     private val clockStatePaint = textPaint(fonts.barlow(600), STATUS_SIZE, 0, 0.08f, Paint.Align.RIGHT)
-    private val statusBaseline = STATUS_CENTER_Y + clockStatePaint.centerToBaselinePerPx("H") * STATUS_SIZE
+    private val statusBaseline = STATUS_BAR_CENTER_Y + clockStatePaint.centerToBaselinePerPx("H") * STATUS_SIZE
     private val statusIconPaint = fillPaint()
     private val pauseBarLeft = RectF()
     private val pauseBarRight = RectF()
@@ -315,10 +312,10 @@ class ScoreboardView(
         clockStateText = context.getString(
             if (s.gameClock.running) R.string.status_clock_running else R.string.status_clock_stopped,
         )
-        val textLeft = DESIGN_WIDTH - STATUS_PADDING - clockStatePaint.measureText(clockStateText)
+        val textLeft = DESIGN_WIDTH - BAR_PADDING - clockStatePaint.measureText(clockStateText)
         statusIconX = textLeft - STATUS_ICON_GAP - STATUS_ICON_SIZE
         // The pause icon: two 5×16 bars in an 18×18 box (boards.html PAUSE_ICON).
-        val top = STATUS_CENTER_Y - STATUS_ICON_SIZE / 2
+        val top = STATUS_BAR_CENTER_Y - STATUS_ICON_SIZE / 2
         pauseBarLeft.set(statusIconX + 2, top + 1, statusIconX + 7, top + 17)
         pauseBarRight.set(statusIconX + 11, top + 1, statusIconX + 16, top + 17)
         return true
@@ -421,10 +418,10 @@ class ScoreboardView(
         possession.draw(canvas)
         fouls.draw(canvas)
 
-        canvas.drawRect(0f, STATUS_TOP, DESIGN_WIDTH, STATUS_TOP + STATUS_LINE, statusLinePaint)
-        canvas.drawText(clockStateText, DESIGN_WIDTH - STATUS_PADDING, statusBaseline, clockStatePaint)
+        canvas.drawRect(0f, STATUS_BAR_TOP, DESIGN_WIDTH, STATUS_BAR_TOP + STATUS_LINE, statusLinePaint)
+        canvas.drawText(clockStateText, DESIGN_WIDTH - BAR_PADDING, statusBaseline, clockStatePaint)
         if (running == true) {
-            canvas.drawCircle(statusIconX + STATUS_ICON_SIZE / 2, STATUS_CENTER_Y, 8f, statusIconPaint)
+            canvas.drawCircle(statusIconX + STATUS_ICON_SIZE / 2, STATUS_BAR_CENTER_Y, 8f, statusIconPaint)
         } else {
             canvas.drawRoundRect(pauseBarLeft, 1f, 1f, statusIconPaint)
             canvas.drawRoundRect(pauseBarRight, 1f, 1f, statusIconPaint)

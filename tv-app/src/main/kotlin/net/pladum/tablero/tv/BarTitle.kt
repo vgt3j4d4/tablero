@@ -2,14 +2,7 @@ package net.pladum.tablero.tv
 
 import android.graphics.Canvas
 
-// Design pixels, from docs/design/boards.html (.bar.tall).
-/** The tall bars over the status bar (time up, break): their top edge and their center line. */
-const val TALL_BAR_TOP = 992f
-const val TALL_BAR_CENTER_Y = 1036f
-
-/** Space at both ends of a bar. */
-const val BAR_PADDING = 48f
-
+// Design pixels, from docs/design/boards.html (.bar.tall); the bar's place is in BoardPaint.kt.
 private const val TITLE_SIZE = 48f
 private const val DETAIL_SIZE = 30f
 private const val TEXT_GAP = 20f
