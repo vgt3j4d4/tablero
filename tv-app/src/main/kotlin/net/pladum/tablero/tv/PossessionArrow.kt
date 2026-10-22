@@ -38,22 +38,10 @@ class PossessionArrow(context: Context, fonts: BoardFonts) {
     /** Puts the label and the arrows where [layout] has them. */
     fun place(layout: BoardLayout) {
         labelBaseline = layout.nameCenterY + labelBaselineOffset
-        val height = layout.possessionArrowHeight
-        val width = height * ARROW_WIDTH_PER_HEIGHT
-        val top = layout.scoreCenterY - height / 2
-        val bottom = top + height
-        val leftEdge = CENTER_X - layout.possessionArrowGap / 2
-        val rightEdge = CENTER_X + layout.possessionArrowGap / 2
-        left.reset()
-        left.moveTo(leftEdge, top)
-        left.lineTo(leftEdge, bottom)
-        left.lineTo(leftEdge - width, layout.scoreCenterY)
-        left.close()
-        right.reset()
-        right.moveTo(rightEdge, top)
-        right.lineTo(rightEdge, bottom)
-        right.lineTo(rightEdge + width, layout.scoreCenterY)
-        right.close()
+        val width = layout.possessionArrowHeight * ARROW_WIDTH_PER_HEIGHT
+        val baseX = layout.possessionArrowGap / 2
+        left.arrow(CENTER_X - baseX, CENTER_X - baseX - width, layout)
+        right.arrow(CENTER_X + baseX, CENTER_X + baseX + width, layout)
     }
 
     /** Colors the label, the lit arrow and the unlit one, as resolved colors. */
@@ -75,6 +63,16 @@ class PossessionArrow(context: Context, fonts: BoardFonts) {
         canvas.drawText(label, CENTER_X, labelBaseline, labelPaint)
         canvas.drawPath(left, if (side == Side.LEFT) litPaint else unlitPaint)
         canvas.drawPath(right, if (side == Side.RIGHT) litPaint else unlitPaint)
+    }
+
+    /** A triangle with its upright base at [baseX] and its tip at [tipX], centered on the scores. */
+    private fun Path.arrow(baseX: Float, tipX: Float, layout: BoardLayout) {
+        val halfHeight = layout.possessionArrowHeight / 2
+        reset()
+        moveTo(baseX, layout.scoreCenterY - halfHeight)
+        lineTo(baseX, layout.scoreCenterY + halfHeight)
+        lineTo(tipX, layout.scoreCenterY)
+        close()
     }
 
     private fun arrowPaint() = fillPaint().apply {

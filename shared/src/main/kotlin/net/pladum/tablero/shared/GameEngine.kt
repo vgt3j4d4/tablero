@@ -163,14 +163,8 @@ class GameEngine(
                 s.withTeam(command.side, s.team(command.side).copy(score = score))
             }
             is Command.AdjustGameClock -> adjust(s.gameClock, -entry.appliedDeltaNanos, now).first.withTimeUp(s)
-            Command.NewGame -> s.copy(
-                gameClock = before.gameClock.stopAt(entry.appliedAtNanos),
-                left = before.left,
-                right = before.right,
-                timeUp = before.timeUp,
-                gameStarted = before.gameStarted,
-                possession = before.possession,
-            )
+            // Everything since the new game has been undone already, so the whole previous game comes back.
+            Command.NewGame -> before.copy(gameClock = before.gameClock.stopAt(entry.appliedAtNanos))
             Command.TogglePossession, Command.ClearPossession -> s.copy(possession = before.possession)
             is Command.SetGameLength -> s.copy(rules = before.rules)
             Command.ToggleClock, Command.Undo -> error("$command is never recorded")

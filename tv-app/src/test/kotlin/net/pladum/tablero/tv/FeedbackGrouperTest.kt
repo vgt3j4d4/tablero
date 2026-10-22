@@ -32,6 +32,13 @@ class FeedbackGrouperTest {
         return grouper.onEvent(CommandApplied(Score(side, delta), before, state), atMs * NANOS_PER_MS)
     }
 
+    /** Applies a possession [command] that leaves the arrow at [to], at [atMs], and returns its confirmation. */
+    private fun possession(command: Command, to: Side?, atMs: Long = 0): Feedback? {
+        val before = state
+        state = before.copy(possession = to)
+        return grouper.onEvent(CommandApplied(command, before, state), atMs * NANOS_PER_MS)
+    }
+
     @Test
     fun `one press`() {
         assertEquals(Feedback.Score(LEFT, 1, from = 48, to = 49), press(LEFT, 1, atMs = 0))
@@ -84,22 +91,14 @@ class FeedbackGrouperTest {
 
     @Test
     fun `the possession arrow confirms where it points, or that it is hidden`() {
-        val pointed = state.copy(possession = RIGHT)
-        assertEquals(
-            Feedback.Possession(RIGHT),
-            grouper.onEvent(CommandApplied(Command.TogglePossession, state, pointed), 0),
-        )
-        assertEquals(
-            Feedback.Possession(null),
-            grouper.onEvent(CommandApplied(Command.ClearPossession, pointed, state), 0),
-        )
+        assertEquals(Feedback.Possession(RIGHT), possession(Command.TogglePossession, to = RIGHT))
+        assertEquals(Feedback.Possession(null), possession(Command.ClearPossession, to = null))
     }
 
     @Test
     fun `a possession change ends the group`() {
         press(LEFT, 1, atMs = 0)
-        val pointed = state.copy(possession = LEFT)
-        grouper.onEvent(CommandApplied(Command.TogglePossession, state, pointed), 100 * NANOS_PER_MS)
+        possession(Command.TogglePossession, to = LEFT, atMs = 100)
         assertEquals(Feedback.Score(LEFT, 1, from = 49, to = 50), press(LEFT, 1, atMs = 200))
     }
 

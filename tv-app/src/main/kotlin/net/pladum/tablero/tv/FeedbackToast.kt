@@ -79,7 +79,7 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
             is Feedback.Undone ->
                 context.getString(R.string.feedback_undone, context.getString(feedback.action.labelRes()))
             is Feedback.Possession -> feedback.side?.let {
-                context.getString(R.string.feedback_possession, context.getString(it.teamNameRes()).uppercase(locale))
+                context.getString(R.string.feedback_possession, teamTitle(it, locale))
             } ?: context.getString(R.string.feedback_possession_hidden)
             Feedback.NothingToUndo -> {
                 hasHint = false
@@ -119,8 +119,12 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
         } else {
             context.getString(R.string.feedback_minus, -delta)
         }
-        return context.getString(R.string.feedback_score, context.getString(side.teamNameRes()).uppercase(locale), change)
+        return context.getString(R.string.feedback_score, teamTitle(side, locale), change)
     }
+
+    /** The team name as the board shows it: `HOME`, `LOCAL`. */
+    private fun teamTitle(side: Side, locale: Locale): String =
+        context.getString(side.teamNameRes()).uppercase(locale)
 
     private fun UndoneAction.labelRes(): Int = when (this) {
         UndoneAction.START_CLOCK -> R.string.undone_start_clock

@@ -46,20 +46,21 @@ class FeedbackGrouper(private val groupWindowNanos: Long = FEEDBACK_GROUP_WINDOW
     fun onEvent(event: GameEvent, nowNanos: Long): Feedback? = when (event) {
         is GameEvent.CommandApplied -> when (val command = event.command) {
             is Command.Score -> score(command, event, nowNanos)
-            Command.TogglePossession, Command.ClearPossession ->
-                Feedback.Possession(event.after.possession).also { lastScore = null }
+            Command.TogglePossession, Command.ClearPossession -> Feedback.Possession(event.after.possession)
             else -> null
         }
-        is GameEvent.CommandUndone -> undone(event).also { lastScore = null }
+        is GameEvent.CommandUndone -> undone(event)
         GameEvent.ClockStarted, GameEvent.ClockStopped, GameEvent.GameClockExpired -> null
-    }
+    }.endingGroup()
 
     /** The confirmation for a command the engine rejected, or null when the rejection needs none. */
     fun onRejected(command: Command, reason: RejectReason): Feedback? {
         if (command != Command.Undo || reason != RejectReason.NOTHING_TO_UNDO) return null
-        lastScore = null
-        return Feedback.NothingToUndo
+        return Feedback.NothingToUndo.endingGroup()
     }
+
+    /** Any other confirmation shows between score presses, so the next press starts a new one. */
+    private fun Feedback?.endingGroup(): Feedback? = also { if (it != null && it !is Feedback.Score) lastScore = null }
 
     private fun score(command: Command.Score, event: GameEvent.CommandApplied, nowNanos: Long): Feedback.Score {
         val before = event.before.team(command.side)

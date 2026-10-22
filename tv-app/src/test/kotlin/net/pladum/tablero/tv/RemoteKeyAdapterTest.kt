@@ -10,9 +10,9 @@ import android.view.KeyEvent.KEYCODE_ENTER
 import android.view.KeyEvent.KEYCODE_NUMPAD_ENTER
 import android.view.KeyEvent.KEYCODE_VOLUME_UP
 import net.pladum.tablero.shared.Command
+import net.pladum.tablero.shared.Command.ClearPossession
 import net.pladum.tablero.shared.Command.NewGame
 import net.pladum.tablero.shared.Command.ResetGameClock
-import net.pladum.tablero.shared.Command.ClearPossession
 import net.pladum.tablero.shared.Command.Score
 import net.pladum.tablero.shared.Command.ToggleClock
 import net.pladum.tablero.shared.Command.TogglePossession
