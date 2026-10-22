@@ -310,8 +310,9 @@ score is tied; and overtime fouls count as period 4 fouls.
   after period 4 or an overtime with the score tied, the time-up bar offers the break (focused) or skipping it
   (design 29). Both move to the next period: period + 1 (or the next overtime), fouls back to 0 (kept going into
   overtime), clock at the period length (5:00 in overtime). With the break, the game clock first counts the break
-  down (design 30): ↓ adjusts it like any clock and OK ends it early; at 0 the buzzer sounds and the clock shows the
-  period's time, stopped, until OK starts it. After period 4 or an overtime with a winner, the Pickup time-up bar
+  down (design 30): ↓ adjusts it like any clock and OK ends it early (the engine resolves `ToggleClock` to `EndBreak`
+  during a break, so every input does the same); at 0 the buzzer sounds and the clock shows the period's time,
+  stopped, until OK starts it. After period 4 or an overtime with a winner, the Pickup time-up bar
   shows (design 03).
 - **Possession arrow:** unchanged; ↑ flips it, and it carries across periods.
 - **New game** under FIBA: 0–0, period 1, no fouls, clock at the period length, arrow hidden.
