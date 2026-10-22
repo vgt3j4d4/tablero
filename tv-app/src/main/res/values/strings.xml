@@ -33,6 +33,12 @@
     <string name="feedback_possession">POS → %1$s</string>
     <string name="feedback_possession_hidden">POS HIDDEN</string>
 
+    <!-- Under FIBA rules: the label over each team's fouls, beside the clock, and the label over the period between
+         the scores, which reads OT in overtime. -->
+    <string name="fouls_label">FOULS</string>
+    <string name="period_label">PERIOD</string>
+    <string name="overtime_label">OT</string>
+
     <!-- Time-up bar over the status bar. The result is in sentence case: %1$s is the winning team (Home, Away),
          %2$d its score and %3$d the other team's; a tie gives both scores. -->
     <string name="time_up_title">TIME UP</string>
@@ -69,6 +75,15 @@
     <string name="menu_game_length">Game length</string>
     <string name="menu_score">%1$s score</string>
     <string name="menu_new_game">New game</string>
+    <!-- Under FIBA rules: the period (%1$d is the overtime in overtime), its length, and %1$s is the team name. -->
+    <string name="menu_period">Period</string>
+    <string name="menu_period_overtime">OT %1$d</string>
+    <string name="menu_period_length">Period length</string>
+    <string name="menu_fouls">%1$s fouls</string>
+    <string name="menu_rules">Rules</string>
+    <!-- Menu → Rules values: back-to-back games on one clock, and FIBA's periods, fouls, breaks and overtime. -->
+    <string name="rules_pickup">Pickup</string>
+    <string name="rules_fiba" translatable="false">FIBA</string>
     <string name="menu_layout">Layout</string>
     <!-- Menu → Layout values: today's board, and the one with bigger digits for small screens. -->
     <string name="layout_classic">Classic</string>

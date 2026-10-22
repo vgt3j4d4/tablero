@@ -122,7 +122,7 @@ class MainActivity : Activity() {
 
     override fun onStop() {
         if (clockAdjust.isOpen) clockAdjust.done()
-        menu.applyGameLength() // The menu may stay open; a pending change must not wait for it.
+        menu.applyPendingCommands() // The menu may stay open; a pending change must not wait for it.
         uiScope?.cancel()
         uiScope = null
         super.onStop()

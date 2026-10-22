@@ -28,6 +28,10 @@
     <string name="feedback_possession">POS → %1$s</string>
     <string name="feedback_possession_hidden">POS OCULTA</string>
 
+    <string name="fouls_label">FALTAS</string>
+    <string name="period_label">PERIODO</string>
+    <string name="overtime_label">TIEMPO EXTRA</string>
+
     <!-- Time-up bar over the status bar. The result is in sentence case: %1$s is the winning team (Local, Visita),
          %2$d its score and %3$d the other team's; a tie gives both scores. -->
     <string name="time_up_title">FIN DEL PARTIDO</string>
@@ -54,6 +58,12 @@
     <string name="menu_game_length">Duración del partido</string>
     <string name="menu_score">Puntos %1$s</string>
     <string name="menu_new_game">Nuevo partido</string>
+    <string name="menu_period">Periodo</string>
+    <string name="menu_period_overtime">Tiempo extra %1$d</string>
+    <string name="menu_period_length">Duración del periodo</string>
+    <string name="menu_fouls">Faltas %1$s</string>
+    <string name="menu_rules">Reglas</string>
+    <string name="rules_pickup">Recreativo</string>
     <string name="menu_layout">Diseño</string>
     <!-- Menu → Layout values: today's board, and the one with bigger digits for small screens. -->
     <string name="layout_classic">Clásico</string>

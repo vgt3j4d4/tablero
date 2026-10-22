@@ -142,6 +142,12 @@ value, OK opens the focused row.
   one undo instead of three and can't push older actions (an accidental new game) out of the 20-entry history.
   Language is applied once because applying it recreates the activity; the menu reopens on the row it was on.
   The activity also applies a pending game length when it stops.
+- **Rules** (*Pickup* / *FIBA*, design 06 / 32) stays pending like game length and goes out as one `SetRules` when
+  focus leaves the row or the menu closes; it only changes while the clock is stopped, and is muted while it runs.
+  Under FIBA the menu adds **Period** and **Home / Away fouls**, which change with every press (`ChangePeriod`,
+  `Foul`) like scores, and Game length reads Period length. The rows then outgrow the panel: the list scrolls so that
+  the focused row and the rows next to it show, and fades out where it is cut. Which rows show follows the snapshot's
+  rules (`MenuRow.shownUnder`).
 - **Layout** (*Classic* / *Large*, design 01 / 11) applies with every ←/→ press: the board behind the menu changes at
   once, without recreating the activity. The choice is saved in preferences (`LayoutSetting`, next to the language),
   so the board comes back the same after a restart or a reboot; a fresh install starts on Classic. Each layout is a
