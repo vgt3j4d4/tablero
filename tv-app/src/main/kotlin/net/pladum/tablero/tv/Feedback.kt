@@ -50,7 +50,7 @@ class FeedbackGrouper(private val groupWindowNanos: Long = FEEDBACK_GROUP_WINDOW
             else -> null
         }
         is GameEvent.CommandUndone -> undone(event)
-        GameEvent.ClockStarted, GameEvent.ClockStopped, GameEvent.GameClockExpired -> null
+        GameEvent.ClockStarted, GameEvent.ClockStopped, GameEvent.GameClockExpired, GameEvent.BreakEnded -> null
     }.endingGroup()
 
     /** The confirmation for a command the engine rejected, or null when the rejection needs none. */
@@ -97,6 +97,8 @@ class FeedbackGrouper(private val groupWindowNanos: Long = FEEDBACK_GROUP_WINDOW
         Command.NewGame -> Feedback.Undone(UndoneAction.NEW_GAME)
         is Command.SetGameLength -> Feedback.Undone(UndoneAction.GAME_LENGTH)
         Command.TogglePossession, Command.ClearPossession -> Feedback.Undone(UndoneAction.POSSESSION)
+        // No input sends the period rules' commands yet.
+        is Command.SetRules, is Command.Foul, is Command.NextPeriod, Command.EndBreak, is Command.ChangePeriod -> null
         Command.ToggleClock, Command.Undo -> null // Never recorded: a toggle is recorded as what it resolved to.
     }
 }

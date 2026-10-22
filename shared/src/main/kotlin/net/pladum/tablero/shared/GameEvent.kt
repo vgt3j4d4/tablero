@@ -9,6 +9,9 @@ sealed interface GameEvent {
     /** Emitted exactly once when the running clock reaches 0. */
     data object GameClockExpired : GameEvent
 
+    /** Emitted once when a running break reaches 0; the clock then shows the period's length, stopped. */
+    data object BreakEnded : GameEvent
+
     /**
      * A [command] changed the state, from whichever input it came; the UI confirms it (`HOME +1 · 48 → 49`).
      * [ToggleClock][Command.ToggleClock] is reported as the start or stop it resolved to. [before] and [after] are

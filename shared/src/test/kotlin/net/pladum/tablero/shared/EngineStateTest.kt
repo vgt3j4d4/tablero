@@ -2,12 +2,17 @@ package net.pladum.tablero.shared
 
 import kotlinx.serialization.SerializationException
 import net.pladum.tablero.shared.Command.AdjustGameClock
+import net.pladum.tablero.shared.Command.ChangePeriod
 import net.pladum.tablero.shared.Command.ClearPossession
+import net.pladum.tablero.shared.Command.EndBreak
+import net.pladum.tablero.shared.Command.Foul
 import net.pladum.tablero.shared.Command.NewGame
+import net.pladum.tablero.shared.Command.NextPeriod
 import net.pladum.tablero.shared.Command.ResetGameClock
 import net.pladum.tablero.shared.Command.Score
 import net.pladum.tablero.shared.Command.SetGameClock
 import net.pladum.tablero.shared.Command.SetGameLength
+import net.pladum.tablero.shared.Command.SetRules
 import net.pladum.tablero.shared.Command.StartClock
 import net.pladum.tablero.shared.Command.StopClock
 import net.pladum.tablero.shared.Command.TogglePossession
@@ -17,6 +22,7 @@ import net.pladum.tablero.shared.Side.RIGHT
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -41,6 +47,23 @@ class EngineStateTest {
         val state = engine.exportState()
         assertEquals(LEFT, state.snapshot.possession)
         assertEquals(13, state.history.size)
+        assertEquals(state, EngineState.fromJson(state.toJson()))
+    }
+
+    @Test
+    fun `JSON round trip keeps FIBA rules, fouls, the period and a running break`() = engineTest {
+        apply(SetRules(RulesPreset.FIBA))
+        apply(Foul(LEFT, 1))
+        apply(ChangePeriod(1))
+        apply(StartClock)
+        advance(GAME_MS)
+        apply(NextPeriod(withBreak = true))
+        apply(EndBreak)
+        apply(Undo)
+        val state = engine.exportState()
+        assertEquals(PeriodRules.FIBA, state.snapshot.rules.periods)
+        assertTrue(state.snapshot.inBreak)
+        assertEquals(3, state.snapshot.period)
         assertEquals(state, EngineState.fromJson(state.toJson()))
     }
 
@@ -87,6 +110,35 @@ class EngineStateTest {
         start(restored = saved, rebooted = true, timeSource = { 42 })
         assertTrue(state.timeUp)
         assertClock(0, running = false)
+    }
+
+    @Test
+    fun `after a reboot a break that ran out is over, one that didn't is paused`() = engineTest {
+        apply(SetRules(RulesPreset.FIBA))
+        apply(StartClock)
+        advance(GAME_MS)
+        apply(NextPeriod(withBreak = true))
+        val saved = engine.exportState()
+        val breakNanos = PeriodRules.FIBA.breakMs * NANOS_PER_MS
+        start(restored = saved.copy(savedAtNanos = saved.savedAtNanos + breakNanos), rebooted = true, timeSource = { 42 })
+        assertFalse(state.inBreak)
+        assertFalse(state.timeUp)
+        assertClock(GAME_MS, running = false)
+
+        start(restored = saved.copy(savedAtNanos = saved.savedAtNanos + MINUTE_MS * NANOS_PER_MS), rebooted = true)
+        assertTrue(state.inBreak)
+        assertClock(PeriodRules.FIBA.breakMs - MINUTE_MS, running = false)
+    }
+
+    @Test
+    fun `a game saved before period rules existed is Pickup, period 1, no fouls`() = engineTest {
+        apply(Score(LEFT, 1))
+        val json = engine.exportState().toJson()
+        assertFalse("period" in json || "fouls" in json || "inBreak" in json, "defaults aren't written")
+        val old = EngineState.fromJson(json).snapshot
+        assertNull(old.rules.periods)
+        assertEquals(1, old.period)
+        assertEquals(TeamState(score = 1, fouls = 0), old.left)
     }
 
     @Test

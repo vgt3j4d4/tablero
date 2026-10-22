@@ -5,7 +5,7 @@
 | Component       | Where                   | Responsibility                                                                       |
 | --------------- | ----------------------- | ------------------------------------------------------------------------------------ |
 | `GameEngine`    | `shared/` (pure Kotlin) | Owns all game state and the game clock; applies `Command`s; emits snapshots + events |
-| Rules           | `shared/`               | Data: game length, tenths threshold (planned: Pickup and FIBA presets)              |
+| Rules           | `shared/`               | Data: game length, tenths threshold, period rules (Pickup and FIBA presets)          |
 | Protocol DTOs   | `shared/`               | Messages exchanged with controllers (Phase 2)                                        |
 | Scoreboard view | `tv-app/`               | Renders the latest `GameSnapshot` and confirmations with `Canvas`                   |
 | Overlays        | `tv-app/`               | Menu, quick clock adjust, set clock, time up, how to use, exit confirm               |
@@ -51,15 +51,17 @@ don't implement them.
 ```kotlin
 data class GameSnapshot(
     val version: Long,                 // increments on every applied command
-    val rules: GameRules,              // gameLength, tenthsBelow
-    val gameClock: ClockState,         // remaining, running
+    val rules: GameRules,              // gameLength, tenthsBelow, periods (null = Pickup)
+    val gameClock: ClockState,         // remaining, running; also counts a break
     val left: TeamState,
     val right: TeamState,
     val timeUp: Boolean,               // clock reached 0; UI shows the time-up bar
     val gameStarted: Boolean,          // the clock ran since the last new game (see Game length)
     val possession: Side?,             // where the possession arrow points; null = hidden
+    val period: Int,                   // period rules: 1…, past the last one = overtime
+    val inBreak: Boolean,              // the game clock counts a break before `period`
 )
-data class TeamState(val score: Int)       // room for team fouls, timeouts later
+data class TeamState(val score: Int, val fouls: Int)   // fouls in the current period (room for timeouts later)
 enum class Side { LEFT, RIGHT }            // LEFT = home, RIGHT = away; names localized in tv-app
 ```
 
@@ -71,11 +73,16 @@ enum class Side { LEFT, RIGHT }            // LEFT = home, RIGHT = away; names l
 | `Score(side, delta)`                       | delta ±1; score never goes below 0                                         |
 | `AdjustGameClock(deltaMs)`                 | Relative; allowed running or stopped; result clamped to 0–60:00            |
 | `SetGameClock(ms)`                         | Absolute correction (0–60:00), only while stopped                          |
-| `ResetGameClock`                           | Back to the game length, stopped, scores kept                              |
-| `NewGame`                                  | Scores 0–0, clock at game length, stopped, possession arrow hidden         |
+| `ResetGameClock`                           | Back to the period's (game) length, stopped, ending a break; scores kept   |
+| `NewGame`                                  | 0–0, clock at game length, stopped, arrow hidden; period 1, no fouls       |
 | `TogglePossession`                         | Flips the possession arrow; a hidden arrow shows, pointing to HOME         |
 | `ClearPossession`                          | Hides the possession arrow                                                 |
 | `SetGameLength(ms)`                        | 1–60 min; applies from the next reset / new game                           |
+| `SetRules(preset)`                         | Pickup / FIBA, clock stopped; keeps scores and clock; period 1, no fouls   |
+| `Foul(side, delta)`                        | Period rules; delta ±1; fouls 0–9                                          |
+| `NextPeriod(withBreak)`                    | Period rules, at time up when there is a next period (see Rules)           |
+| `EndBreak`                                 | Ends a break: clock at the period's length, stopped                        |
+| `ChangePeriod(delta)`                      | Period rules; corrects the period by ±1 (1 to the 9th overtime)            |
 | `Undo`                                     | Reverts the last applied command (history of 20)                           |
 
 - Giving the clock time while `timeUp` (adjust or set to > 0) clears `timeUp`, so a scorer can add back seconds
@@ -109,6 +116,11 @@ Undo reverts the **effect** of the last command, not the passage of time:
 - `NewGame` → restores the previous game's scores and clock (stopped), the time-up state, whether it had
   started, and its possession arrow.
 - `TogglePossession` / `ClearPossession` → the arrow points where it did before (or hides again).
+- `SetRules`, `Foul`, `ChangePeriod` → the rules, fouls or period come back.
+- `NextPeriod` → the period's end comes back as it was (time up, its fouls), without the buzzer, even when the
+  break that followed has run out since.
+- `EndBreak` → the break resumes as if it had never ended; if it would have run out by now, it stays over (no
+  second buzzer).
 
 The quick-adjust overlay's Back ("cancel") undoes every adjustment made since the overlay opened. Each key is its own
 `AdjustGameClock`, so Cancel sends one `Undo` per adjustment the session applied: they leave the history, and a later
@@ -162,8 +174,8 @@ remote key adapter ignores key-ups whose key-down it never saw (a stray Back rel
 
 ## Events
 
-`GameClockExpired`, `ClockStarted`, `ClockStopped`. The buzzer (`Buzzer` in `tv-app`) plays its horn on
-`GameClockExpired` and nothing else. The engine emits it once, at the instant a running clock reaches 0 (run out or
+`GameClockExpired`, `BreakEnded`, `ClockStarted`, `ClockStopped`. The buzzer (`Buzzer` in `tv-app`) plays its horn
+on `GameClockExpired` and nothing else (`BreakEnded` joins it with the tv-app's FIBA screens). The engine emits it once, at the instant a running clock reaches 0 (run out or
 adjusted down to 0), so an undo that brings a finished game back shows the time-up bar again but stays silent. The
 buzzer belongs to the application, not the activity: it loads once, survives a language recreate, and sounds even
 when another app is in front, because the clock keeps running there. An expiry found while restoring after a
@@ -270,7 +282,7 @@ No Kotlin changes are needed.
 - OEM battery killers (Xiaomi, Huawei, Samsung): onboarding screen for battery-optimization exemptions; the
   system must tolerate the controller being killed (see invariant: TV owns the clock).
 
-## Rules: Pickup and FIBA (designed, not built)
+## Rules: Pickup and FIBA (engine built, tv-app screens not yet)
 
 The menu's *Rules* row chooses how a game is played (design 24–33). **Pickup** is everything above: one clock per
 game, back-to-back games. **FIBA** adds team fouls, periods, breaks and overtime. The rules are data (`GameRules`)
@@ -295,8 +307,13 @@ score is tied; and overtime fouls count as period 4 fouls.
 - **New game** under FIBA: 0–0, period 1, no fouls, clock at the period length, arrow hidden.
 - Undo reverts each of these like any command: a foul, moving to the next period, starting or ending a break.
 
-The engine model (period, fouls per team, the break on the clock, their commands and events) settles with the
-implementation. Keep it as data so that NBA, NCAA and FIBA 3x3 (see "Later") are new presets, not new branches.
+In the engine, `GameRules.periods` holds a `PeriodRules` (periods, overtime, break and halftime lengths, the
+penalty foul, whether overtime keeps fouls), null under Pickup; `RulesPreset` names the sets the menu offers
+(`PICKUP`, `FIBA`). The snapshot answers what the UI needs from that data: `nextPeriod` (null when the game is
+over), `breakBeforeMs(next)`, `lengthMs(period)`, `overtime` and `inPenalty(side)`. A break runs on the game clock
+(`inBreak`, with `period` already the next one); when it runs out the engine emits `BreakEnded` and leaves the
+period's length on the clock, stopped. NBA, NCAA and FIBA 3x3 (see "Later") are new `PeriodRules` values, not new
+branches.
 
 ## Later (out of Phase 1 scope)
 
