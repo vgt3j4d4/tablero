@@ -161,6 +161,10 @@
     <string name="help_possession_hide">Hide arrow</string>
     <string name="help_adjust">Adjust clock</string>
     <string name="help_adjust_note">Works while the clock runs</string>
+    <!-- Under FIBA rules: ↓ also adjusts a break, and holding it gives a team foul; %1$s / %2$s are Home / Away. -->
+    <string name="help_adjust_note_breaks">Works while the clock runs, and in breaks</string>
+    <string name="help_foul">Team foul</string>
+    <string name="help_foul_note">Then ← %1$s or → %2$s</string>
     <string name="help_undo">Undo last action</string>
     <string name="help_undo_note">Fixes mistakes, even a new game</string>
     <string name="help_menu">Open menu</string>

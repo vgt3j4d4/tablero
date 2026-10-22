@@ -32,7 +32,8 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
   persistence, fonts, launcher banner and icon, localization (English + Spanish, in-app language via `AppLanguage`), `HOME` intent filter and
   guarded exit to Android TV (menu → hold OK 2 s → the stock launcher), and a how to use screen (menu, and once on
   the first launch).
-- FIBA rules (menu → Rules: team fouls, periods, breaks, overtime) — design agreed (`docs/design/` 24–33), not built.
+- FIBA rules (menu → Rules: team fouls, periods, breaks, overtime; design 24–33): engine and tv-app built, checked on
+  the Fire TV stick.
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
@@ -41,7 +42,7 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
 **In:** two teams, HOME on the left and AWAY on the right (fixed, no swap), with scores; game clock (tenths under
 1:00), buzzer at 0, undo, quick clock adjust, possession arrow, time-up bar with a new game (0–0), menu, how to use
 screen, guarded exit to Android TV. All of that is the **Pickup** rules, the default. The menu's Rules row adds
-**FIBA** rules: team fouls, four periods with breaks between them, and overtime (designed, not built yet).
+**FIBA** rules: team fouls, four periods with breaks between them, and overtime.
 
 **Out for now:** shot clock, timeouts, NBA/NCAA/3x3 presets. Keep the engine open to them (rules are data), but
 don't implement or render them.

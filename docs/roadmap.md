@@ -33,9 +33,10 @@ are deferred.
 - [x] `shared` + `tv-app`: possession arrow between the scores (↑ flips it, long ↑ hides it)
 - [x] `tv-app`: How to use screen (a generic remote and what each key does), in the menu and on the first launch
 - [x] Design: FIBA rules (team fouls, periods, breaks, overtime), `docs/design/` 24–33
-- [ ] `shared`: rules presets as data (Pickup, FIBA), periods, team fouls, breaks, overtime + unit tests
-- [ ] `tv-app`: FIBA board (fouls in the corners, period between the scores), team foul bar (hold ↓), end of period
+- [x] `shared`: rules presets as data (Pickup, FIBA), periods, team fouls, breaks, overtime + unit tests
+- [x] `tv-app`: FIBA board (fouls in the corners, period between the scores), team foul bar (hold ↓), end of period
       and break bars, menu rows (rules, period, period length, fouls) in a scrolling list, how to use
+- [ ] Play a full FIBA game on the Xiaomi stick (periods, halftime, overtime)
 - [ ] Test the Outdoor mode on a real outdoor court in daylight
 - [ ] Test the full Phase 1 flow on the Xiaomi stick
 - [ ] `scripts/setup-stick.sh` / `restore-stick.sh`

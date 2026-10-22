@@ -334,7 +334,7 @@ class ScoreboardView(
         val s = snapshot ?: return false
         val panel = menu.update(menuState, s)
         val exit = exitConfirm.update(menuState?.exitConfirm)
-        val helpChanged = help.update(menuState?.help == true)
+        val helpChanged = help.update(menuState?.help == true, s.rules.periods != null)
         return setClock.update(menuState?.setClock) || exit || helpChanged || panel
     }
 
