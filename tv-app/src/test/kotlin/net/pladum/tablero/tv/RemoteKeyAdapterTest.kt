@@ -17,6 +17,10 @@ import net.pladum.tablero.shared.Command.Score
 import net.pladum.tablero.shared.Command.ToggleClock
 import net.pladum.tablero.shared.Command.TogglePossession
 import net.pladum.tablero.shared.Command.Undo
+import net.pladum.tablero.shared.GameRules
+import net.pladum.tablero.shared.GameSnapshot
+import net.pladum.tablero.shared.RulesPreset
+import net.pladum.tablero.shared.Side
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
 import org.junit.jupiter.api.BeforeEach
@@ -27,6 +31,12 @@ import org.junit.jupiter.params.provider.ValueSource
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+
+private val PLAYING = GameSnapshot.initial()
+private val TIME_UP = PLAYING.copy(timeUp = true)
+
+/** The end of period 1 under FIBA rules: the bar offers the break or skipping it. */
+private val PERIOD_END = TIME_UP.copy(rules = GameRules(preset = RulesPreset.FIBA))
 
 /** Records what the keys asked of quick clock adjust. */
 private class FakeClockAdjust : ClockAdjustKeys {
@@ -45,6 +55,30 @@ private class FakeClockAdjust : ClockAdjustKeys {
     override fun done() {
         isOpen = false
         calls += "done"
+    }
+
+    override fun cancel() {
+        isOpen = false
+        calls += "cancel"
+    }
+}
+
+/** Records what the keys asked of the team foul bar; [rules] says whether period rules let it open. */
+private class FakeFouls : FoulKeys {
+    val calls = mutableListOf<String>()
+    var rules = true
+    override var isOpen = false
+
+    override fun open(): Boolean {
+        if (!rules) return false
+        isOpen = true
+        calls += "open"
+        return true
+    }
+
+    override fun foul(side: Side) {
+        isOpen = false
+        calls += "foul $side"
     }
 
     override fun cancel() {
@@ -97,9 +131,10 @@ private class FakeMenu : MenuKeys {
 class RemoteKeyAdapterTest {
     private val dispatched = mutableListOf<Command>()
     private val clockAdjust = FakeClockAdjust()
+    private val fouls = FakeFouls()
     private val timeUp = TimeUpBar({ dispatched += it }, {})
     private val menu = FakeMenu()
-    private val keys = RemoteKeyAdapter({ dispatched += it }, clockAdjust, timeUp, menu)
+    private val keys = RemoteKeyAdapter({ dispatched += it }, clockAdjust, fouls, timeUp, menu)
 
     private fun shortPress(keyCode: Int) {
         assertTrue(keys.onKeyDown(keyCode, repeatCount = 0))
@@ -171,9 +206,9 @@ class RemoteKeyAdapterTest {
     @Nested
     inner class QuickClockAdjust {
         @Test
-        fun `down opens it on key-down, and its release does nothing more`() {
+        fun `down opens it on release, since down also has a long press`() {
             assertTrue(keys.onKeyDown(KEYCODE_DPAD_DOWN, repeatCount = 0))
-            assertEquals(listOf("open"), clockAdjust.calls)
+            assertEquals(emptyList(), clockAdjust.calls)
             assertTrue(keys.onKeyUp(KEYCODE_DPAD_DOWN, canceled = false))
             assertEquals(listOf("open"), clockAdjust.calls)
         }
@@ -233,9 +268,54 @@ class RemoteKeyAdapterTest {
     }
 
     @Nested
+    inner class TeamFouls {
+        @Test
+        fun `down held opens the foul bar, and its release opens nothing else`() {
+            assertTrue(longPress(KEYCODE_DPAD_DOWN))
+            assertEquals(listOf("open"), fouls.calls)
+            assertEquals(emptyList(), clockAdjust.calls)
+        }
+
+        @Test
+        fun `left or right gives that team the foul, on key-down, and their release does not score`() {
+            longPress(KEYCODE_DPAD_DOWN)
+            shortPress(KEYCODE_DPAD_RIGHT)
+            longPress(KEYCODE_DPAD_DOWN)
+            shortPress(KEYCODE_DPAD_LEFT)
+            assertEquals(listOf("open", "foul RIGHT", "open", "foul LEFT"), fouls.calls)
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `back cancels without undoing, the other keys do nothing`() {
+            longPress(KEYCODE_DPAD_DOWN)
+            listOf(KEYCODE_DPAD_UP, KEYCODE_DPAD_DOWN, KEYCODE_DPAD_CENTER, KEYCODE_BACK).forEach(::shortPress)
+            assertEquals(listOf("open", "cancel"), fouls.calls)
+            assertEquals(emptyList(), dispatched)
+            assertEquals(emptyList(), clockAdjust.calls)
+        }
+
+        @Test
+        fun `under Pickup rules a held down opens quick clock adjust on release`() {
+            fouls.rules = false
+            assertFalse(longPress(KEYCODE_DPAD_DOWN))
+            assertEquals(emptyList(), fouls.calls)
+            assertEquals(listOf("open"), clockAdjust.calls)
+        }
+
+        @Test
+        fun `down held does nothing over another overlay`() {
+            shortPress(KEYCODE_DPAD_DOWN)
+            assertTrue(longPress(KEYCODE_DPAD_DOWN))
+            assertEquals(emptyList(), fouls.calls)
+            assertEquals(listOf("open", "adjust -60000"), clockAdjust.calls)
+        }
+    }
+
+    @Nested
     inner class TimeUp {
         @BeforeEach
-        fun clockRanOut() = timeUp.onTimeUp(true)
+        fun clockRanOut() = timeUp.onTimeUp(TIME_UP)
 
         @Test
         fun `OK starts a new game, the focused choice when the bar opens`() {
@@ -289,9 +369,9 @@ class RemoteKeyAdapterTest {
 
         @Test
         fun `quick clock adjust keeps the remote while open`() {
-            timeUp.onTimeUp(false)
+            timeUp.onTimeUp(PLAYING)
             shortPress(KEYCODE_DPAD_DOWN)
-            timeUp.onTimeUp(true) // The clock ran out with the overlay open.
+            timeUp.onTimeUp(TIME_UP) // The clock ran out with the overlay open.
             shortPress(KEYCODE_DPAD_CENTER)
             assertEquals(listOf("open", "done"), clockAdjust.calls)
             shortPress(KEYCODE_DPAD_CENTER)
@@ -349,11 +429,25 @@ class RemoteKeyAdapterTest {
 
         @Test
         fun `it keeps the remote when time runs out`() {
-            timeUp.onTimeUp(true)
+            timeUp.onTimeUp(TIME_UP)
             shortPress(KEYCODE_DPAD_CENTER)
             assertEquals(listOf("ok", "ok released"), menu.calls)
             assertEquals(emptyList(), dispatched)
         }
+    }
+
+    @Test
+    fun `at the end of a period left and right pick the break or skipping it`() {
+        timeUp.onTimeUp(PERIOD_END)
+        shortPress(KEYCODE_DPAD_CENTER)
+        timeUp.onTimeUp(PLAYING)
+        timeUp.onTimeUp(PERIOD_END)
+        shortPress(KEYCODE_DPAD_RIGHT)
+        shortPress(KEYCODE_DPAD_CENTER)
+        shortPress(KEYCODE_DPAD_LEFT)
+        shortPress(KEYCODE_DPAD_CENTER)
+        val breakOrNot = listOf(true, false, true).map { Command.NextPeriod(withBreak = it) }
+        assertEquals<List<Command>>(breakOrNot, dispatched)
     }
 
     @Test
@@ -366,7 +460,7 @@ class RemoteKeyAdapterTest {
 
     @Test
     fun `at time up, back closes the bar and a second long press opens the menu`() {
-        timeUp.onTimeUp(true)
+        timeUp.onTimeUp(TIME_UP)
         assertTrue(longPress(KEYCODE_BACK))
         assertFalse(timeUp.isOpen)
         assertEquals(emptyList(), menu.calls)

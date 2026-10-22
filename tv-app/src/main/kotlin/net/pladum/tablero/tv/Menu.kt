@@ -3,6 +3,7 @@ package net.pladum.tablero.tv
 import net.pladum.tablero.shared.Command
 import net.pladum.tablero.shared.GameRules
 import net.pladum.tablero.shared.GameSnapshot
+import net.pladum.tablero.shared.RulesPreset
 import net.pladum.tablero.shared.Side
 import java.util.Locale
 
@@ -12,20 +13,41 @@ private const val MINUTE_MS = 60_000L
 const val EXIT_HOLD_MS = 2_000L
 
 /**
- * The menu's rows, top to bottom; rows with the same [group] sit together between dividing lines. A [stoppedOnly] row
- * only opens while the clock is stopped, and is muted while it runs.
+ * The menu's rows, top to bottom; rows with the same [group] sit together between dividing lines. A [changeable]
+ * row's value changes with ←/→ (it shows both chevrons); the others open with OK. A [stoppedOnly] row only opens or
+ * changes while the clock is stopped, and is muted while it runs. A [periodRulesOnly] row only shows under period
+ * rules (design 32).
  */
-enum class MenuRow(val group: Int, val stoppedOnly: Boolean = false) {
+enum class MenuRow(
+    val group: Int,
+    val changeable: Boolean = false,
+    val stoppedOnly: Boolean = false,
+    val periodRulesOnly: Boolean = false,
+) {
     GAME_CLOCK(0, stoppedOnly = true),
-    GAME_LENGTH(0),
-    HOME_SCORE(1),
-    AWAY_SCORE(1),
+    PERIOD(0, changeable = true, periodRulesOnly = true),
+
+    /** The period length under period rules. */
+    GAME_LENGTH(0, changeable = true),
+    HOME_SCORE(1, changeable = true),
+    AWAY_SCORE(1, changeable = true),
+    HOME_FOULS(1, changeable = true, periodRulesOnly = true),
+    AWAY_FOULS(1, changeable = true, periodRulesOnly = true),
     NEW_GAME(2),
-    LAYOUT(2),
-    MODE(2),
-    LANGUAGE(2),
+    RULES(2, changeable = true, stoppedOnly = true),
+    LAYOUT(2, changeable = true),
+    MODE(2, changeable = true),
+    LANGUAGE(2, changeable = true),
     HELP(2, stoppedOnly = true),
     EXIT(2, stoppedOnly = true),
+    ;
+
+    companion object {
+        private val PICKUP_ROWS = entries.filterNot { it.periodRulesOnly }
+
+        /** The rows the menu shows under [rules], top to bottom. */
+        fun shownUnder(rules: GameRules): List<MenuRow> = if (rules.periods != null) entries else PICKUP_ROWS
+    }
 }
 
 /** The exit confirm screen's buttons, left to right. */
@@ -44,6 +66,8 @@ data class MenuState(
     val focused: MenuRow,
     /** A game length chosen with ←/→ and not applied yet, or null to show the engine's. */
     val pendingGameLengthMs: Long?,
+    /** Rules chosen with ←/→ and not applied yet, or null to show the engine's. */
+    val pendingRules: RulesPreset?,
     /** The board's layout, which the Layout row shows and changes at once. */
     val layout: BoardLayout,
     /** The board's mode, which the Mode row shows and changes at once. */
@@ -93,13 +117,15 @@ interface MenuKeys {
  * screen (design 09). ↑/↓ move between rows, ←/→ change the focused row's value, OK opens the focused row, Back
  * closes the dialog or the menu.
  *
- * Scores change with every press (one [Command.Score] each, as on the scoreboard). Game length and language are
- * kept pending while their row is focused and applied when focus leaves the row or the menu closes: game length as
- * one [Command.SetGameLength], so stepping through minutes takes a single undo, and language once, because applying
- * it recreates the activity. Layout and mode apply with every press: the board behind the menu shows them at once.
+ * Scores, and under period rules fouls and the period, change with every press (one command each, as on the
+ * scoreboard). Game length, rules and language are kept pending while their row is focused and applied when focus
+ * leaves the row or the menu closes: game length as one [Command.SetGameLength], so stepping through minutes takes a
+ * single undo, rules as one [Command.SetRules], and language once, because applying it recreates the activity.
+ * Layout and mode apply with every press: the board behind the menu shows them at once. The rows follow the rules in
+ * the snapshot ([MenuRow.shownUnder]), so the period and fouls rows appear once period rules apply.
  *
- * Game clock, how to use and exit only open while the clock is stopped ([MenuRow.stoppedOnly]): the dialog shows
- * the stopped time, and the other two screens hide the board. OK or Back closes how to use; [openHelp] shows it
+ * Game clock, rules, how to use and exit only open or change while the clock is stopped ([MenuRow.stoppedOnly]): the
+ * dialog shows the stopped time, and the two screens hide the board. OK or Back closes how to use; [openHelp] shows it
  * without the menu, on the first launch.
  *
  * Exit (design 09) opens on a confirm screen with CANCEL focused; leaving takes OK held on EXIT for [EXIT_HOLD_MS].
@@ -136,6 +162,7 @@ class Menu(
     private var layout = layout
     private var mode = mode
     private var pendingGameLengthMs: Long? = null
+    private var pendingRules: RulesPreset? = null
     private var pendingLanguage: Locale? = null
     private var setClock: SetClockEditor? = null
     private var exitConfirm: ExitConfirm? = null
@@ -146,10 +173,13 @@ class Menu(
 
     override fun open() = open(MenuRow.entries.first())
 
-    /** Opens the menu with [row] focused, e.g. after the activity was recreated with the menu open. */
+    /**
+     * Opens the menu with [row] focused, e.g. after the activity was recreated with the menu open; the first row when
+     * the rules hide [row].
+     */
     fun open(row: MenuRow) {
         if (isOpen) return
-        focused = row
+        focused = row.takeIf { it in shownRows() } ?: MenuRow.entries.first()
         notifyChange()
     }
 
@@ -177,12 +207,9 @@ class Menu(
         notifyChange()
     }
 
-    /** Applies a pending game length now, e.g. before the activity stops; the menu stays open. */
-    fun applyGameLength() {
-        val pending = pendingGameLengthMs ?: return
-        pendingGameLengthMs = null
-        if (pending != snapshot().rules.gameLengthMs) dispatch(Command.SetGameLength(pending))
-        notifyChange()
+    /** Applies a pending game length or rules now, e.g. before the activity stops; the menu stays open. */
+    fun applyPendingCommands() {
+        if (dispatchPending()) notifyChange()
     }
 
     /** Cancels a hold on EXIT in progress, e.g. when the activity pauses and OK's release may never arrive. */
@@ -285,14 +312,17 @@ class Menu(
 
     private fun move(delta: Int) {
         val row = focused ?: return
-        val next = MenuRow.entries.getOrNull(row.ordinal + delta) ?: return
+        val rows = shownRows()
+        val next = rows.getOrNull(rows.indexOf(row) + delta) ?: return
         focused = next
         applyPending()
         notifyChange()
     }
 
     private fun change(delta: Int) {
-        when (focused) {
+        val row = focused ?: return
+        if (row.stoppedOnly && snapshot().gameClock.running) return
+        when (row) {
             MenuRow.GAME_LENGTH -> {
                 val current = pendingGameLengthMs ?: snapshot().rules.gameLengthMs
                 val next = stepGameLength(current, delta)
@@ -300,8 +330,16 @@ class Menu(
                 pendingGameLengthMs = next
                 notifyChange()
             }
+            MenuRow.PERIOD -> dispatch(Command.ChangePeriod(delta))
             MenuRow.HOME_SCORE -> dispatch(Command.Score(Side.LEFT, delta))
             MenuRow.AWAY_SCORE -> dispatch(Command.Score(Side.RIGHT, delta))
+            MenuRow.HOME_FOULS -> dispatch(Command.Foul(Side.LEFT, delta))
+            MenuRow.AWAY_FOULS -> dispatch(Command.Foul(Side.RIGHT, delta))
+            MenuRow.RULES -> {
+                val applied = snapshot().rules.preset
+                pendingRules = RulesPreset.entries.step(pendingRules ?: applied, delta).takeIf { it != applied }
+                notifyChange()
+            }
             MenuRow.LAYOUT -> {
                 layout = BoardLayout.entries.step(layout, delta)
                 applyLayout(layout)
@@ -318,21 +356,32 @@ class Menu(
                 pendingLanguage = languages[(current + delta).mod(languages.size)].takeIf { it != language }
                 notifyChange()
             }
-            MenuRow.GAME_CLOCK, MenuRow.NEW_GAME, MenuRow.HELP, MenuRow.EXIT, null -> Unit
+            MenuRow.GAME_CLOCK, MenuRow.NEW_GAME, MenuRow.HELP, MenuRow.EXIT -> Unit
         }
     }
 
     /** Pending values only exist while their row is focused, so this runs whenever focus leaves a row. */
     private fun applyPending() {
-        val gameLength = pendingGameLengthMs
-        pendingGameLengthMs = null
-        if (gameLength != null && gameLength != snapshot().rules.gameLengthMs) {
-            dispatch(Command.SetGameLength(gameLength))
-        }
+        dispatchPending()
         val chosen = pendingLanguage ?: return
         pendingLanguage = null
         applyLanguage(chosen)
     }
+
+    /** Dispatches a pending game length or rules; returns whether there was one. */
+    private fun dispatchPending(): Boolean {
+        val gameLength = pendingGameLengthMs
+        val rules = pendingRules
+        pendingGameLengthMs = null
+        pendingRules = null
+        if (gameLength != null && gameLength != snapshot().rules.gameLengthMs) {
+            dispatch(Command.SetGameLength(gameLength))
+        }
+        if (rules != null) dispatch(Command.SetRules(rules))
+        return gameLength != null || rules != null
+    }
+
+    private fun shownRows(): List<MenuRow> = MenuRow.shownUnder(snapshot().rules)
 
     private fun show(editor: SetClockEditor?) {
         setClock = editor
@@ -383,7 +432,15 @@ class Menu(
     private fun notifyChange() = onChange(
         focused?.let {
             MenuState(
-                it, pendingGameLengthMs, layout, mode, pendingLanguage ?: language, setClock, exitConfirm, help != null,
+                it,
+                pendingGameLengthMs,
+                pendingRules,
+                layout,
+                mode,
+                pendingLanguage ?: language,
+                setClock,
+                exitConfirm,
+                help != null,
             )
         },
     )

@@ -29,27 +29,25 @@ private const val CLOCK_BOX_BORDER = 2f
 /** Longer team names shrink to fit. */
 private const val NAME_MAX_WIDTH = 800f
 
-private const val STATUS_TOP = 1016f
-private const val STATUS_CENTER_Y = 1048f
 private const val STATUS_LINE = 2f
-private const val STATUS_PADDING = 48f
 private const val STATUS_SIZE = 28f
 private const val STATUS_ICON_SIZE = 18f
 private const val STATUS_ICON_GAP = 12f
 
 /**
- * The scoreboard surface: one Canvas view (design screens 01 to 03, 05 to 23). Renders the latest [GameSnapshot]
- * given to [render], confirmations given to [show], the time-up bar, the quick clock adjust overlay, the menu, its set
- * game clock dialog, its how to use screen and its exit confirm screen.
+ * The scoreboard surface: one Canvas view (design screens 01 to 03, 05 to 33). Renders the latest [GameSnapshot]
+ * given to [render] (with the break bar while a break runs), confirmations given to [show], the time-up bar, the
+ * quick clock adjust overlay, the team foul bar, the menu, its set game clock dialog, its how to use screen and its
+ * exit confirm screen.
  *
  * Everything is laid out in design pixels, where [BoardLayout] puts it, in the colors of [BoardMode], and scaled to
  * the view. Text is built and measured when the state or the layout changes; [onDraw] allocates nothing. While the clock runs the view re-reads [timeSource] every [TICK_MS] and
  * redraws only when the reading changes (1 Hz above the tenths threshold, 10 Hz below).
  *
- * Only the clock digits change at 10 Hz, so everything else (box, unlit segments, teams, possession arrow, status
- * bar, overlays) is drawn into a screen-sized [layer] bitmap when it changes, and a tick draws that bitmap plus one
- * text. On the stick's slow CPU, recording and issuing the full scene on every tick missed about half the frame
- * deadlines.
+ * Only the clock digits change at 10 Hz, so everything else (box, unlit segments, teams, possession arrow and period,
+ * fouls, status bar, overlays) is drawn into a screen-sized [layer] bitmap when it changes, and a tick draws that
+ * bitmap plus one text. On the stick's slow CPU, recording and issuing the full scene on every tick missed about half
+ * the frame deadlines.
  * With the menu open, the board is dimmed in the layer and a tick draws the digits in a dimmed color, clipped to the
  * left of the panel, and the menu's Game clock value; the set game clock dialog and the exit confirm screen only
  * open while the clock is stopped, so they go into the layer with the clock digits under them. How to use also only
@@ -84,7 +82,6 @@ class ScoreboardView(
     private val clockBoxBorderPaint = strokePaint(0, CLOCK_BOX_BORDER)
     private val clockPaint = ledPaint(Paint.Align.RIGHT)
     private val clockGhostPaint = ledPaint(Paint.Align.LEFT)
-    private val ledCenterPerPx = clockPaint.centerToBaselinePerPx("8")
     private var ledBaselineOffset = 0f
     private var clockBaseline = 0f
     private var reading: ClockReading? = null
@@ -96,10 +93,11 @@ class ScoreboardView(
     private val left = TeamSlot(Side.LEFT)
     private val right = TeamSlot(Side.RIGHT)
     private val possession = PossessionArrow(context, fonts)
+    private val fouls = TeamFouls(context, fonts)
 
     private val statusLinePaint = fillPaint()
     private val clockStatePaint = textPaint(fonts.barlow(600), STATUS_SIZE, 0, 0.08f, Paint.Align.RIGHT)
-    private val statusBaseline = STATUS_CENTER_Y + clockStatePaint.centerToBaselinePerPx("H") * STATUS_SIZE
+    private val statusBaseline = STATUS_BAR_CENTER_Y + clockStatePaint.centerToBaselinePerPx("H") * STATUS_SIZE
     private val statusIconPaint = fillPaint()
     private val pauseBarLeft = RectF()
     private val pauseBarRight = RectF()
@@ -113,6 +111,8 @@ class ScoreboardView(
         invalidateLayer()
     }
     private val clockAdjust = ClockAdjustOverlay(context, fonts)
+    private val foulBar = FoulBarOverlay(context, fonts)
+    private val breakBar = BreakOverlay(context, fonts)
     private val timeUp = TimeUpOverlay(context, fonts)
     private var timeUpFocus: TimeUpChoice? = null
     private val menu = MenuOverlay(context, fonts)
@@ -157,9 +157,11 @@ class ScoreboardView(
         snapshot = next
         var changed = left.update(next.left)
         changed = right.update(next.right) || changed
-        changed = possession.update(next.possession) || changed
+        changed = possession.update(next) || changed
+        changed = fouls.update(next) || changed
         changed = updateStatus(next) || changed
         changed = updateTimeUp() || changed
+        changed = breakBar.update(next) || changed
         changed = updateMenu() || changed
         if (changed) invalidateLayer()
         refreshClock()
@@ -186,12 +188,22 @@ class ScoreboardView(
         if (session == null) {
             clockAdjust.hide()
         } else {
-            if (!clockAdjust.visible) {
-                removeCallbacks(hideToast)
-                toast.hide()
-            }
+            if (!clockAdjust.visible) dropToast()
             clockAdjust.show(session)
         }
+        invalidateLayer()
+    }
+
+    /**
+     * Shows the team foul bar, or hides it. Like quick clock adjust, its bar takes the status bar's place: a
+     * confirmation showing when it opens is dropped, and one arriving while it is open waits for it to close.
+     */
+    fun showFoulBar(open: Boolean) {
+        if (open == foulBar.visible) return
+        if (open) {
+            dropToast()
+        }
+        foulBar.visible = open
         invalidateLayer()
     }
 
@@ -201,8 +213,7 @@ class ScoreboardView(
      */
     fun showTimeUpBar(focused: TimeUpChoice?) {
         if (focused != null && timeUpFocus == null) {
-            removeCallbacks(hideToast)
-            toast.hide()
+            dropToast()
         }
         timeUpFocus = focused
         if (updateTimeUp()) invalidateLayer()
@@ -211,8 +222,7 @@ class ScoreboardView(
     /** Shows the menu, or one of its dialogs, for [state]; hides it when null. */
     fun showMenu(state: MenuState?) {
         if (state != null && menuState == null) {
-            removeCallbacks(hideToast)
-            toast.hide()
+            dropToast()
         }
         menuState = state
         if (updateMenu()) invalidateLayer() else invalidate() // A hold on EXIT starting or ending.
@@ -239,7 +249,7 @@ class ScoreboardView(
     /** Places the clock, its box, the team columns and the adjust ring where [layout] has them. */
     private fun applyLayout() {
         for (paint in arrayOf(clockPaint, clockGhostPaint, clockDimPaint)) paint.textSize = layout.ledSize
-        ledBaselineOffset = ledCenterPerPx * layout.ledSize
+        ledBaselineOffset = fonts.ledCenterPerPx * layout.ledSize
         clockBaseline = layout.clockCenterY + ledBaselineOffset
         val box = layout.clockBox
         if (box != null) {
@@ -250,7 +260,9 @@ class ScoreboardView(
         left.place(layout.leftTeamX)
         right.place(layout.rightTeamX)
         possession.place(layout)
+        fouls.place(layout)
         clockAdjust.place(layout)
+        foulBar.place(layout)
         // Measured again at the new size on the next refresh.
         reading = null
         clockGhost = ""
@@ -264,9 +276,10 @@ class ScoreboardView(
             clockBoxBorderPaint.color = context.color(box.border)
         }
         val clock = context.color(mode.clock)
+        val clockUnlit = context.color(mode.clockUnlit)
         clockPaint.color = clock
         clockDimPaint.color = menu.dimmed(clock)
-        clockGhostPaint.color = context.color(mode.clockUnlit)
+        clockGhostPaint.color = clockUnlit
         val text = context.color(mode.text)
         clockStatePaint.color = text
         statusIconPaint.color = text
@@ -275,8 +288,16 @@ class ScoreboardView(
         val scoreUnlit = context.color(mode.scoreUnlit)
         left.setColors(text, score, scoreUnlit)
         right.setColors(text, score, scoreUnlit)
-        possession.setColors(text, score, scoreUnlit)
+        possession.setColors(text, score, scoreUnlit, clock, clockUnlit)
+        fouls.setColors(text, score, scoreUnlit, clock, clockUnlit)
         toast.setMode(mode)
+        foulBar.setMode(context, mode)
+    }
+
+    /** Drops the confirmation showing over the status bar, e.g. when a bar or the menu takes its place. */
+    private fun dropToast() {
+        removeCallbacks(hideToast)
+        toast.hide()
     }
 
     private fun invalidateLayer() {
@@ -291,10 +312,10 @@ class ScoreboardView(
         clockStateText = context.getString(
             if (s.gameClock.running) R.string.status_clock_running else R.string.status_clock_stopped,
         )
-        val textLeft = DESIGN_WIDTH - STATUS_PADDING - clockStatePaint.measureText(clockStateText)
+        val textLeft = DESIGN_WIDTH - BAR_PADDING - clockStatePaint.measureText(clockStateText)
         statusIconX = textLeft - STATUS_ICON_GAP - STATUS_ICON_SIZE
         // The pause icon: two 5×16 bars in an 18×18 box (boards.html PAUSE_ICON).
-        val top = STATUS_CENTER_Y - STATUS_ICON_SIZE / 2
+        val top = STATUS_BAR_CENTER_Y - STATUS_ICON_SIZE / 2
         pauseBarLeft.set(statusIconX + 2, top + 1, statusIconX + 7, top + 17)
         pauseBarRight.set(statusIconX + 11, top + 1, statusIconX + 16, top + 17)
         return true
@@ -302,14 +323,14 @@ class ScoreboardView(
 
     private fun updateTimeUp(): Boolean {
         val s = snapshot ?: return false
-        return timeUp.update(s.timeUp, s.left.score, s.right.score, timeUpFocus)
+        return timeUp.update(s, timeUpFocus)
     }
 
     private fun updateMenu(): Boolean {
         val s = snapshot ?: return false
         val panel = menu.update(menuState, s)
         val exit = exitConfirm.update(menuState?.exitConfirm)
-        val helpChanged = help.update(menuState?.help == true)
+        val helpChanged = help.update(menuState?.help == true, s.rules.periods != null)
         return setClock.update(menuState?.setClock) || exit || helpChanged || panel
     }
 
@@ -333,8 +354,7 @@ class ScoreboardView(
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        removeCallbacks(hideToast)
-        toast.hide()
+        dropToast()
         updateTicker()
     }
 
@@ -396,11 +416,12 @@ class ScoreboardView(
         left.draw(canvas)
         right.draw(canvas)
         possession.draw(canvas)
+        fouls.draw(canvas)
 
-        canvas.drawRect(0f, STATUS_TOP, DESIGN_WIDTH, STATUS_TOP + STATUS_LINE, statusLinePaint)
-        canvas.drawText(clockStateText, DESIGN_WIDTH - STATUS_PADDING, statusBaseline, clockStatePaint)
+        canvas.drawRect(0f, STATUS_BAR_TOP, DESIGN_WIDTH, STATUS_BAR_TOP + STATUS_LINE, statusLinePaint)
+        canvas.drawText(clockStateText, DESIGN_WIDTH - BAR_PADDING, statusBaseline, clockStatePaint)
         if (running == true) {
-            canvas.drawCircle(statusIconX + STATUS_ICON_SIZE / 2, STATUS_CENTER_Y, 8f, statusIconPaint)
+            canvas.drawCircle(statusIconX + STATUS_ICON_SIZE / 2, STATUS_BAR_CENTER_Y, 8f, statusIconPaint)
         } else {
             canvas.drawRoundRect(pauseBarLeft, 1f, 1f, statusIconPaint)
             canvas.drawRoundRect(pauseBarRight, 1f, 1f, statusIconPaint)
@@ -409,7 +430,11 @@ class ScoreboardView(
         timeUp.draw(canvas)
         when {
             clockAdjust.visible -> clockAdjust.draw(canvas)
-            !timeUp.barVisible -> toast.draw(canvas)
+            foulBar.visible -> foulBar.draw(canvas)
+            else -> {
+                breakBar.draw(canvas) // Never at time up, which only a period's end reaches.
+                if (!timeUp.barVisible) toast.draw(canvas)
+            }
         }
         menu.draw(canvas)
         if (setClock.visible || exitConfirm.visible) {
@@ -447,60 +472,39 @@ class ScoreboardView(
         private var score = -1
         private var centerX = 0f
 
-        private val name = context.getString(side.teamNameRes()).uppercase(resources.configuration.primaryLocale)
+        private val name = context.teamTitle(side)
         private val namePaint = textPaint(fonts.barlow(700), layout.nameSize, 0, 0.03f, Paint.Align.CENTER)
         private val nameCenterPerPx = namePaint.centerToBaselinePerPx("H")
         private var nameBaseline = 0f
 
-        private var scoreText = ""
-        private var scoreGhost = ""
-        private var scoreGhostX = 0f
-        private var scoreRight = 0f
-        private val scorePaint = ledPaint(Paint.Align.RIGHT)
-        private val scoreGhostPaint = ledPaint(Paint.Align.LEFT)
-        private var scoreBaseline = 0f
+        private val digits = LedDigits(fonts)
 
         /** Puts the column at [x] and sizes it as [layout] has it. */
         fun place(x: Float) {
             centerX = x
             namePaint.fitText(name, layout.nameSize, NAME_MAX_WIDTH)
             nameBaseline = layout.nameCenterY + nameCenterPerPx * namePaint.textSize
-            scorePaint.textSize = layout.ledSize
-            scoreGhostPaint.textSize = layout.ledSize
-            scoreBaseline = layout.scoreCenterY + ledBaselineOffset
-            placeScore()
+            digits.place(x, layout.scoreCenterY, layout.ledSize)
         }
 
         /** Colors the name, the score and its unlit segments, as resolved colors. */
         fun setColors(name: Int, score: Int, scoreUnlit: Int) {
             namePaint.color = name
-            scorePaint.color = score
-            scoreGhostPaint.color = scoreUnlit
+            digits.setColors(score, scoreUnlit)
         }
 
         /** Returns true when anything this column shows changed. */
         fun update(team: TeamState): Boolean {
             if (team.score == score) return false
             score = team.score
-            scoreText = score.toString()
-            val ghost = scoreGhost(scoreText)
-            if (ghost != scoreGhost) {
-                scoreGhost = ghost
-                placeScore()
-            }
+            val text = score.toString()
+            digits.setText(text, scoreGhost(text))
             return true
-        }
-
-        private fun placeScore() {
-            val width = scoreGhostPaint.measureText(scoreGhost)
-            scoreGhostX = centerX - width / 2
-            scoreRight = scoreGhostX + width
         }
 
         fun draw(canvas: Canvas) {
             canvas.drawText(name, centerX, nameBaseline, namePaint)
-            canvas.drawText(scoreGhost, scoreGhostX, scoreBaseline, scoreGhostPaint)
-            canvas.drawText(scoreText, scoreRight, scoreBaseline, scorePaint)
+            digits.draw(canvas)
         }
     }
 }

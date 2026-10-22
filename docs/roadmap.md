@@ -3,7 +3,8 @@
 ## Phase 1 — TV app + stick remote
 
 Scope: two teams (HOME / AWAY), scores, game clock, buzzer, undo, new game, possession arrow (see `CLAUDE.md` →
-Phase 1 scope). Shot clock, fouls, timeouts and periods are deferred.
+Phase 1 scope), under Pickup rules or FIBA rules (team fouls, periods, breaks, overtime). Shot clock and timeouts
+are deferred.
 
 - [x] Gradle multi-module scaffold (`shared`, `tv-app`), version catalog, CI-friendly `./gradlew test`
 - [x] `shared`: `TimeSource`, `GameEngine`, `Command`, `GameSnapshot`, `GameEvent`, undo history (+ undo semantics tests)
@@ -31,6 +32,11 @@ Phase 1 scope). Shot clock, fouls, timeouts and periods are deferred.
 - [x] `tv-app`: Outdoor mode (a light board for daylight courts), chosen in the menu next to Indoor
 - [x] `shared` + `tv-app`: possession arrow between the scores (↑ flips it, long ↑ hides it)
 - [x] `tv-app`: How to use screen (a generic remote and what each key does), in the menu and on the first launch
+- [x] Design: FIBA rules (team fouls, periods, breaks, overtime), `docs/design/` 24–33
+- [x] `shared`: rules presets as data (Pickup, FIBA), periods, team fouls, breaks, overtime + unit tests
+- [x] `tv-app`: FIBA board (fouls in the corners, period between the scores), team foul bar (hold ↓), end of period
+      and break bars, menu rows (rules, period, period length, fouls) in a scrolling list, how to use
+- [ ] Play a full FIBA game on the Xiaomi stick (periods, halftime, overtime)
 - [ ] Test the Outdoor mode on a real outdoor court in daylight
 - [ ] Test the full Phase 1 flow on the Xiaomi stick
 - [ ] `scripts/setup-stick.sh` / `restore-stick.sh`
@@ -53,7 +59,7 @@ Phase 1 scope). Shot clock, fouls, timeouts and periods are deferred.
 
 ## Phase 4 — Polish, full basketball & more sports
 
-- [ ] Shot clock (24/14), team fouls / bonus, timeouts, periods, league presets
+- [ ] Shot clock (24/14), timeouts, more presets (NBA, NCAA, FIBA 3x3)
       (see `docs/architecture.md` → Later)
 - [ ] Multiple controllers with roles and conflict rules
 - [ ] Custom team names, themes

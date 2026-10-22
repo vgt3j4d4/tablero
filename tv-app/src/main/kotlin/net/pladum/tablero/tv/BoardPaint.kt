@@ -12,7 +12,18 @@ import android.graphics.Typeface
 const val DESIGN_WIDTH = 1920f
 const val DESIGN_HEIGHT = 1080f
 
+// The status bar along the bottom of the board, and the bars that take its place: quick clock adjust, the foul bar
+// and the confirmation cover it, the time-up and break bars rise above it. BAR_PADDING is the space at both ends.
+const val STATUS_BAR_TOP = 1016f
+const val STATUS_BAR_CENTER_Y = 1048f
+const val TALL_BAR_TOP = 992f
+const val TALL_BAR_CENTER_Y = 1036f
+const val BAR_PADDING = 48f
+
 private const val LED_FONT = "fonts/DSEG7Classic-Bold.ttf"
+
+/** Glyph bounds come in whole pixels, so the LED digits' center is measured at a size larger than any on screen. */
+private const val LED_MEASURE_SIZE = 1000f
 private val BARLOW_FONTS = mapOf(
     500 to "fonts/BarlowCondensed-Medium.ttf",
     600 to "fonts/BarlowCondensed-SemiBold.ttf",
@@ -28,6 +39,9 @@ private val BARLOW_FONTS = mapOf(
 class BoardFonts(context: Context) {
     val led: Typeface = Typeface.createFromAsset(context.assets, LED_FONT)
     private val barlow = BARLOW_FONTS.mapValues { (_, path) -> Typeface.createFromAsset(context.assets, path) }
+
+    /** From an LED digit's visual center down to its baseline, per pixel of text size (see [centerToBaselinePerPx]). */
+    val ledCenterPerPx: Float = textPaint(led, LED_MEASURE_SIZE, 0).centerToBaselinePerPx("8")
 
     /** Barlow Condensed in [weight] 500, 600, 700 or 800. */
     fun barlow(weight: Int): Typeface = barlow.getValue(weight)

@@ -12,8 +12,9 @@ import net.pladum.tablero.shared.GameEvent
 
 /**
  * The time-up horn (`res/raw/buzzer.wav`, made by `scripts/make-buzzer.py`), preloaded in a [SoundPool] so it
- * plays without delay. It reacts to [GameEvent.GameClockExpired] only, which the engine emits once per expiry: an
- * undo that brings a finished game back shows the time-up bar again but doesn't sound the horn.
+ * plays without delay. It reacts to [GameEvent.GameClockExpired] and [GameEvent.BreakEnded] only, which the engine
+ * emits once per expiry: an undo that brings a finished game back shows the time-up bar again but doesn't sound the
+ * horn.
  *
  * It plays as media, the stream that goes out over HDMI and follows the TV's volume.
  */
@@ -41,12 +42,13 @@ class Buzzer(context: Context) {
     }
 
     /**
-     * Sounds the horn each time [engine]'s clock runs out. Subscribes before returning, so no later expiry is
-     * missed; one that happened while the app wasn't running (found on restore) doesn't sound.
+     * Sounds the horn each time [engine]'s clock runs out, at the end of a period or of a break. Subscribes before
+     * returning, so no later expiry is missed; one that happened while the app wasn't running (found on restore)
+     * doesn't sound.
      */
     fun watch(engine: GameEngine, scope: CoroutineScope) {
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            engine.events.collect { if (it == GameEvent.GameClockExpired) play() }
+            engine.events.collect { if (it == GameEvent.GameClockExpired || it == GameEvent.BreakEnded) play() }
         }
     }
 

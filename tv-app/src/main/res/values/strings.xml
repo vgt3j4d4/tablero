@@ -26,12 +26,26 @@
     <string name="undone_new_game">NEW GAME</string>
     <string name="undone_game_length">GAME LENGTH</string>
     <string name="undone_possession">POSSESSION ARROW</string>
+    <string name="undone_rules">RULES</string>
+    <string name="undone_next_period">NEXT PERIOD</string>
+    <string name="undone_end_break">END BREAK</string>
+    <string name="undone_period">PERIOD</string>
+    <!-- Under FIBA rules, after a foul (and as undone: UNDONE · AWAY FOUL). %1$s is the team name (HOME, AWAY). -->
+    <string name="feedback_foul">%1$s FOUL</string>
 
     <!-- Possession arrow (↑): the label over the arrows between the scores, then its confirmations. %1$s is the team
          the arrow now points to (HOME, AWAY). -->
     <string name="possession_label">POS</string>
     <string name="feedback_possession">POS → %1$s</string>
     <string name="feedback_possession_hidden">POS HIDDEN</string>
+
+    <!-- Under FIBA rules: the label over each team's fouls, beside the clock, and the label over the period between
+         the scores, which reads OT in overtime. -->
+    <string name="fouls_label">FOULS</string>
+    <string name="period_label">PERIOD</string>
+    <string name="overtime_label">OT</string>
+    <!-- Team foul bar (hold ↓): the keys pick the team (← HOME, → AWAY). -->
+    <string name="foul_title">TEAM FOUL</string>
 
     <!-- Time-up bar over the status bar. The result is in sentence case: %1$s is the winning team (Home, Away),
          %2$d its score and %3$d the other team's; a tie gives both scores. -->
@@ -40,6 +54,23 @@
     <string name="time_up_tie">Tie %1$d–%2$d</string>
     <string name="time_up_new_game">NEW GAME</string>
     <string name="time_up_reset_clock">RESET CLOCK · KEEP SCORE</string>
+    <!-- Under FIBA rules, at the end of a period (%1$d is the period, or the overtime): who leads, as in time_up_wins,
+         and the break before the next period (%1$s is its length, 2:00) or straight on to it. -->
+    <string name="time_up_period_end">END OF PERIOD %1$d</string>
+    <string name="time_up_overtime_end">END OF OT %1$d</string>
+    <string name="time_up_leads">%1$s leads %2$d–%3$d</string>
+    <string name="time_up_break">BREAK · %1$s</string>
+    <string name="time_up_halftime">HALFTIME · %1$s</string>
+    <string name="time_up_skip_break">SKIP BREAK</string>
+
+    <!-- Under FIBA rules, the bar over the status bar while a break counts down on the game clock: the break, then
+         which period (%1$d) or overtime starts when it ends. The number names the period, it counts nothing. -->
+    <string name="break_title">BREAK</string>
+    <string name="break_halftime">HALFTIME</string>
+    <string name="break_next_period" tools:ignore="PluralsCandidate">Period %1$d starts at 0:00</string>
+    <string name="break_next_overtime" tools:ignore="PluralsCandidate">OT %1$d starts at 0:00</string>
+    <string name="hint_adjust">ADJUST</string>
+    <string name="hint_end_break">END BREAK</string>
 
     <!-- Key hints: the remote key's label in a keycap, then what it does. -->
     <string name="key_back">BACK</string>
@@ -69,6 +100,15 @@
     <string name="menu_game_length">Game length</string>
     <string name="menu_score">%1$s score</string>
     <string name="menu_new_game">New game</string>
+    <!-- Under FIBA rules: the period (%1$d is the overtime in overtime), its length, and %1$s is the team name. -->
+    <string name="menu_period">Period</string>
+    <string name="menu_period_overtime">OT %1$d</string>
+    <string name="menu_period_length">Period length</string>
+    <string name="menu_fouls">%1$s fouls</string>
+    <string name="menu_rules">Rules</string>
+    <!-- Menu → Rules values: back-to-back games on one clock, and FIBA's periods, fouls, breaks and overtime. -->
+    <string name="rules_pickup">Pickup</string>
+    <string name="rules_fiba" translatable="false">FIBA</string>
     <string name="menu_layout">Layout</string>
     <!-- Menu → Layout values: today's board, and the one with bigger digits for small screens. -->
     <string name="layout_classic">Classic</string>
@@ -121,6 +161,10 @@
     <string name="help_possession_hide">Hide arrow</string>
     <string name="help_adjust">Adjust clock</string>
     <string name="help_adjust_note">Works while the clock runs</string>
+    <!-- Under FIBA rules: ↓ also adjusts a break, and holding it gives a team foul; %1$s / %2$s are Home / Away. -->
+    <string name="help_adjust_note_breaks">Works while the clock runs, and in breaks</string>
+    <string name="help_foul">Team foul</string>
+    <string name="help_foul_note">Then ← %1$s or → %2$s</string>
     <string name="help_undo">Undo last action</string>
     <string name="help_undo_note">Fixes mistakes, even a new game</string>
     <string name="help_menu">Open menu</string>

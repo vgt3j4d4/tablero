@@ -50,7 +50,7 @@ class GameEngine(
             restored == null -> GameSnapshot.initial()
             rebooted -> restored.snapshot.let {
                 val clock = it.gameClock.stopAt(restored.savedAtNanos)
-                it.copy(gameClock = clock, timeUp = it.timeUp || (it.gameClock.running && clock.remainingNanos == 0L))
+                if (it.gameClock.running && clock.remainingNanos == 0L) it.ranOut() else it.copy(gameClock = clock)
             }
             else -> restored.snapshot.also { history.addAll(restored.history) }
         }
@@ -86,7 +86,11 @@ class GameEngine(
     private fun apply(s: GameSnapshot, command: Command, now: Long): Step {
         val next = when (command) {
             Command.ToggleClock -> {
-                val resolved = if (s.gameClock.running) Command.StopClock else Command.StartClock
+                val resolved = when {
+                    s.inBreak -> Command.EndBreak
+                    s.gameClock.running -> Command.StopClock
+                    else -> Command.StartClock
+                }
                 return apply(s, resolved, now)
             }
             Command.StartClock -> when {
@@ -100,7 +104,7 @@ class GameEngine(
                 s.copy(gameClock = s.gameClock.stopAt(now))
             }
             is Command.Score -> {
-                if (command.delta != 1 && command.delta != -1) return Step.Reject(RejectReason.INVALID_ARGUMENT)
+                if (!command.delta.isStep()) return Step.Reject(RejectReason.INVALID_ARGUMENT)
                 val team = s.team(command.side)
                 val score = team.score + command.delta
                 if (score < 0) return Step.Reject(RejectReason.SCORE_AT_ZERO)
@@ -116,7 +120,11 @@ class GameEngine(
                 if (command.remainingMs !in 0..GameRules.MAX_CLOCK_MS) return Step.Reject(RejectReason.INVALID_ARGUMENT)
                 ClockState.stopped(command.remainingMs).withTimeUp(s)
             }
-            Command.ResetGameClock -> s.copy(gameClock = ClockState.stopped(s.rules.gameLengthMs), timeUp = false)
+            Command.ResetGameClock -> s.copy(
+                gameClock = ClockState.stopped(s.lengthMs(s.period)),
+                timeUp = false,
+                inBreak = false,
+            )
             Command.NewGame -> s.copy(
                 gameClock = ClockState.stopped(s.rules.gameLengthMs),
                 left = TeamState(),
@@ -124,6 +132,8 @@ class GameEngine(
                 timeUp = false,
                 gameStarted = false,
                 possession = null,
+                period = 1,
+                inBreak = false,
             )
             Command.TogglePossession -> s.copy(
                 possession = when (s.possession) {
@@ -136,6 +146,42 @@ class GameEngine(
                 val range = GameRules.MIN_GAME_LENGTH_MS..GameRules.MAX_GAME_LENGTH_MS
                 if (command.gameLengthMs !in range) return Step.Reject(RejectReason.INVALID_ARGUMENT)
                 s.copy(rules = s.rules.copy(gameLengthMs = command.gameLengthMs))
+            }
+            is Command.SetRules -> {
+                if (s.gameClock.running) return Step.Reject(RejectReason.CLOCK_RUNNING)
+                if (command.preset == s.rules.preset) return Step.Reject(RejectReason.NO_CHANGE)
+                val rules = s.rules.copy(preset = command.preset)
+                s.copy(rules = rules, period = 1, inBreak = false).withoutFouls()
+            }
+            is Command.Foul -> {
+                if (s.rules.periods == null) return Step.Reject(RejectReason.NOT_IN_RULES)
+                if (!command.delta.isStep()) return Step.Reject(RejectReason.INVALID_ARGUMENT)
+                val team = s.team(command.side)
+                val fouls = team.fouls + command.delta
+                if (fouls !in 0..GameRules.MAX_FOULS) return Step.Reject(RejectReason.OUT_OF_RANGE)
+                s.withTeam(command.side, team.copy(fouls = fouls))
+            }
+            is Command.NextPeriod -> {
+                val rules = s.rules.periods ?: return Step.Reject(RejectReason.NOT_IN_RULES)
+                val next = s.nextPeriod ?: return Step.Reject(RejectReason.NO_NEXT_PERIOD)
+                val clock = if (command.withBreak) {
+                    ClockState.stopped(s.breakBeforeMs(next)).startAt(now)
+                } else {
+                    ClockState.stopped(s.lengthMs(next))
+                }
+                val moved = s.copy(period = next, gameClock = clock, timeUp = false, inBreak = command.withBreak)
+                if (next > rules.periods && rules.overtimeKeepsFouls) moved else moved.withoutFouls()
+            }
+            Command.EndBreak -> {
+                if (!s.inBreak) return Step.Reject(RejectReason.NOT_IN_BREAK)
+                s.afterBreak()
+            }
+            is Command.ChangePeriod -> {
+                val rules = s.rules.periods ?: return Step.Reject(RejectReason.NOT_IN_RULES)
+                if (!command.delta.isStep()) return Step.Reject(RejectReason.INVALID_ARGUMENT)
+                val period = s.period + command.delta
+                if (period !in 1..rules.lastPeriod) return Step.Reject(RejectReason.OUT_OF_RANGE)
+                s.copy(period = period)
             }
             Command.Undo -> error("Undo is handled by undo()")
         }
@@ -157,7 +203,7 @@ class GameEngine(
             Command.StopClock,
             is Command.SetGameClock,
             Command.ResetGameClock,
-            -> s.copy(gameClock = before.gameClock, timeUp = before.timeUp)
+            -> s.copy(gameClock = before.gameClock, timeUp = before.timeUp, inBreak = before.inBreak)
             is Command.Score -> {
                 val score = before.team(command.side).score
                 s.withTeam(command.side, s.team(command.side).copy(score = score))
@@ -167,6 +213,25 @@ class GameEngine(
             Command.NewGame -> before.copy(gameClock = before.gameClock.stopAt(entry.appliedAtNanos))
             Command.TogglePossession, Command.ClearPossession -> s.copy(possession = before.possession)
             is Command.SetGameLength -> s.copy(rules = before.rules)
+            is Command.SetRules -> s.copy(rules = before.rules, period = before.period, inBreak = before.inBreak)
+                .withFoulsOf(before)
+            is Command.Foul -> {
+                val fouls = before.team(command.side).fouls
+                s.withTeam(command.side, s.team(command.side).copy(fouls = fouls))
+            }
+            // Everything since has been undone already, so the period's end comes back as it was.
+            is Command.NextPeriod -> s.copy(
+                period = before.period,
+                gameClock = before.gameClock,
+                timeUp = before.timeUp,
+                inBreak = before.inBreak,
+            ).withFoulsOf(before)
+            // The break comes back as if it had never ended; one that would have run out by now stays over, silently.
+            Command.EndBreak -> {
+                val clock = before.gameClock
+                if (clock.running && clock.remainingAt(now) == 0L) s else s.copy(gameClock = clock, inBreak = true)
+            }
+            is Command.ChangePeriod -> s.copy(period = before.period)
             Command.ToggleClock, Command.Undo -> error("$command is never recorded")
         }
         return Step.Revert(next, undone = command)
@@ -221,8 +286,8 @@ class GameEngine(
     private fun expireIfDue(now: Long): Boolean {
         val current = _snapshot.value
         if (!current.gameClock.running || current.gameClock.remainingAt(now) > 0) return false
-        _snapshot.value = current.copy(version = current.version + 1, gameClock = ClockState(0), timeUp = true)
-        _events.tryEmit(GameEvent.GameClockExpired)
+        _snapshot.value = current.ranOut().copy(version = current.version + 1)
+        _events.tryEmit(if (current.inBreak) GameEvent.BreakEnded else GameEvent.GameClockExpired)
         return true
     }
 
@@ -241,6 +306,23 @@ class GameEngine(
             }
         }
     }
+
+    /** The running clock reached 0: a break is over, a period or game is at time up. */
+    private fun GameSnapshot.ranOut(): GameSnapshot =
+        if (inBreak) afterBreak() else copy(gameClock = ClockState(0), timeUp = true)
+
+    /** The break is over: the clock shows the period's length, stopped. */
+    private fun GameSnapshot.afterBreak(): GameSnapshot =
+        copy(gameClock = ClockState.stopped(lengthMs(period)), inBreak = false)
+
+    private fun GameSnapshot.withoutFouls(): GameSnapshot =
+        copy(left = left.copy(fouls = 0), right = right.copy(fouls = 0))
+
+    private fun GameSnapshot.withFoulsOf(other: GameSnapshot): GameSnapshot =
+        copy(left = left.copy(fouls = other.left.fouls), right = right.copy(fouls = other.right.fouls))
+
+    /** Scores, fouls and the period change by one at a time. */
+    private fun Int.isStep(): Boolean = this == 1 || this == -1
 
     private sealed interface Step {
         data class Reject(val reason: RejectReason) : Step

@@ -91,9 +91,10 @@ private const val ICON_SIZE = 32f
 private const val ICON_STROKE = 3f
 
 /**
- * How to use (design 10): a generic remote, since every Android TV remote has the D-pad, its center button and BACK,
- * next to a table of what each key does when pressed or held. It covers the whole board and only opens while the
- * clock is stopped, so everything is laid out once and [draw] goes into the scoreboard's cached layer. Design pixels.
+ * How to use (design 10, 33): a generic remote, since every Android TV remote has the D-pad, its center button and
+ * BACK, next to a table of what each key does when pressed or held; under period rules holding ↓ gives a team foul.
+ * It covers the whole board and only opens while the clock is stopped, so everything is laid out once and [draw] goes
+ * into the scoreboard's cached layer. Design pixels.
  */
 class HelpOverlay(context: Context, fonts: BoardFonts) {
     var visible = false
@@ -129,26 +130,30 @@ class HelpOverlay(context: Context, fonts: BoardFonts) {
     private val nonePaint = textPaint(fonts.barlow(600), MAIN_SIZE, faint)
     private val notePaint = textPaint(fonts.barlow(500), NOTE_SIZE, muted)
     private val none = context.getString(R.string.help_none)
-    private val rows = run {
-        val home = context.getString(Side.LEFT.teamNameRes())
-        val away = context.getString(Side.RIGHT.teamNameRes())
-        val locale = context.resources.configuration.primaryLocale
-        listOf(
-            Row(context.getString(R.string.key_ok), context.getString(R.string.help_clock),
-                context.getString(R.string.help_clock_note), null),
-            Row(context.getString(R.string.key_left), context.getString(R.string.help_score_up, home),
-                context.getString(R.string.help_score_note), context.getString(R.string.help_score_down, home)),
-            Row(context.getString(R.string.key_right), context.getString(R.string.help_score_up, away),
-                context.getString(R.string.help_score_note), context.getString(R.string.help_score_down, away)),
-            Row(context.getString(R.string.key_up), context.getString(R.string.help_possession),
-                context.getString(R.string.help_possession_note, home.uppercase(locale)),
-                context.getString(R.string.help_possession_hide)),
-            Row(context.getString(R.string.key_down), context.getString(R.string.help_adjust),
-                context.getString(R.string.help_adjust_note), null),
-            Row(context.getString(R.string.key_back), context.getString(R.string.help_undo),
-                context.getString(R.string.help_undo_note), context.getString(R.string.help_menu)),
-        )
+    private val home = context.getString(Side.LEFT.teamNameRes())
+    private val away = context.getString(Side.RIGHT.teamNameRes())
+    private val okRow = Row(context.getString(R.string.key_ok), context.getString(R.string.help_clock),
+        context.getString(R.string.help_clock_note), null)
+    private val leftRow = Row(context.getString(R.string.key_left), context.getString(R.string.help_score_up, home),
+        context.getString(R.string.help_score_note), context.getString(R.string.help_score_down, home))
+    private val rightRow = Row(context.getString(R.string.key_right), context.getString(R.string.help_score_up, away),
+        context.getString(R.string.help_score_note), context.getString(R.string.help_score_down, away))
+    private val upRow = Row(context.getString(R.string.key_up), context.getString(R.string.help_possession),
+        context.getString(R.string.help_possession_note, context.teamTitle(Side.LEFT)),
+        context.getString(R.string.help_possession_hide))
+    private val pickupDownRow = Row(context.getString(R.string.key_down), context.getString(R.string.help_adjust),
+        context.getString(R.string.help_adjust_note), null)
+
+    /** Under period rules ↓ also adjusts breaks, and holding it gives a team foul. */
+    private val periodDownRow by lazy {
+        Row(context.getString(R.string.key_down), context.getString(R.string.help_adjust),
+            context.getString(R.string.help_adjust_note_breaks), context.getString(R.string.help_foul),
+            context.getString(R.string.help_foul_note, home, away))
     }
+    private val backRow = Row(context.getString(R.string.key_back), context.getString(R.string.help_undo),
+        context.getString(R.string.help_undo_note), context.getString(R.string.help_menu))
+    private var periodRules = false
+    private var rows = rows()
 
     private val swatch = RectF(
         CONTENT_LEFT, FOOTER_CENTER_Y - SWATCH_SIZE / 2, CONTENT_LEFT + SWATCH_SIZE, FOOTER_CENTER_Y + SWATCH_SIZE / 2,
@@ -219,12 +224,20 @@ class HelpOverlay(context: Context, fonts: BoardFonts) {
         textPaint(fonts.barlow(500), CAPTION_SIZE, muted, align = Paint.Align.CENTER), SIDE_WIDTH,
     )
 
-    /** Shows or hides the screen; returns true when that changed. */
-    fun update(open: Boolean): Boolean {
-        if (open == visible) return false
+    /** Shows or hides the screen, with the ↓ row [periodRules] call for; returns true when that changed. */
+    fun update(open: Boolean, periodRules: Boolean): Boolean {
+        if (open == visible && periodRules == this.periodRules) return false
         visible = open
+        if (periodRules != this.periodRules) {
+            this.periodRules = periodRules
+            rows = rows()
+        }
         return true
     }
+
+    /** The table, top to bottom, with the ↓ row of the rules in use. */
+    private fun rows(): List<Row> =
+        listOf(okRow, leftRow, rightRow, upRow, if (periodRules) periodDownRow else pickupDownRow, backRow)
 
     fun draw(canvas: Canvas) {
         if (!visible) return
@@ -314,18 +327,19 @@ class HelpOverlay(context: Context, fonts: BoardFonts) {
 
     /**
      * One key's row, laid out from its own top: the keycap, what a press does with a note below, and what holding
-     * the key does ([hold] null: nothing).
+     * the key does ([hold] null: nothing), with a note below when [holdNote] is given.
      */
-    private inner class Row(key: String, press: String, note: String, hold: String?) {
+    private inner class Row(key: String, press: String, note: String, hold: String?, holdNote: String? = null) {
         private val keycap: RectF
         private val keyLabel: Label
         private val pressLabel = Label(press, PRESS_LEFT, PRESS_CENTER, mainPaint, PRESS_WIDTH)
         private val noteLabel = Label(note, PRESS_LEFT, NOTE_CENTER, notePaint, PRESS_WIDTH)
-        private val holdLabel = if (hold != null) {
-            Label(hold, HOLD_LEFT, ROW_CENTER, mainPaint, HOLD_WIDTH)
-        } else {
-            Label(none, HOLD_LEFT, ROW_CENTER, nonePaint)
+        private val holdLabel = when {
+            hold == null -> Label(none, HOLD_LEFT, ROW_CENTER, nonePaint)
+            holdNote == null -> Label(hold, HOLD_LEFT, ROW_CENTER, mainPaint, HOLD_WIDTH)
+            else -> Label(hold, HOLD_LEFT, PRESS_CENTER, mainPaint, HOLD_WIDTH)
         }
+        private val holdNoteLabel = holdNote?.let { Label(it, HOLD_LEFT, NOTE_CENTER, notePaint, HOLD_WIDTH) }
 
         init {
             val width = maxOf(KEYCAP_MIN_WIDTH, keycapPaint.measureText(key) + 2 * (KEYCAP_PADDING + KEYCAP_BORDER))
@@ -341,6 +355,7 @@ class HelpOverlay(context: Context, fonts: BoardFonts) {
             pressLabel.draw(canvas)
             noteLabel.draw(canvas)
             holdLabel.draw(canvas)
+            holdNoteLabel?.draw(canvas)
             canvas.drawRect(CONTENT_LEFT, ROW_HEIGHT - LINE, CONTENT_RIGHT, ROW_HEIGHT, rowLinePaint)
         }
     }

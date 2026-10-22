@@ -21,12 +21,22 @@
     <string name="undone_new_game">NUEVO PARTIDO</string>
     <string name="undone_game_length">DURACIÓN DEL PARTIDO</string>
     <string name="undone_possession">FLECHA DE POSESIÓN</string>
+    <string name="undone_rules">REGLAS</string>
+    <string name="undone_next_period">SIGUIENTE PERIODO</string>
+    <string name="undone_end_break">FIN DEL DESCANSO</string>
+    <string name="undone_period">PERIODO</string>
+    <string name="feedback_foul">FALTA %1$s</string>
 
     <!-- Possession arrow (↑): the label over the arrows between the scores, then its confirmations. %1$s is the team
          the arrow now points to (LOCAL, VISITA). -->
     <string name="possession_label">POS</string>
     <string name="feedback_possession">POS → %1$s</string>
     <string name="feedback_possession_hidden">POS OCULTA</string>
+
+    <string name="fouls_label">FALTAS</string>
+    <string name="period_label">PERIODO</string>
+    <string name="overtime_label">TIEMPO EXTRA</string>
+    <string name="foul_title">FALTA DE EQUIPO</string>
 
     <!-- Time-up bar over the status bar. The result is in sentence case: %1$s is the winning team (Local, Visita),
          %2$d its score and %3$d the other team's; a tie gives both scores. -->
@@ -35,6 +45,19 @@
     <string name="time_up_tie">Empate %1$d–%2$d</string>
     <string name="time_up_new_game">NUEVO PARTIDO</string>
     <string name="time_up_reset_clock">REINICIAR RELOJ · MISMO PUNTAJE</string>
+    <string name="time_up_period_end">FIN DEL PERIODO %1$d</string>
+    <string name="time_up_overtime_end">FIN DEL TIEMPO EXTRA %1$d</string>
+    <string name="time_up_leads">%1$s va ganando %2$d–%3$d</string>
+    <string name="time_up_break">DESCANSO · %1$s</string>
+    <string name="time_up_halftime">MEDIO TIEMPO · %1$s</string>
+    <string name="time_up_skip_break">SIN DESCANSO</string>
+
+    <string name="break_title">DESCANSO</string>
+    <string name="break_halftime">MEDIO TIEMPO</string>
+    <string name="break_next_period">El periodo %1$d empieza en 0:00</string>
+    <string name="break_next_overtime">El tiempo extra %1$d empieza en 0:00</string>
+    <string name="hint_adjust">AJUSTAR</string>
+    <string name="hint_end_break">TERMINAR DESCANSO</string>
 
     <!-- Key hints: the remote key's label in a keycap, then what it does. -->
     <string name="key_back">ATRÁS</string>
@@ -54,6 +77,12 @@
     <string name="menu_game_length">Duración del partido</string>
     <string name="menu_score">Puntos %1$s</string>
     <string name="menu_new_game">Nuevo partido</string>
+    <string name="menu_period">Periodo</string>
+    <string name="menu_period_overtime">Tiempo extra %1$d</string>
+    <string name="menu_period_length">Duración del periodo</string>
+    <string name="menu_fouls">Faltas %1$s</string>
+    <string name="menu_rules">Reglas</string>
+    <string name="rules_pickup">Recreativo</string>
     <string name="menu_layout">Diseño</string>
     <!-- Menu → Layout values: today's board, and the one with bigger digits for small screens. -->
     <string name="layout_classic">Clásico</string>
@@ -106,6 +135,9 @@
     <string name="help_possession_hide">Ocultar flecha</string>
     <string name="help_adjust">Ajustar reloj</string>
     <string name="help_adjust_note">Funciona con el reloj en marcha</string>
+    <string name="help_adjust_note_breaks">Funciona con el reloj en marcha y en los descansos</string>
+    <string name="help_foul">Falta de equipo</string>
+    <string name="help_foul_note">Luego ← %1$s o → %2$s</string>
     <string name="help_undo">Deshacer última acción</string>
     <string name="help_undo_note">Corrige errores, incluso un nuevo partido</string>
     <string name="help_menu">Abrir menú</string>

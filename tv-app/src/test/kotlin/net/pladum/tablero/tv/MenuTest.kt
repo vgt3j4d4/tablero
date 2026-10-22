@@ -5,6 +5,7 @@ import net.pladum.tablero.shared.Command
 import net.pladum.tablero.shared.GameRules
 import net.pladum.tablero.shared.GameSnapshot
 import net.pladum.tablero.shared.NANOS_PER_MS
+import net.pladum.tablero.shared.RulesPreset
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
 import org.junit.jupiter.api.Nested
@@ -56,7 +57,7 @@ class MenuTest {
         onChange = { shown = it },
     )
 
-    private fun focus(row: MenuRow) = repeat(row.ordinal) { menu.down() }
+    private fun focus(row: MenuRow) = repeat(MenuRow.shownUnder(snapshot.rules).indexOf(row)) { menu.down() }
 
     @Test
     fun `opens on the first row and closes with back`() {
@@ -152,11 +153,11 @@ class MenuTest {
         }
 
         @Test
-        fun `applyGameLength applies it and keeps the menu open`() {
+        fun `applyPendingCommands applies it and keeps the menu open`() {
             menu.open()
             focus(MenuRow.GAME_LENGTH)
             menu.left()
-            menu.applyGameLength()
+            menu.applyPendingCommands()
             assertEquals(listOf<Command>(Command.SetGameLength(9 * MINUTE_MS)), dispatched)
             assertTrue(menu.isOpen)
             assertNull(shown?.pendingGameLengthMs)
@@ -564,6 +565,82 @@ class MenuTest {
             assertEquals(0, exits)
             assertTrue(menu.isOpen)
             assertNull(shown?.exitConfirm)
+        }
+    }
+
+    @Nested
+    inner class Rules {
+        private val fiba = GameSnapshot.initial(GameRules(preset = RulesPreset.FIBA))
+
+        @Test
+        fun `under Pickup rules the period and fouls rows are hidden`() {
+            menu.open()
+            repeat(MenuRow.entries.size) { menu.down() }
+            assertEquals(MenuRow.shownUnder(snapshot.rules), MenuRow.entries.filterNot { it.periodRulesOnly })
+            menu.open(MenuRow.PERIOD)
+            assertEquals(MenuRow.EXIT, menu.focused, "already open")
+            menu.back()
+            menu.open(MenuRow.HOME_FOULS)
+            assertEquals(MenuRow.GAME_CLOCK, menu.focused, "a hidden row opens the menu on the first row")
+        }
+
+        @Test
+        fun `a change stays pending until focus leaves the row, then applies as one command`() {
+            menu.open()
+            focus(MenuRow.RULES)
+            menu.right()
+            assertEquals(RulesPreset.FIBA, shown?.pendingRules)
+            menu.right()
+            assertNull(shown?.pendingRules, "back to the rules in use")
+            menu.left()
+            assertEquals(emptyList(), dispatched)
+            menu.up()
+            assertEquals(listOf<Command>(Command.SetRules(RulesPreset.FIBA)), dispatched)
+            assertNull(shown?.pendingRules)
+        }
+
+        @Test
+        fun `closing the menu or applyPendingCommands applies a pending change`() {
+            menu.open()
+            focus(MenuRow.RULES)
+            menu.right()
+            menu.applyPendingCommands()
+            assertTrue(menu.isOpen)
+            menu.left()
+            menu.back()
+            assertEquals(
+                listOf<Command>(Command.SetRules(RulesPreset.FIBA), Command.SetRules(RulesPreset.FIBA)),
+                dispatched,
+            )
+        }
+
+        @Test
+        fun `rules don't change while the clock runs`() {
+            menu.open()
+            focus(MenuRow.RULES)
+            snapshot = snapshot.copy(gameClock = running)
+            menu.right()
+            menu.back()
+            assertNull(shown)
+            assertEquals(emptyList(), dispatched)
+        }
+
+        @Test
+        fun `under FIBA rules the period and fouls rows show and change with every press`() {
+            snapshot = fiba
+            menu.open()
+            assertEquals(MenuRow.entries, MenuRow.shownUnder(snapshot.rules))
+            focus(MenuRow.PERIOD)
+            menu.right()
+            menu.back()
+            menu.open(MenuRow.HOME_FOULS)
+            menu.right()
+            menu.down()
+            menu.left()
+            assertEquals(
+                listOf<Command>(Command.ChangePeriod(1), Command.Foul(LEFT, 1), Command.Foul(RIGHT, -1)),
+                dispatched,
+            )
         }
     }
 

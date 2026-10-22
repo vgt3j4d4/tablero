@@ -4,13 +4,10 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.RectF
 import net.pladum.tablero.shared.Side
-import java.util.Locale
 
-// Design pixels, from docs/design/boards.html (.toast).
+// Design pixels, from docs/design/boards.html (.toast); the bar's place is in BoardPaint.kt.
 private const val LEFT = 500f
 private const val RIGHT = 1420f
-private const val TOP = 1016f
-private const val CENTER_Y = 1048f
 private const val RADIUS = 16f
 private const val PADDING = 28f
 private const val GAP = 16f
@@ -30,7 +27,8 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
     var visible = false
         private set
 
-    private val panel = RectF(LEFT, TOP, RIGHT, DESIGN_HEIGHT + RADIUS) // Square bottom: its corners are off screen.
+    /** Square bottom: its rounded corners are off screen. */
+    private val panel = RectF(LEFT, STATUS_BAR_TOP, RIGHT, DESIGN_HEIGHT + RADIUS)
     private val panelPaint = fillPaint()
 
     private var title = ""
@@ -42,14 +40,14 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
     private var detail = ""
     private var detailX = 0f
     private val detailPaint = textPaint(fonts.barlow(600), DETAIL_SIZE, 0)
-    private val detailBaseline = CENTER_Y + detailPaint.centerToBaselinePerPx("0") * DETAIL_SIZE
+    private val detailBaseline = STATUS_BAR_CENTER_Y + detailPaint.centerToBaselinePerPx("0") * DETAIL_SIZE
 
     private var hasHint = false
     private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, 0, 0.06f)
-    private val hintBaseline = CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
+    private val hintBaseline = STATUS_BAR_CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
     private val keycapPaint = keycapPaint(0)
     private val hint = KeyHint(context.getString(R.string.key_back), context.getString(R.string.hint_undo))
-    private val hintLeft = hint.layoutEndingAt(RIGHT - PADDING, CENTER_Y, hintPaint)
+    private val hintLeft = hint.layoutEndingAt(RIGHT - PADDING, STATUS_BAR_CENTER_Y, hintPaint)
 
     init {
         setMode(mode)
@@ -64,22 +62,26 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
     }
 
     fun show(feedback: Feedback) {
-        val locale = context.resources.configuration.primaryLocale
         detail = ""
         hasHint = true
         title = when (feedback) {
             is Feedback.Score -> {
                 detail = context.getString(R.string.feedback_score_change, feedback.from, feedback.to)
-                scoreTitle(feedback.side, feedback.delta, locale)
+                scoreTitle(feedback.side, feedback.delta)
             }
             is Feedback.UndoneScore -> {
                 detail = context.getString(R.string.feedback_score_change, feedback.from, feedback.to)
-                context.getString(R.string.feedback_undone, scoreTitle(feedback.side, feedback.delta, locale))
+                context.getString(R.string.feedback_undone, scoreTitle(feedback.side, feedback.delta))
+            }
+            is Feedback.Foul -> {
+                detail = context.getString(R.string.feedback_score_change, feedback.from, feedback.to)
+                val foul = context.getString(R.string.feedback_foul, context.teamTitle(feedback.side))
+                if (feedback.undone) context.getString(R.string.feedback_undone, foul) else foul
             }
             is Feedback.Undone ->
                 context.getString(R.string.feedback_undone, context.getString(feedback.action.labelRes()))
             is Feedback.Possession -> feedback.side?.let {
-                context.getString(R.string.feedback_possession, teamTitle(it, locale))
+                context.getString(R.string.feedback_possession, context.teamTitle(it))
             } ?: context.getString(R.string.feedback_possession_hidden)
             Feedback.NothingToUndo -> {
                 hasHint = false
@@ -108,23 +110,19 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
         val detailWidth = if (detail.isEmpty()) 0f else GAP + detailPaint.measureText(detail)
         titleX = x
         val titleWidth = titlePaint.fitText(title, TITLE_SIZE, right - x - detailWidth)
-        titleBaseline = CENTER_Y + titleCenter * titlePaint.textSize
+        titleBaseline = STATUS_BAR_CENTER_Y + titleCenter * titlePaint.textSize
         detailX = x + titleWidth + GAP
     }
 
     /** `HOME +3`, `LOCAL −1`. */
-    private fun scoreTitle(side: Side, delta: Int, locale: Locale): String {
+    private fun scoreTitle(side: Side, delta: Int): String {
         val change = if (delta >= 0) {
             context.getString(R.string.feedback_plus, delta)
         } else {
             context.getString(R.string.feedback_minus, -delta)
         }
-        return context.getString(R.string.feedback_score, teamTitle(side, locale), change)
+        return context.getString(R.string.feedback_score, context.teamTitle(side), change)
     }
-
-    /** The team name as the board shows it: `HOME`, `LOCAL`. */
-    private fun teamTitle(side: Side, locale: Locale): String =
-        context.getString(side.teamNameRes()).uppercase(locale)
 
     private fun UndoneAction.labelRes(): Int = when (this) {
         UndoneAction.START_CLOCK -> R.string.undone_start_clock
@@ -135,5 +133,9 @@ class FeedbackToast(private val context: Context, fonts: BoardFonts, mode: Board
         UndoneAction.NEW_GAME -> R.string.undone_new_game
         UndoneAction.GAME_LENGTH -> R.string.undone_game_length
         UndoneAction.POSSESSION -> R.string.undone_possession
+        UndoneAction.RULES -> R.string.undone_rules
+        UndoneAction.NEXT_PERIOD -> R.string.undone_next_period
+        UndoneAction.END_BREAK -> R.string.undone_end_break
+        UndoneAction.PERIOD -> R.string.undone_period
     }
 }

@@ -18,8 +18,8 @@ import net.pladum.tablero.shared.GameEngine
 import net.pladum.tablero.shared.Side
 import net.pladum.tablero.shared.TimeSource
 
-/** Quick clock adjust closes on its own, keeping its changes, after this long without a key. */
-private const val CLOCK_ADJUST_IDLE_MS = 5_000L
+/** Quick clock adjust (keeping its changes) and the foul bar close on their own after this long without a key. */
+private const val OVERLAY_IDLE_MS = 5_000L
 
 /** Saved instance state: the focused menu row, when the menu was open (a language change recreates the activity). */
 private const val STATE_MENU_ROW = "menuRow"
@@ -33,6 +33,7 @@ class MainActivity : Activity() {
     private lateinit var timeSource: TimeSource
     private lateinit var scoreboard: ScoreboardView
     private val clockAdjust = ClockAdjustController()
+    private val foulBar = FoulBarController()
     private val timeUp = TimeUpBar({ dispatch(it) }, { scoreboard.showTimeUpBar(it) })
     private lateinit var menu: Menu
     private lateinit var keys: RemoteKeyAdapter
@@ -78,7 +79,7 @@ class MainActivity : Activity() {
             exitToAndroidTv = { AndroidTv.open(this) },
             onChange = { scoreboard.showMenu(it) },
         )
-        keys = RemoteKeyAdapter({ dispatch(it) }, clockAdjust, timeUp, menu)
+        keys = RemoteKeyAdapter({ dispatch(it) }, clockAdjust, foulBar, timeUp, menu)
         savedInstanceState?.getString(STATE_MENU_ROW)
             ?.let { saved -> MenuRow.entries.firstOrNull { it.name == saved } }
             ?.let(menu::open)
@@ -105,7 +106,7 @@ class MainActivity : Activity() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         scope.launch {
             engine.snapshot.collect { snapshot ->
-                timeUp.onTimeUp(snapshot.timeUp)
+                timeUp.onTimeUp(snapshot)
                 scoreboard.render(snapshot)
             }
         }
@@ -122,7 +123,8 @@ class MainActivity : Activity() {
 
     override fun onStop() {
         if (clockAdjust.isOpen) clockAdjust.done()
-        menu.applyGameLength() // The menu may stay open; a pending change must not wait for it.
+        foulBar.cancel()
+        menu.applyPendingCommands() // The menu may stay open; a pending change must not wait for it.
         uiScope?.cancel()
         uiScope = null
         super.onStop()
@@ -187,13 +189,40 @@ class MainActivity : Activity() {
             this.session = session
             scoreboard.showClockAdjust(session)
             scoreboard.removeCallbacks(closeWhenIdle)
-            scoreboard.postDelayed(closeWhenIdle, CLOCK_ADJUST_IDLE_MS)
+            scoreboard.postDelayed(closeWhenIdle, OVERLAY_IDLE_MS)
         }
 
         private fun close() {
             session = null
             scoreboard.removeCallbacks(closeWhenIdle)
             scoreboard.showClockAdjust(null)
+        }
+    }
+
+    /** Runs the team foul bar (hold ↓) for the remote, under period rules only; it closes after idle time. */
+    private inner class FoulBarController : FoulKeys {
+        private val closeWhenIdle = Runnable { cancel() }
+
+        override var isOpen = false
+            private set
+
+        override fun open(): Boolean {
+            if (engine.snapshot.value.rules.periods == null) return false
+            isOpen = true
+            scoreboard.showFoulBar(true)
+            scoreboard.postDelayed(closeWhenIdle, OVERLAY_IDLE_MS)
+            return true
+        }
+
+        override fun foul(side: Side) {
+            dispatch(Command.Foul(side, 1))
+            cancel()
+        }
+
+        override fun cancel() {
+            isOpen = false
+            scoreboard.removeCallbacks(closeWhenIdle)
+            scoreboard.showFoulBar(false)
         }
     }
 }

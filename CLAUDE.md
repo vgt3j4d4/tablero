@@ -32,6 +32,8 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
   persistence, fonts, launcher banner and icon, localization (English + Spanish, in-app language via `AppLanguage`), `HOME` intent filter and
   guarded exit to Android TV (menu → hold OK 2 s → the stock launcher), and a how to use screen (menu, and once on
   the first launch).
+- FIBA rules (menu → Rules: team fouls, periods, breaks, overtime; design 24–33): engine and tv-app built, checked on
+  the Fire TV stick.
 - Design reference: `docs/design/` (PNG screens in English and Spanish, regenerated from `boards.html`).
 - See `docs/roadmap.md` for phases and checklists.
 
@@ -39,10 +41,11 @@ in Spanish — whoever is actually playing; it never tracks teams or who plays n
 
 **In:** two teams, HOME on the left and AWAY on the right (fixed, no swap), with scores; game clock (tenths under
 1:00), buzzer at 0, undo, quick clock adjust, possession arrow, time-up bar with a new game (0–0), menu, how to use
-screen, guarded exit to Android TV.
+screen, guarded exit to Android TV. All of that is the **Pickup** rules, the default. The menu's Rules row adds
+**FIBA** rules: team fouls, four periods with breaks between them, and overtime.
 
-**Out for now (designed for, not built):** shot clock, team fouls, timeouts, periods, FIBA/NBA/NCAA presets. Keep
-the engine open to them, but don't implement or render them.
+**Out for now:** shot clock, timeouts, NBA/NCAA/3x3 presets. Keep the engine open to them (rules are data), but
+don't implement or render them.
 ## Repository layout (planned)
 
 ```
@@ -115,6 +118,10 @@ tablero/
   **Outdoor** for daylight courts: white board, black clock and team names, deep red scores, no clock box, faint
   unlit segments (they keep each digit's place), a dark confirmation, and full window brightness (it only reaches the backlight on a Google TV set,
   not on a stick over HDMI). Menu, dialogs, time-up and adjust bars look the same in both modes.
+- **FIBA rules** (design 24–33): each team's fouls sit in the corner beside the clock on its side (`FOULS` over one
+  LED digit, score color, clock color from the 5th foul of a period, the first with free throws). The period is one
+  digit in the clock color between the scores, labelled `PERIOD` (`OT` in overtime), with the possession arrows on
+  either side of it; they stay drawn, unlit, while the arrow is hidden, and `POS` isn't shown.
 
 ## Remote control mapping (Phase 1, Xiaomi Bluetooth remote)
 
@@ -128,25 +135,33 @@ via HDMI-CEC (verify with a key logger).
 | ← | Home +1 | Home −1 |
 | → | Away +1 | Away −1 |
 | ↑ | Flip the possession arrow (first press points to HOME) | Hide the arrow |
-| ↓ | Quick clock adjust mode | — |
+| ↓ | Quick clock adjust mode | Team foul (FIBA rules only): then ← HOME or → AWAY |
 | Back | Undo last action | Open menu |
 
 - Ignore key repeats (`repeatCount > 0`) for OK so holding it never toggles twice.
 - Consecutive +1 presses on the same side within ~1.5 s are shown as one confirmation (`HOME +3`), but are
   still separate `Score` commands.
-- **Quick clock adjust (↓):** clock gets highlighted; ↑/↓ = ±1 min, ←/→ = ±1 s, OK = done, Back = cancel all
-  changes made in this session. Auto-exits after ~5 s idle. Works while the clock runs (relative command).
+- **Quick clock adjust (↓):** opens when ↓ is released (holding it is the foul bar under FIBA rules); clock gets
+  highlighted; ↑/↓ = ±1 min, ←/→ = ±1 s, OK = done, Back = cancel all changes made in this session. Auto-exits
+  after ~5 s idle. Works while the clock runs (relative command).
 - **Game length:** the time on the clock at a game's first start (after `NEW GAME`) becomes the game length that
   resets and new games use; set 7:00 before the game starts to play 7-minute games. The menu can set it too.
 - **Time up:** red frame + bar with `NEW GAME` (default: 0–0, clock at game length, stopped) /
   `RESET CLOCK · KEEP SCORE` (←/→ to choose, OK to apply). Back closes the bar instead of undoing (the frame stays,
   so a score can still be fixed); OK opens it again.
+- **Team foul (FIBA, hold ↓):** rings on both foul corners and a bar; ← or → adds a foul to that team and closes
+  it, Back cancels, ~5 s idle closes it. A hold is fine because the whistle has stopped the clock. Undo with Back.
+- **End of a period (FIBA):** the time-up frame with a bar offering the break (focused) or `SKIP BREAK`; both move to
+  the next period. The break counts down on the game clock (↓ adjusts it, OK ends it early). Break lengths, fouls
+  and overtime: `docs/architecture.md` → Rules: Pickup and FIBA.
 
 Menu overlay (Back long press; D-pad navigable): game clock (set exact time, stopped only), game length, left/right
-score, new game, layout, mode, language, how to use (stopped only), exit (only while stopped; confirm screen with
-Cancel focused; exit requires holding OK 2 s). Open until Back. Scores, layout and mode change with every ←/→ press;
-game length and language apply when focus leaves their row or the menu closes (one undo for game length, one activity
-recreate for language). Layout, mode and language are saved in preferences and survive restarts.
+score, new game, rules, layout, mode, language, how to use (stopped only), exit (only while stopped; confirm screen
+with Cancel focused; exit requires holding OK 2 s). Under FIBA rules it adds period and left/right fouls, game length
+becomes period length, and the list scrolls with the focus (design 32). Open until Back. Scores, fouls, layout and
+mode change with every ←/→ press; game length, rules and language apply when focus leaves their row or the menu
+closes (one undo for game length or rules, one activity recreate for language). Layout, mode and language are saved
+in preferences and survive restarts; the rules are part of the game state.
 
 **How to use** (design 10) shows this table in user wording next to a generic remote: the D-pad, its center button and
 Back exist on every Android TV remote, whatever their labels. It also opens once by itself, without the menu, the
