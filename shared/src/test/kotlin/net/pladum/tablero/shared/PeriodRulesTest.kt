@@ -52,7 +52,7 @@ class PeriodRulesTest {
         @Test
         fun `the game starts under Pickup rules`() = engineTest {
             assertNull(state.rules.periods)
-            assertEquals(RulesPreset.PICKUP, RulesPreset.of(state.rules))
+            assertEquals(RulesPreset.PICKUP, state.rules.preset)
         }
 
         @Test
@@ -61,7 +61,7 @@ class PeriodRulesTest {
             apply(SetGameClock(7 * MINUTE_MS))
             fiba()
             assertEquals(FIBA, state.rules.periods)
-            assertEquals(RulesPreset.FIBA, RulesPreset.of(state.rules))
+            assertEquals(RulesPreset.FIBA, state.rules.preset)
             assertEquals(1, state.left.score)
             assertClock(7 * MINUTE_MS, running = false)
             assertEquals(1, state.period)
@@ -75,12 +75,6 @@ class PeriodRulesTest {
             apply(SetRules(RulesPreset.PICKUP))
             assertEquals(1, state.period)
             assertEquals(0, state.left.fouls)
-        }
-
-        @Test
-        fun `rules saved with values no preset has count as the preset of their kind`() {
-            assertEquals(RulesPreset.FIBA, RulesPreset.of(GameRules(periods = FIBA.copy(breakMs = MINUTE_MS))))
-            assertEquals(RulesPreset.PICKUP, RulesPreset.of(GameRules(gameLengthMs = 7 * MINUTE_MS)))
         }
 
         @Test

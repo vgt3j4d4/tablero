@@ -280,7 +280,7 @@ class MenuOverlay(private val context: Context, fonts: BoardFonts) {
                 MenuRow.HOME_FOULS -> values.left.fouls.toString()
                 MenuRow.AWAY_FOULS -> values.right.fouls.toString()
                 MenuRow.RULES -> {
-                    val rules = state.pendingRules ?: RulesPreset.of(values.rules)
+                    val rules = state.pendingRules ?: values.rules.preset
                     context.getString(rules.labelRes())
                 }
                 MenuRow.LAYOUT -> context.getString(state.layout.labelRes())

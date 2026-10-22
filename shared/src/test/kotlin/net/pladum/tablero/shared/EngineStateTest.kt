@@ -66,6 +66,14 @@ class EngineStateTest {
     }
 
     @Test
+    fun `a save names the rule set rather than copying its values`() = engineTest {
+        fiba()
+        val json = engine.exportState().toJson()
+        assertTrue("""preset":"FIBA""" in json)
+        assertFalse("halftimeMs" in json)
+    }
+
+    @Test
     fun `after the app is killed a running clock keeps counting and undo still works`() = engineTest {
         apply(StartClock)
         apply(Score(LEFT, 1))

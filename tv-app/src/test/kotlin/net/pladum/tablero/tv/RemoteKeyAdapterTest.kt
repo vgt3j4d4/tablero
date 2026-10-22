@@ -19,7 +19,7 @@ import net.pladum.tablero.shared.Command.TogglePossession
 import net.pladum.tablero.shared.Command.Undo
 import net.pladum.tablero.shared.GameRules
 import net.pladum.tablero.shared.GameSnapshot
-import net.pladum.tablero.shared.PeriodRules
+import net.pladum.tablero.shared.RulesPreset
 import net.pladum.tablero.shared.Side
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
@@ -36,7 +36,7 @@ private val PLAYING = GameSnapshot.initial()
 private val TIME_UP = PLAYING.copy(timeUp = true)
 
 /** The end of period 1 under FIBA rules: the bar offers the break or skipping it. */
-private val PERIOD_END = TIME_UP.copy(rules = GameRules(periods = PeriodRules.FIBA))
+private val PERIOD_END = TIME_UP.copy(rules = GameRules(preset = RulesPreset.FIBA))
 
 /** Records what the keys asked of quick clock adjust. */
 private class FakeClockAdjust : ClockAdjustKeys {

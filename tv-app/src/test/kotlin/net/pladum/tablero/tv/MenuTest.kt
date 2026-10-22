@@ -5,7 +5,6 @@ import net.pladum.tablero.shared.Command
 import net.pladum.tablero.shared.GameRules
 import net.pladum.tablero.shared.GameSnapshot
 import net.pladum.tablero.shared.NANOS_PER_MS
-import net.pladum.tablero.shared.PeriodRules
 import net.pladum.tablero.shared.RulesPreset
 import net.pladum.tablero.shared.Side.LEFT
 import net.pladum.tablero.shared.Side.RIGHT
@@ -571,7 +570,7 @@ class MenuTest {
 
     @Nested
     inner class Rules {
-        private val fiba = GameSnapshot.initial(GameRules(periods = PeriodRules.FIBA))
+        private val fiba = GameSnapshot.initial(GameRules(preset = RulesPreset.FIBA))
 
         @Test
         fun `under Pickup rules the period and fouls rows are hidden`() {

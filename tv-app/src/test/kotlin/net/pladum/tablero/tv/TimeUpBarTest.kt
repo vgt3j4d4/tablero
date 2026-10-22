@@ -3,7 +3,7 @@ package net.pladum.tablero.tv
 import net.pladum.tablero.shared.Command
 import net.pladum.tablero.shared.GameRules
 import net.pladum.tablero.shared.GameSnapshot
-import net.pladum.tablero.shared.PeriodRules
+import net.pladum.tablero.shared.RulesPreset
 import net.pladum.tablero.shared.TeamState
 import net.pladum.tablero.tv.TimeUpChoice.BREAK
 import net.pladum.tablero.tv.TimeUpChoice.NEW_GAME
@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 
 private val PLAYING = GameSnapshot.initial()
 private val TIME_UP = PLAYING.copy(timeUp = true)
-private val FIBA = TIME_UP.copy(rules = GameRules(periods = PeriodRules.FIBA))
+private val FIBA = TIME_UP.copy(rules = GameRules(preset = RulesPreset.FIBA))
 
 class TimeUpBarTest {
     private val dispatched = mutableListOf<Command>()

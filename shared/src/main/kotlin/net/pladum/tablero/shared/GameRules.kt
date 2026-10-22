@@ -12,9 +12,12 @@ data class GameRules(
     val gameLengthMs: Long = DEFAULT_GAME_LENGTH_MS,
     /** Below this remaining time the clock is read with tenths (`SS.t`) instead of `MM:SS`. */
     val tenthsBelowMs: Long = DEFAULT_TENTHS_BELOW_MS,
-    /** How a game splits into periods; null plays one clock per game (Pickup). */
-    val periods: PeriodRules? = null,
+    /** The rule set the menu chose; saves store its name, and its data comes with the app ([periods]). */
+    val preset: RulesPreset = RulesPreset.PICKUP,
 ) {
+    /** How a game splits into periods; null plays one clock per game (Pickup). */
+    val periods: PeriodRules? get() = preset.periods
+
     companion object {
         const val DEFAULT_GAME_LENGTH_MS = 10 * 60_000L
         const val DEFAULT_TENTHS_BELOW_MS = 60_000L
@@ -64,19 +67,9 @@ data class PeriodRules(
     }
 }
 
-/** The rule sets the menu offers; each one only names its data. */
+/** The rule sets the menu offers; each one names its data. */
 @Serializable
 enum class RulesPreset(val periods: PeriodRules?) {
     PICKUP(null),
     FIBA(PeriodRules.FIBA),
-    ;
-
-    companion object {
-        /**
-         * The preset [rules] follow. Rules no preset matches exactly (saved by a version with other values) count as
-         * the first preset of their kind: with periods or without.
-         */
-        fun of(rules: GameRules): RulesPreset = entries.firstOrNull { it.periods == rules.periods }
-            ?: entries.first { (it.periods == null) == (rules.periods == null) }
-    }
 }

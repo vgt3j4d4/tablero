@@ -336,7 +336,7 @@ class Menu(
             MenuRow.HOME_FOULS -> dispatch(Command.Foul(Side.LEFT, delta))
             MenuRow.AWAY_FOULS -> dispatch(Command.Foul(Side.RIGHT, delta))
             MenuRow.RULES -> {
-                val applied = RulesPreset.of(snapshot().rules)
+                val applied = snapshot().rules.preset
                 pendingRules = RulesPreset.entries.step(pendingRules ?: applied, delta).takeIf { it != applied }
                 notifyChange()
             }

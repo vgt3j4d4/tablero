@@ -51,7 +51,7 @@ don't implement them.
 ```kotlin
 data class GameSnapshot(
     val version: Long,                 // increments on every applied command
-    val rules: GameRules,              // gameLength, tenthsBelow, periods (null = Pickup)
+    val rules: GameRules,              // gameLength, tenthsBelow, preset (its periods: null = Pickup)
     val gameClock: ClockState,         // remaining, running; also counts a break
     val left: TeamState,
     val right: TeamState,
@@ -318,13 +318,14 @@ score is tied; and overtime fouls count as period 4 fouls.
 - **New game** under FIBA: 0–0, period 1, no fouls, clock at the period length, arrow hidden.
 - Undo reverts each of these like any command: a foul, moving to the next period, starting or ending a break.
 
-In the engine, `GameRules.periods` holds a `PeriodRules` (periods, overtime, break and halftime lengths, the
-penalty foul, whether overtime keeps fouls), null under Pickup; `RulesPreset` names the sets the menu offers
-(`PICKUP`, `FIBA`). The snapshot answers what the UI needs from that data: `nextPeriod` (null when the game is
-over), `breakBeforeMs(next)`, `lengthMs(period)`, `overtime` and `inPenalty(side)`. A break runs on the game clock
+In the engine, `GameRules.preset` names the rule set the menu chose (`RulesPreset`: `PICKUP`, `FIBA`), and its
+`periods` is that set's `PeriodRules` (periods, overtime, break and halftime lengths, the penalty foul, whether
+overtime keeps fouls), null under Pickup. Saves store the name only, so the values come with the app. The snapshot
+answers what the UI needs from that data: `nextPeriod` (null when the game is over), `breakBeforeMs(next)`,
+`halftimeBefore(next)`, `lengthMs(period)`, `overtime` and `inPenalty(side)`. A break runs on the game clock
 (`inBreak`, with `period` already the next one); when it runs out the engine emits `BreakEnded` and leaves the
-period's length on the clock, stopped. NBA, NCAA and FIBA 3x3 (see "Later") are new `PeriodRules` values, not new
-branches.
+period's length on the clock, stopped. NBA, NCAA and FIBA 3x3 (see "Later") are new presets with their own
+`PeriodRules` values, not new branches.
 
 ## Later (out of Phase 1 scope)
 

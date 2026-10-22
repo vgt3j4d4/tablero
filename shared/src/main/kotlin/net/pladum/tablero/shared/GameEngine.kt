@@ -149,8 +149,8 @@ class GameEngine(
             }
             is Command.SetRules -> {
                 if (s.gameClock.running) return Step.Reject(RejectReason.CLOCK_RUNNING)
-                if (command.preset.periods == s.rules.periods) return Step.Reject(RejectReason.NO_CHANGE)
-                val rules = s.rules.copy(periods = command.preset.periods)
+                if (command.preset == s.rules.preset) return Step.Reject(RejectReason.NO_CHANGE)
+                val rules = s.rules.copy(preset = command.preset)
                 s.copy(rules = rules, period = 1, inBreak = false).withoutFouls()
             }
             is Command.Foul -> {
