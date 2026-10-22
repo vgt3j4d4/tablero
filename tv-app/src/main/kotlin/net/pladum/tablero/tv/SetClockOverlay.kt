@@ -64,15 +64,15 @@ class SetClockOverlay(private val context: Context, fonts: BoardFonts) {
 
     private val eyebrow = context.getString(R.string.set_clock_title)
     private val eyebrowPaint = textPaint(fonts.barlow(600), EYEBROW_SIZE, muted, 0.24f, Paint.Align.CENTER)
-    private val eyebrowBaseline = EYEBROW_CENTER_Y + eyebrowPaint.centerToBaselinePerPx("H") * EYEBROW_SIZE
+    private val eyebrowBaseline = eyebrowPaint.baselineAt(EYEBROW_CENTER_Y)
     private var was = ""
     private val wasPaint = textPaint(fonts.barlow(500), WAS_SIZE, context.color(R.color.text_soft), align = Paint.Align.CENTER)
-    private val wasBaseline = WAS_CENTER_Y + wasPaint.centerToBaselinePerPx("H") * WAS_SIZE
+    private val wasBaseline = wasPaint.baselineAt(WAS_CENTER_Y)
 
     private val digitPaint = textPaint(fonts.led, DIGIT_SIZE, text, align = Paint.Align.CENTER)
-    private val digitBaseline = FIELD_CENTER_Y + digitPaint.centerToBaselinePerPx("8") * DIGIT_SIZE
+    private val digitBaseline = fonts.ledBaseline(FIELD_CENTER_Y, DIGIT_SIZE)
     private val labelPaint = textPaint(fonts.barlow(600), LABEL_SIZE, muted, 0.2f, Paint.Align.CENTER)
-    private val labelBaseline = LABEL_CENTER_Y + labelPaint.centerToBaselinePerPx("H") * LABEL_SIZE
+    private val labelBaseline = labelPaint.baselineAt(LABEL_CENTER_Y)
     private val focusedFill = fillPaint(context.color(R.color.panel_raised))
     private val focusedOutline = strokePaint(adjust, FOCUSED_BORDER)
     private val unfocusedOutline = strokePaint(context.color(R.color.field_outline), UNFOCUSED_BORDER)
@@ -92,7 +92,6 @@ class SetClockOverlay(private val context: Context, fonts: BoardFonts) {
 
     private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, muted, 0.06f)
     private val keycapPaint = keycapPaint(muted)
-    private val hintBaseline = HINTS_CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
     private val hints = listOf(
         KeyHint(context.getString(R.string.key_up_down), context.getString(R.string.hint_change)),
         KeyHint(context.getString(R.string.key_left_right), context.getString(R.string.hint_field)),
@@ -135,7 +134,7 @@ class SetClockOverlay(private val context: Context, fonts: BoardFonts) {
         seconds.draw(canvas)
         canvas.drawText(":", CENTER_X, digitBaseline, digitPaint)
         canvas.drawRect(HINTS_LINE_LEFT, HINTS_TOP, HINTS_LINE_RIGHT, HINTS_TOP + BORDER, linePaint)
-        for (hint in hints) hint.draw(canvas, hintBaseline, hintPaint, keycapPaint)
+        for (hint in hints) hint.draw(canvas, hintPaint, keycapPaint)
     }
 
     private inner class Field(private val centerX: Float, private val label: String) {

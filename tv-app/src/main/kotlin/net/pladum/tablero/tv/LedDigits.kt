@@ -27,7 +27,7 @@ class LedDigits(private val fonts: BoardFonts) {
         litPaint.textSize = size
         unlitPaint.textSize = size
         this.centerX = centerX
-        baseline = centerY + fonts.ledCenterPerPx * size
+        baseline = fonts.ledBaseline(centerY, size)
         measure()
     }
 

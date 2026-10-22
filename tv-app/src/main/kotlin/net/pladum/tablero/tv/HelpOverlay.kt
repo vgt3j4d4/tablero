@@ -161,7 +161,6 @@ class HelpOverlay(context: Context, fonts: BoardFonts) {
     private val swatchPaint = strokePaint(off, SWATCH_BORDER)
     private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, muted, 0.06f)
     private val hintKeycapPaint = keycapPaint(muted)
-    private val hintBaseline = FOOTER_CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
     private val hint = KeyHint(context.getString(R.string.key_back), context.getString(R.string.hint_close))
     private val hintLeft = hint.layoutEndingAt(CONTENT_RIGHT, FOOTER_CENTER_Y, hintPaint)
     private val legend = Label(
@@ -256,7 +255,7 @@ class HelpOverlay(context: Context, fonts: BoardFonts) {
         }
         canvas.drawRoundRect(swatch, SWATCH_RADIUS, SWATCH_RADIUS, swatchPaint)
         legend.draw(canvas)
-        hint.draw(canvas, hintBaseline, hintPaint, hintKeycapPaint)
+        hint.draw(canvas, hintPaint, hintKeycapPaint)
     }
 
     private fun drawRemote(canvas: Canvas) {
@@ -315,7 +314,7 @@ class HelpOverlay(context: Context, fonts: BoardFonts) {
             val defaultSize = paint.textSize
             paint.fitText(text, defaultSize, maxWidth)
             size = paint.textSize
-            baseline = centerY + paint.centerToBaselinePerPx("H") * size
+            baseline = paint.baselineAt(centerY)
             paint.textSize = defaultSize
         }
 

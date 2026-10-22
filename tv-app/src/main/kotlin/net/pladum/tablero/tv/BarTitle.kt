@@ -18,7 +18,6 @@ private const val GROUP_GAP = 24f
 class BarTitle(fonts: BoardFonts, titleColor: Int, detailColor: Int) {
     private val titlePaint = textPaint(fonts.barlow(800), TITLE_SIZE, titleColor, 0.06f)
     private val detailPaint = textPaint(fonts.barlow(600), DETAIL_SIZE, detailColor)
-    private val titleCenter = titlePaint.centerToBaselinePerPx("H")
     private var title = ""
     private var detail = ""
     private var detailX = 0f
@@ -37,7 +36,7 @@ class BarTitle(fonts: BoardFonts, titleColor: Int, detailColor: Int) {
             detailPaint.textSize = DETAIL_SIZE * available / width
         }
         detailX = BAR_PADDING + titlePaint.measureText(title) + TEXT_GAP * titlePaint.textSize / TITLE_SIZE
-        baseline = TALL_BAR_CENTER_Y + titleCenter * titlePaint.textSize
+        baseline = titlePaint.baselineAt(TALL_BAR_CENTER_Y)
     }
 
     fun draw(canvas: Canvas) {

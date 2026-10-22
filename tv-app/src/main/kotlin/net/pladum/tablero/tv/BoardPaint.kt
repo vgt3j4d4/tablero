@@ -20,6 +20,13 @@ const val TALL_BAR_TOP = 992f
 const val TALL_BAR_CENTER_Y = 1036f
 const val BAR_PADDING = 48f
 
+// Text on the bars that cover the status bar with a title and key hints (quick clock adjust, the foul bar): the
+// hints sit SHORT_BAR_HINT_GAP apart at the right end, at least SHORT_BAR_GROUP_GAP from the title.
+const val SHORT_BAR_TITLE_SIZE = 36f
+const val SHORT_BAR_HINT_SIZE = 26f
+const val SHORT_BAR_HINT_GAP = 28f
+const val SHORT_BAR_GROUP_GAP = 40f
+
 private const val LED_FONT = "fonts/DSEG7Classic-Bold.ttf"
 
 /** Glyph bounds come in whole pixels, so the LED digits' center is measured at a size larger than any on screen. */
@@ -40,11 +47,14 @@ class BoardFonts(context: Context) {
     val led: Typeface = Typeface.createFromAsset(context.assets, LED_FONT)
     private val barlow = BARLOW_FONTS.mapValues { (_, path) -> Typeface.createFromAsset(context.assets, path) }
 
-    /** From an LED digit's visual center down to its baseline, per pixel of text size (see [centerToBaselinePerPx]). */
-    val ledCenterPerPx: Float = textPaint(led, LED_MEASURE_SIZE, 0).centerToBaselinePerPx("8")
+    /** From an LED digit's visual center down to its baseline, per pixel of text size. */
+    private val ledCenterPerPx: Float = textPaint(led, LED_MEASURE_SIZE, 0).baselineAt(0f, "8") / LED_MEASURE_SIZE
 
     /** Barlow Condensed in [weight] 500, 600, 700 or 800. */
     fun barlow(weight: Int): Typeface = barlow.getValue(weight)
+
+    /** The baseline that centers LED digits of [size] on [centerY] (see [baselineAt]). */
+    fun ledBaseline(centerY: Float, size: Float): Float = centerY + ledCenterPerPx * size
 }
 
 fun textPaint(
@@ -76,13 +86,13 @@ fun roundStrokePaint(color: Int, width: Float) = strokePaint(color, width).apply
 }
 
 /**
- * Text is placed by its visual center line, like the design's flex centering. This is the distance from that
- * center down to the baseline, per pixel of text size, measured on [sample]: capitals for text, an 8 for digits.
+ * Text is placed by its visual center line, like the design's flex centering. This is the baseline that puts that
+ * line on [centerY] at the paint's current text size, measured on [sample]: capitals by default, a digit for numbers.
  */
-fun Paint.centerToBaselinePerPx(sample: String): Float {
+fun Paint.baselineAt(centerY: Float, sample: String = "H"): Float {
     val bounds = Rect()
     getTextBounds(sample, 0, sample.length, bounds)
-    return -(bounds.top + bounds.bottom) / 2f / textSize
+    return centerY - (bounds.top + bounds.bottom) / 2f
 }
 
 /** Sets [Paint.textSize] to [size], or smaller so that [text] fits [maxWidth]. Returns the text's width. */

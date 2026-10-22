@@ -5,15 +5,10 @@ import android.graphics.Canvas
 import android.graphics.RectF
 import net.pladum.tablero.shared.Side
 
-// Design pixels, from docs/design/boards.html (.foul-ring, .foul-bar); the rings' place comes from the layout.
+// Design pixels, from docs/design/boards.html (.foul-ring, .foul-bar); the rings' place comes from the layout, the
+// title and hint sizes and gaps are the short bars' (BoardPaint.kt).
 private const val RING_WIDTH = 6f
 private const val RING_RADIUS = 32f
-private const val TITLE_SIZE = 36f
-private const val HINT_SIZE = 26f
-private const val HINT_GAP = 28f
-
-/** Minimum space between the title and the key hints. */
-private const val GROUP_GAP = 40f
 
 /** What the keys drive while the team foul bar (hold ↓) is open; [MainActivity] runs it. */
 interface FoulKeys {
@@ -43,12 +38,11 @@ class FoulBarOverlay(context: Context, fonts: BoardFonts) {
     private val barPaint = fillPaint()
 
     private val title = context.getString(R.string.foul_title)
-    private val titlePaint = textPaint(fonts.barlow(800), TITLE_SIZE, 0, 0.06f)
-    private val titleBaseline = STATUS_BAR_CENTER_Y + titlePaint.centerToBaselinePerPx("H") * TITLE_SIZE
+    private val titlePaint = textPaint(fonts.barlow(800), SHORT_BAR_TITLE_SIZE, 0, 0.06f)
+    private val titleBaseline = titlePaint.baselineAt(STATUS_BAR_CENTER_Y)
 
-    private val hintPaint = textPaint(fonts.barlow(600), HINT_SIZE, 0, 0.06f)
+    private val hintPaint = textPaint(fonts.barlow(600), SHORT_BAR_HINT_SIZE, 0, 0.06f)
     private val keycapPaint = keycapPaint(0)
-    private val hintBaseline = STATUS_BAR_CENTER_Y + hintPaint.centerToBaselinePerPx("H") * HINT_SIZE
     private val hints = listOf(
         KeyHint(context.getString(R.string.key_left), context.teamTitle(Side.LEFT)),
         KeyHint(context.getString(R.string.key_right), context.teamTitle(Side.RIGHT)),
@@ -56,8 +50,9 @@ class FoulBarOverlay(context: Context, fonts: BoardFonts) {
     )
 
     init {
-        val hintsLeft = hints.layoutEndingAt(DESIGN_WIDTH - BAR_PADDING, HINT_GAP, STATUS_BAR_CENTER_Y, hintPaint)
-        titlePaint.fitText(title, TITLE_SIZE, hintsLeft - GROUP_GAP - BAR_PADDING)
+        val hintsLeft =
+            hints.layoutEndingAt(DESIGN_WIDTH - BAR_PADDING, SHORT_BAR_HINT_GAP, STATUS_BAR_CENTER_Y, hintPaint)
+        titlePaint.fitText(title, SHORT_BAR_TITLE_SIZE, hintsLeft - SHORT_BAR_GROUP_GAP - BAR_PADDING)
     }
 
     /** Puts the rings where [layout] has them: the left one as given, the right one mirrored. */
@@ -84,6 +79,6 @@ class FoulBarOverlay(context: Context, fonts: BoardFonts) {
         canvas.drawRoundRect(rightRing, radius, radius, ringPaint)
         canvas.drawRect(0f, STATUS_BAR_TOP, DESIGN_WIDTH, DESIGN_HEIGHT, barPaint)
         canvas.drawText(title, BAR_PADDING, titleBaseline, titlePaint)
-        for (hint in hints) hint.draw(canvas, hintBaseline, hintPaint, keycapPaint)
+        for (hint in hints) hint.draw(canvas, hintPaint, keycapPaint)
     }
 }
