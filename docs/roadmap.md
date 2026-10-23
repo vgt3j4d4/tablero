@@ -40,6 +40,8 @@ are deferred.
 - [ ] Test the Outdoor mode on a real outdoor court in daylight
 - [ ] Test the full Phase 1 flow on the Xiaomi stick
 - [x] `scripts/setup-stick.sh` / `restore-stick.sh`
+- [x] Release signing and a tag-triggered release workflow: the signed APK on GitHub Releases (`docs/releasing.md`)
+- [ ] First release (v0.1.0): the minified build checked on the Xiaomi and Fire TV sticks, then published
 - [ ] Readability test on a real TV from the far corner of a court
 
 ## Phase 2 — Phone controller over Wi-Fi
