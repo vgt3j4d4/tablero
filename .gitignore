@@ -1,5 +1,6 @@
 # Gradle / Android
 .gradle/
+.kotlin/
 build/
 local.properties
 captures/
@@ -10,10 +11,14 @@ captures/
 *.keystore
 *.jks
 
+# Python (scripts/)
+__pycache__/
+
 # IDE
 .idea/
 *.iml
 .vscode/
+bin/
 
 # OS
 .DS_Store

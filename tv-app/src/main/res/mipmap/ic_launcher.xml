@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  App icon before API 26 (Fire TV Stick 2nd gen): the adaptive icon's layers stacked in a plain square
+  (mipmap-anydpi-v26/ic_launcher is the adaptive one).
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/board_background" />
+    <item android:drawable="@drawable/ic_launcher_foreground" />
+</layer-list>

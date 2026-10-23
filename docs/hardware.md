@@ -7,9 +7,9 @@ change often.
 
 | Option | Notes |
 |---|---|
-| **Xiaomi Mi TV Stick, MDZ-24-AA** (owned) | Amlogic S805Y, 1 GB RAM, Android TV 9 (API 28), dual-band Wi-Fi, Bluetooth remote. **Primary target.** |
+| **Xiaomi Mi TV Stick, MDZ-24-AA** (owned) | Amlogic S805Y, 1 GB RAM, Android TV 9 (API 28) out of the box, 10 (API 29) after an OTA update, dual-band Wi-Fi, Bluetooth remote. **Primary target.** |
 | Google TV set (e.g. Miray MS32-E2000GBT, Android 14) | The TV itself can run tablero; the stick becomes a spare. |
-| Amazon Fire TV Stick 2nd gen, LY73PR (owned) | Fire OS 5 = Android 5.1 (API 22). Not targeted (too old for current AndroidX). Spare only. |
+| Amazon Fire TV Stick 2nd gen, LY73PR (owned) | Model AFTT, Fire OS 5.2 = Android 5.1 (API 22), ~0.9 GB RAM, renders at 1920×1080. Supported (`minSdk 22`); ADB setup in `docs/stick-setup.md`. |
 
 Power the stick from a wall adapter (5 V / 1 A), not the TV's USB port — some TVs cut USB power on standby.
 Use the HDMI extender so the stick's antenna isn't flush behind the TV.
@@ -20,6 +20,11 @@ Use the HDMI extender so the stick's antenna isn't flush behind the TV.
   larger than the 3" (7.6 cm) LED digits of typical portable scoreboards.
 - Mount at the centre of a sideline, high and tilted down; avoid facing windows. LCD TVs are fine indoors but
   wash out in direct sunlight.
+- **Outdoors**, set tablero's menu → Mode to *Outdoor* (a light board, design 14), and on the TV set the picture
+  mode to *Vivid* / *Dynamic* and the backlight to maximum. tablero asks for full brightness, but that only reaches
+  the backlight when it runs on the TV itself (a Google TV set): a stick can't change the TV's backlight over HDMI.
+  Shade on the screen helps more than anything else: a canopy or a hood, or the sun behind the TV rather than on its
+  face. A matte screen reflects less sky than a glossy one, and in direct sun a TV can overheat and go dark.
 - Any OS is fine when using the stick (Roku, Tizen, webOS…) — it is just an HDMI screen. Check that the TV
   powers on to the last-used HDMI input.
 
@@ -41,6 +46,12 @@ Monitors with speakers were considered and rejected: 2×1–3 W speakers and a s
 - Louder: wired powered speaker on the TV's 3.5 mm / optical output. If the TV has no audio output, insert an
   HDMI audio extractor between stick and TV.
 - Avoid Bluetooth speakers for the buzzer: 100–300 ms of added latency.
+- The horn is synthesized, not recorded, so it ships under the repo's MIT license: `scripts/make-buzzer.py`
+  (Python standard library only) writes `tv-app/src/main/res/raw/buzzer.wav`. Its pitch, length, rasp and level
+  are constants at the top of the script; tune them by ear on the TV and run it again. To use a recorded horn
+  instead, replace the WAV (keep it short, mono, 16-bit PCM) and check that its license allows redistribution.
+- It plays on the media stream at full app volume. On the Xiaomi stick the media volume over HDMI sits at its
+  maximum, so the TV's volume alone sets how loud the horn is.
 
 ## Network
 

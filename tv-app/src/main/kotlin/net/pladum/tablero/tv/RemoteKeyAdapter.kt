@@ -1,0 +1,165 @@
+package net.pladum.tablero.tv
+
+import android.view.KeyEvent
+import net.pladum.tablero.shared.Command
+import net.pladum.tablero.shared.Side
+
+/** What the keys drive while quick clock adjust (↓) is open; [MainActivity] runs the [ClockAdjustSession]. */
+interface ClockAdjustKeys {
+    val isOpen: Boolean
+
+    fun open()
+
+    fun adjust(deltaMs: Long)
+
+    /** OK: keep the adjustments and close. */
+    fun done()
+
+    /** Back: revert the session's adjustments and close. */
+    fun cancel()
+}
+
+/**
+ * Maps the stick remote's keys to [Command]s (see CLAUDE.md → Remote control mapping). Takes primitives instead of
+ * [KeyEvent]s so it can be unit tested; [MainActivity] forwards its key callbacks here.
+ *
+ * Each method returns whether the key is ours. A mapped key is consumed at every stage, so the system never acts
+ * on it (Back must never finish the activity). Key repeats are ignored; the long press is reported once by the
+ * framework, and the key-up that follows it arrives canceled.
+ *
+ * The menu, quick clock adjust, the team foul bar and the time-up bar act on key-down, so a key pressed there (or the
+ * long press of Back or ↓ that opens the menu or the foul bar) is swallowed until it is released: its key-up must not
+ * act again on the scoreboard once the overlay has closed (Back would undo). ↓ has a long press, so like ←/→ its
+ * short press acts on release: it opens quick clock adjust then. Under Pickup rules, which count no fouls, a held ↓
+ * opens quick clock adjust on release too. A key-up whose key-down this adapter never
+ * saw is ignored too: changing the language in the menu recreates the activity, and the new one may get the
+ * release of the key that applied it.
+ *
+ * The one release an overlay gets is OK's while the menu is open: holding OK on its exit confirm screen is what
+ * confirms the exit, so the menu learns when OK goes up, canceled or not.
+ */
+class RemoteKeyAdapter(
+    private val dispatch: (Command) -> Unit,
+    private val clockAdjust: ClockAdjustKeys,
+    private val fouls: FoulKeys,
+    private val timeUp: TimeUpKeys,
+    private val menu: MenuKeys,
+) {
+    private val swallowed = mutableSetOf<Key>()
+    private val held = mutableSetOf<Key>()
+
+    /** Returns true when the key is ours; the caller then starts tracking it for a long press. */
+    fun onKeyDown(keyCode: Int, repeatCount: Int): Boolean {
+        val key = Key.of(keyCode) ?: return false
+        if (repeatCount > 0 || key in swallowed) return true
+        held += key
+        when {
+            menu.isOpen -> {
+                swallowed += key
+                menuKey(key)
+            }
+            clockAdjust.isOpen -> {
+                swallowed += key
+                adjustKey(key)
+            }
+            fouls.isOpen -> {
+                swallowed += key
+                foulKey(key)
+            }
+            timeUp.isOpen -> {
+                swallowed += key
+                timeUpKey(key)
+            }
+            key == Key.OK && timeUp.isClosed -> {
+                swallowed += key
+                timeUp.reopen() // The clock can't start at time up anyway.
+            }
+            key == Key.OK -> dispatch(Command.ToggleClock) // On key-down: no delay; during a break it ends the break.
+        }
+        return true
+    }
+
+    fun onKeyLongPress(keyCode: Int): Boolean {
+        val key = Key.of(keyCode) ?: return false
+        if (key in swallowed || overlayOpen) return true
+        return when (key) {
+            Key.LEFT -> true.also { dispatch(Command.Score(Side.LEFT, -1)) }
+            Key.RIGHT -> true.also { dispatch(Command.Score(Side.RIGHT, -1)) }
+            Key.UP -> true.also { dispatch(Command.ClearPossession) }
+            Key.BACK -> true.also {
+                swallowed += key
+                menu.open()
+            }
+            Key.DOWN -> fouls.open().also { if (it) swallowed += key }
+            Key.OK -> false
+        }
+    }
+
+    fun onKeyUp(keyCode: Int, canceled: Boolean): Boolean {
+        val key = Key.of(keyCode) ?: return false
+        val wasHeld = held.remove(key)
+        if (key == Key.OK && wasHeld && menu.isOpen) menu.okReleased()
+        if (swallowed.remove(key) || !wasHeld || canceled || overlayOpen) return true
+        when (key) {
+            Key.LEFT -> dispatch(Command.Score(Side.LEFT, 1))
+            Key.RIGHT -> dispatch(Command.Score(Side.RIGHT, 1))
+            Key.UP -> dispatch(Command.TogglePossession)
+            Key.DOWN -> clockAdjust.open()
+            Key.BACK -> dispatch(Command.Undo)
+            Key.OK -> Unit // OK acted on key-down.
+        }
+        return true
+    }
+
+    private val overlayOpen: Boolean get() = menu.isOpen || clockAdjust.isOpen || fouls.isOpen || timeUp.isOpen
+
+    private fun menuKey(key: Key) = when (key) {
+        Key.UP -> menu.up()
+        Key.DOWN -> menu.down()
+        Key.LEFT -> menu.left()
+        Key.RIGHT -> menu.right()
+        Key.OK -> menu.ok()
+        Key.BACK -> menu.back()
+    }
+
+    private fun adjustKey(key: Key) = when (key) {
+        Key.UP -> clockAdjust.adjust(ADJUST_MINUTE_MS)
+        Key.DOWN -> clockAdjust.adjust(-ADJUST_MINUTE_MS)
+        Key.RIGHT -> clockAdjust.adjust(ADJUST_SECOND_MS)
+        Key.LEFT -> clockAdjust.adjust(-ADJUST_SECOND_MS)
+        Key.OK -> clockAdjust.done()
+        Key.BACK -> clockAdjust.cancel()
+    }
+
+    private fun foulKey(key: Key) = when (key) {
+        Key.LEFT -> fouls.foul(Side.LEFT)
+        Key.RIGHT -> fouls.foul(Side.RIGHT)
+        Key.BACK -> fouls.cancel()
+        Key.OK, Key.UP, Key.DOWN -> Unit
+    }
+
+    private fun timeUpKey(key: Key) = when (key) {
+        Key.LEFT -> timeUp.left()
+        Key.RIGHT -> timeUp.right()
+        Key.OK -> timeUp.pick()
+        Key.BACK -> timeUp.close()
+        Key.UP, Key.DOWN -> Unit
+    }
+
+    private enum class Key {
+        OK, LEFT, RIGHT, UP, DOWN, BACK;
+
+        companion object {
+            fun of(keyCode: Int): Key? = when (keyCode) {
+                // Some remotes and keyboards send ENTER for OK.
+                KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> OK
+                KeyEvent.KEYCODE_DPAD_LEFT -> LEFT
+                KeyEvent.KEYCODE_DPAD_RIGHT -> RIGHT
+                KeyEvent.KEYCODE_DPAD_UP -> UP
+                KeyEvent.KEYCODE_DPAD_DOWN -> DOWN
+                KeyEvent.KEYCODE_BACK -> BACK
+                else -> null
+            }
+        }
+    }
+}

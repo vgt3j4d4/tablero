@@ -5,31 +5,31 @@ stick's remote — no internet required. Later: a full 24/14 shot clock, other s
 phone over local Wi-Fi.
 
 ```
- ┌──────────────────────────────┐        HDMI        ┌──────────────────────────────┐
- │  Android TV stick / Google TV │ ─────────────────▶ │  TV (24–32", built-in audio)  │
- │  tablero tv-app               │                    │  scoreboard + buzzer          │
- │  • GameEngine (owns the clock)│                    └──────────────────────────────┘
- │  • WebSocket server (Phase 2) │
- └──────────────▲───────────────┘
+ ┌────────────────────────────────┐        HDMI        ┌──────────────────────────────┐
+ │  Android TV stick / Google TV  │ ─────────────────▶ │  TV (24–32", built-in audio) │
+ │  tablero tv-app                │                    │  scoreboard + buzzer         │
+ │  • GameEngine (owns the clock) │                    └──────────────────────────────┘
+ │  • WebSocket server (Phase 2)  │
+ └────────────────▲───────────────┘
         Bluetooth │ remote (Phase 1)        local Wi-Fi (phone hotspot) │ WebSocket (Phase 2)
                   │                                                     │
-          ┌───────┴──────┐                                    ┌─────────┴────────┐
-          │ Stick remote │                                    │ tablero remote-app│
-          │ (scorer)     │                                    │ (referee / table) │
-          └──────────────┘                                    └──────────────────┘
+          ┌───────┴──────┐                                    ┌─────────┴──────────┐
+          │ Stick remote │                                    │ tablero remote-app │
+          │ (scorer)     │                                    │ (referee / table)  │
+          └──────────────┘                                    └────────────────────┘
 ```
 
 ## Why
 
 Portable LED scoreboards cost ~US$120 (~US$250 with a shot clock) and more once shipped to Peru, and they are
 awkward to correct mid-game. A cheap TV plus an Android TV stick gives bigger digits, a clock you can fix in a
-couple of key presses, undo, and a quick way to start the next game — for under US$150 total. The same
+couple of key presses, undo, and one key press to start a new game — for under US$150 total. The same
 setup can grow into a proper 24/14 shot clock and phone control.
 
 ## Features (planned)
 
-- **Phase 1 — pickup sessions:** two teams identified by jersey color, scores, game clock (tenths under 1:00)
-  with LED-style digits, buzzer, undo, quick clock adjust, and a next-game team picker.
+- **Phase 1 — pickup sessions:** two teams (HOME / AWAY), scores, game clock (tenths under 1:00)
+  with LED-style digits, buzzer, undo, quick clock adjust, and new games in one press.
 - Control from the stick's Bluetooth remote (Phase 1).
 - English and Spanish built in; adding a language is a translation-only change.
 - Later: 24/14 shot clock, periods, team fouls / bonus, timeouts, possession arrow and presets (FIBA, NBA, NCAA,
@@ -40,37 +40,52 @@ setup can grow into a proper 24/14 shot clock and phone control.
 
 ## Hardware
 
-| Part | Example | Approx. cost (Lima, Oct 2026) |
-|---|---|---|
-| Display device | Xiaomi Mi TV Stick (MDZ-24-AA, Android TV 9) — or any Google TV set | already owned |
-| TV | 32" HD, e.g. Miray MS32-E2000GBT (Google TV, 16 W speakers) | ~S/ 399 |
-| Optional | Wired powered speaker (+ HDMI audio extractor if the TV has no audio out) | ~S/ 100–170 |
-| Controller | Android phone (hotspot + remote app) | owned |
+| Part           | Example                                                                   | Approx. cost (Lima, Oct 2026) |
+| -------------- | ------------------------------------------------------------------------- | ----------------------------- |
+| Display device | Xiaomi Mi TV Stick (MDZ-24-AA), Fire TV Stick 2nd gen — or a Google TV set | already owned                 |
+| TV             | 32" HD, e.g. Miray MS32-E2000GBT (Google TV, 16 W speakers)               | ~S/ 399                       |
+| Optional       | Wired powered speaker (+ HDMI audio extractor if the TV has no audio out) | ~S/ 100–170                   |
+| Controller     | Android phone (hotspot + remote app)                                      | owned                         |
 
 Details: [`docs/hardware.md`](docs/hardware.md).
 
 ## Status
 
-Early planning — documentation only; the Phase 1 design is agreed. See [`docs/roadmap.md`](docs/roadmap.md).
+Early development — the Phase 1 design is agreed, the game engine is in place and a first TV app can be played with the remote; the final scoreboard look is next. See [`docs/roadmap.md`](docs/roadmap.md).
 
-| Phase | Scope | Status |
-|---|---|---|
-| 1 | TV app + stick remote | design done, code not started |
-| 2 | Phone controller over Wi-Fi | — |
-| 3 | Locked-phone control (volume keys, clicker, notification) | — |
-| 4 | Full basketball rules, roles, branding, more languages and sports | — |
+| Phase | Scope                                                             | Status                        |
+| ----- | ----------------------------------------------------------------- | ----------------------------- |
+| 1     | TV app + stick remote                                             | engine + TV skeleton done     |
+| 2     | Phone controller over Wi-Fi                                       | —                             |
+| 3     | Locked-phone control (volume keys, clicker, notification)         | —                             |
+| 4     | Full basketball rules, roles, branding, more languages and sports | —                             |
+
+## Install
+
+Download `tablero-tv-<version>.apk` from the [latest release](https://github.com/vgt3j4d4/tablero/releases/latest)
+and install it on the stick over adb (enable it as in [`docs/stick-setup.md`](docs/stick-setup.md) step 1):
+
+```bash
+adb connect <stick-ip>:5555
+adb install -r tablero-tv-<version>.apk
+```
+
+On the Xiaomi stick, `scripts/setup-stick.sh <stick-ip> --apk tablero-tv-<version>.apk` installs it and prepares the
+stick in one go.
 
 ## Getting started (developers)
 
-The Gradle project is not scaffolded yet. Planned flow:
+Requires JDK 17+ and the Android SDK (Android Studio recent enough for AGP 9.4).
 
 ```bash
-./gradlew :shared:test
+./gradlew :shared:test                 # engine unit tests
+./gradlew :tv-app:assembleDebug
 adb connect <stick-ip>:5555
 ./gradlew :tv-app:installDebug
 ```
 
-Preparing the stick (developer mode, debloat, boot into tablero): [`docs/stick-setup.md`](docs/stick-setup.md).
+Preparing the stick (developer mode, debloat, tablero as the home app): [`docs/stick-setup.md`](docs/stick-setup.md);
+[`scripts/setup-stick.sh`](scripts/setup-stick.sh) does it in one go.
 
 ## Docs
 
@@ -78,9 +93,23 @@ Preparing the stick (developer mode, debloat, boot into tablero): [`docs/stick-s
 - [Architecture](docs/architecture.md)
 - [Hardware](docs/hardware.md)
 - [Stick setup](docs/stick-setup.md)
+- [Releasing](docs/releasing.md)
 - [Roadmap](docs/roadmap.md)
 
 ## License
 
-[MIT](LICENSE). Bundled fonts keep their own license (SIL Open Font License 1.1) and ship with their license
-files.
+[MIT](LICENSE). Bundled fonts keep their own license, the SIL Open Font License 1.1, and ship unmodified with
+their license files:
+
+| Font | Version | Source | License file |
+| --- | --- | --- | --- |
+| DSEG7 Classic Bold | 0.46 | [keshikan/DSEG](https://github.com/keshikan/DSEG) | [`OFL-DSEG.txt`](tv-app/src/main/assets/licenses/OFL-DSEG.txt) |
+| Barlow Condensed 500–800 | 1.422 | [jpt/barlow](https://github.com/jpt/barlow) | [`OFL-BarlowCondensed.txt`](tv-app/src/main/assets/licenses/OFL-BarlowCondensed.txt) |
+
+The time-up buzzer (`tv-app/src/main/res/raw/buzzer.wav`) is synthesized by
+[`scripts/make-buzzer.py`](scripts/make-buzzer.py) and is covered by the MIT license like the code. The launcher
+banner and icon are vector drawables that [`scripts/make-icons.py`](scripts/make-icons.py) draws from the bundled
+fonts' glyph outlines; the font files themselves are not modified.
+
+The app's font files are in `tv-app/src/main/assets/fonts/`. The design mockups use the same fonts as web fonts in
+`docs/design/fonts/`.

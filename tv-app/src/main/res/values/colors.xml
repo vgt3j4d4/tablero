@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Scoreboard palette, see docs/design/README.md → Visual language. -->
+    <color name="board_background">#FF07080A</color>
+    <color name="led_red">#FFFF3B2F</color>
+    <color name="led_red_unlit">#FF160505</color>
+    <!-- Launcher banner and icon: unlit segments a touch brighter than on the board, so they survive small sizes. -->
+    <color name="led_red_unlit_icon">#FF2A0B09</color>
+    <color name="led_amber">#FFFFB21E</color>
+    <color name="led_amber_unlit">#FF161002</color>
+    <color name="clock_box">#FF0B0C0E</color>
+    <color name="clock_box_border">#FF1A1D22</color>
+    <color name="status_line">#FF16191D</color>
+    <color name="text">#FFF5F2EA</color>
+    <color name="text_off">#FF3A3F47</color>
+    <!-- Outdoor mode (menu → Mode): a light board for daylight; see BoardMode. -->
+    <color name="outdoor_background">#FFFFFFFF</color>
+    <color name="outdoor_ink">#FF0A0A0A</color>
+    <color name="outdoor_ink_unlit">#FFEEEFF1</color>
+    <color name="outdoor_score">#FFB0121B</color>
+    <color name="outdoor_score_unlit">#FFF6E7E8</color>
+    <color name="outdoor_status_line">#FFE3E5E8</color>
+    <!-- Clock-editing modes (quick adjust): amber ring and bar, dark ink on the bar. -->
+    <color name="adjust">#FFFFB21E</color>
+    <color name="adjust_ink">#FF3A2A05</color>
+    <!-- Time up: red frame around the board, red bar with white text; the focused button is white with red ink. -->
+    <color name="time_up_frame">#FFFF3B2F</color>
+    <color name="time_up_bar">#FFD92D20</color>
+    <color name="time_up_text">#FFFFFFFF</color>
+    <color name="time_up_ink">#FFA3180E</color>
+    <color name="time_up_outline">#B3FFFFFF</color>
+    <!-- Menu and dialogs: a dark panel over the dimmed board. -->
+    <color name="menu_scrim">#BD07080A</color>
+    <color name="modal_scrim">#CC07080A</color>
+    <color name="panel">#FF111317</color>
+    <color name="panel_raised">#FF1A1D22</color>
+    <color name="panel_line">#FF262A31</color>
+    <color name="menu_group_line">#FF22262D</color>
+    <color name="field_outline">#FF2A2E35</color>
+    <color name="text_soft">#FFB4B9C0</color>
+    <color name="text_muted">#FF8B919B</color>
+    <!-- How to use: keys tablero doesn't use, and the lines between the table's rows. -->
+    <color name="text_faint">#FF6B717A</color>
+    <color name="help_row_line">#FF1C1F24</color>
+    <!-- Destructive actions: the exit confirm's EXIT fills with it while OK is held. -->
+    <color name="destructive">#FFD92D20</color>
+</resources>

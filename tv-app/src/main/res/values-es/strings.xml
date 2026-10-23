@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Teams: home plays on the left, away on the right. Uppercased on the scoreboard. -->
+    <string name="team_home">Local</string>
+    <string name="team_away">Visita</string>
+
+    <!-- Status bar. -->
+    <string name="status_clock_running">RELOJ EN MARCHA</string>
+    <string name="status_clock_stopped">RELOJ DETENIDO</string>
+
+    <!-- Action confirmation over the status bar. %1$s is the team name, %2$s the change (+3, −1). -->
+    <string name="feedback_score">%1$s %2$s</string>
+    <!-- %1$s says what was undone: a score change (LOCAL +1) or one of the actions below. -->
+    <string name="feedback_undone">DESHECHO · %1$s</string>
+    <string name="feedback_nothing_to_undo">NADA QUE DESHACER</string>
+    <string name="undone_start_clock">INICIAR RELOJ</string>
+    <string name="undone_stop_clock">DETENER RELOJ</string>
+    <string name="undone_adjust_clock">AJUSTAR RELOJ</string>
+    <string name="undone_set_clock">FIJAR RELOJ DE JUEGO</string>
+    <string name="undone_reset_clock">REINICIAR RELOJ</string>
+    <string name="undone_new_game">NUEVO PARTIDO</string>
+    <string name="undone_game_length">DURACIÓN DEL PARTIDO</string>
+    <string name="undone_possession">FLECHA DE POSESIÓN</string>
+    <string name="undone_rules">REGLAS</string>
+    <string name="undone_next_period">SIGUIENTE PERIODO</string>
+    <string name="undone_end_break">FIN DEL DESCANSO</string>
+    <string name="undone_period">PERIODO</string>
+    <string name="feedback_foul">FALTA %1$s</string>
+
+    <!-- Possession arrow (↑): the label over the arrows between the scores, then its confirmations. %1$s is the team
+         the arrow now points to (LOCAL, VISITA). -->
+    <string name="possession_label">POS</string>
+    <string name="feedback_possession">POS → %1$s</string>
+    <string name="feedback_possession_hidden">POS OCULTA</string>
+
+    <string name="fouls_label">FALTAS</string>
+    <string name="period_label">PERIODO</string>
+    <string name="overtime_label">TIEMPO EXTRA</string>
+    <string name="foul_title">FALTA DE EQUIPO</string>
+
+    <!-- Time-up bar over the status bar. The result is in sentence case: %1$s is the winning team (Local, Visita),
+         %2$d its score and %3$d the other team's; a tie gives both scores. -->
+    <string name="time_up_title">FIN DEL PARTIDO</string>
+    <string name="time_up_wins">Gana %1$s %2$d–%3$d</string>
+    <string name="time_up_tie">Empate %1$d–%2$d</string>
+    <string name="time_up_new_game">NUEVO PARTIDO</string>
+    <string name="time_up_reset_clock">REINICIAR RELOJ · MISMO PUNTAJE</string>
+    <string name="time_up_period_end">FIN DEL PERIODO %1$d</string>
+    <string name="time_up_overtime_end">FIN DEL TIEMPO EXTRA %1$d</string>
+    <string name="time_up_leads">%1$s va ganando %2$d–%3$d</string>
+    <string name="time_up_break">DESCANSO · %1$s</string>
+    <string name="time_up_halftime">MEDIO TIEMPO · %1$s</string>
+    <string name="time_up_skip_break">SIN DESCANSO</string>
+
+    <string name="break_title">DESCANSO</string>
+    <string name="break_halftime">MEDIO TIEMPO</string>
+    <string name="break_next_period">El periodo %1$d empieza en 0:00</string>
+    <string name="break_next_overtime">El tiempo extra %1$d empieza en 0:00</string>
+    <string name="hint_adjust">AJUSTAR</string>
+    <string name="hint_end_break">TERMINAR DESCANSO</string>
+
+    <!-- Key hints: the remote key's label in a keycap, then what it does. -->
+    <string name="key_back">ATRÁS</string>
+    <string name="hint_undo">DESHACER</string>
+
+    <!-- Quick clock adjust (↓): bar over the status bar. %1$s is the clock when the overlay opened. -->
+    <string name="adjust_title">AJUSTAR RELOJ</string>
+    <string name="adjust_was">antes %1$s</string>
+    <string name="hint_minute">±1 MIN</string>
+    <string name="hint_second">±1 SEG</string>
+    <string name="hint_done">LISTO</string>
+    <string name="hint_cancel">CANCELAR</string>
+
+    <!-- Menu (Back long press): a panel of rows in sentence case. %1$s is the team name (Local, Visita). -->
+    <string name="menu_title">Menú</string>
+    <string name="menu_game_clock">Reloj de juego</string>
+    <string name="menu_game_length">Duración del partido</string>
+    <string name="menu_score">Puntos %1$s</string>
+    <string name="menu_new_game">Nuevo partido</string>
+    <string name="menu_period">Periodo</string>
+    <string name="menu_period_overtime">Tiempo extra %1$d</string>
+    <string name="menu_period_length">Duración del periodo</string>
+    <string name="menu_fouls">Faltas %1$s</string>
+    <string name="menu_rules">Reglas</string>
+    <string name="rules_pickup">Recreativo</string>
+    <string name="menu_layout">Diseño</string>
+    <!-- Menu → Layout values: today's board, and the one with bigger digits for small screens. -->
+    <string name="layout_classic">Clásico</string>
+    <string name="layout_large">Grande</string>
+    <string name="menu_mode">Modo</string>
+    <!-- Menu → Mode values: today's dark board, and a light one for daylight courts. -->
+    <string name="mode_indoor">Interior</string>
+    <string name="mode_outdoor">Exterior</string>
+    <string name="menu_language">Idioma</string>
+    <string name="menu_help">Cómo se usa</string>
+    <string name="menu_exit">Salir</string>
+    <string name="hint_move">MOVER</string>
+    <string name="hint_change">CAMBIAR</string>
+    <string name="hint_open">ABRIR</string>
+    <string name="hint_close">CERRAR</string>
+
+    <!-- Set game clock dialog (menu → Game clock), only while the clock is stopped. %1$s is the clock before. -->
+    <string name="set_clock_title">FIJAR RELOJ DE JUEGO</string>
+    <string name="set_clock_was">Antes %1$s · reloj detenido</string>
+    <string name="set_clock_minutes">MIN</string>
+    <string name="set_clock_seconds">SEG</string>
+    <string name="hint_field">CAMPO</string>
+    <string name="hint_save">GUARDAR</string>
+
+    <!-- Exit confirm (menu → Exit), only while the clock is stopped. The body depends on whether HOME
+         returns to the scoreboard (tablero is the default home app) or not. %1$d is how many seconds to hold OK. -->
+    <string name="exit_eyebrow">ADMINISTRACIÓN</string>
+    <string name="exit_title">¿Salir del marcador?</string>
+    <string name="exit_body_home">El puntaje y el reloj quedan guardados. Presiona INICIO en el control para volver al marcador.</string>
+    <string name="exit_body_apps">El puntaje y el reloj quedan guardados. Abre tablero desde la fila de apps para volver al marcador.</string>
+    <string name="exit_cancel">CANCELAR</string>
+    <string name="exit_confirm">SALIR</string>
+    <string name="exit_hold">MANTÉN OK · %1$d S</string>
+
+    <!-- How to use (menu → How to use, and once on the first launch): a generic remote and what each key does when
+         pressed or held. Row texts are in sentence case; %1$s is the team name (Local, Visita), uppercased in the
+         possession note. The legend's %1$s is the BACK key label, %2$s the menu row (Cómo se usa). -->
+    <string name="help_eyebrow">CÓMO SE USA</string>
+    <string name="help_title">Control remoto</string>
+    <string name="help_column_key">TECLA</string>
+    <string name="help_column_press">PRESIONAR</string>
+    <string name="help_column_hold">MANTENER</string>
+    <string name="help_clock">Iniciar / detener reloj</string>
+    <string name="help_clock_note">El botón del centro</string>
+    <string name="help_score_up">%1$s +1</string>
+    <string name="help_score_down">%1$s −1</string>
+    <string name="help_score_note">Presiona dos veces para 2 puntos, tres para 3</string>
+    <string name="help_possession">Cambiar flecha de posesión</string>
+    <string name="help_possession_note">La primera vez apunta a %1$s</string>
+    <string name="help_possession_hide">Ocultar flecha</string>
+    <string name="help_adjust">Ajustar reloj</string>
+    <string name="help_adjust_note">Funciona con el reloj en marcha</string>
+    <string name="help_adjust_note_breaks">Funciona con el reloj en marcha y en los descansos</string>
+    <string name="help_foul">Falta de equipo</string>
+    <string name="help_foul_note">Luego ← %1$s o → %2$s</string>
+    <string name="help_undo">Deshacer última acción</string>
+    <string name="help_undo_note">Corrige errores, incluso un nuevo partido</string>
+    <string name="help_menu">Abrir menú</string>
+    <string name="help_legend">Las teclas grises no se usan. Para volver a verla: Menú (mantén %1$s) → %2$s.</string>
+    <string name="help_remote">Tu control puede verse distinto</string>
+    <string name="key_home">INICIO</string>
+</resources>
