@@ -54,7 +54,7 @@ tablero/
 ├── tv-app/       # Android TV app: scoreboard view, buzzer, input adapters (remote keys, later WebSocket server)
 ├── remote-app/   # Android phone controller (Phase 2+)
 ├── scripts/      # make-buzzer.py (buzzer WAV), make-icons.py (banner + icon), setup/restore-stick.sh (Xiaomi)
-└── docs/         # architecture.md, hardware.md, stick-setup.md, roadmap.md, design/ (screens)
+└── docs/         # architecture.md, hardware.md, stick-setup.md, releasing.md, roadmap.md, design/ (screens)
 ```
 
 ## Architecture invariants (do not break these)
@@ -191,6 +191,7 @@ first time the app starts with the clock stopped; OK or Back closes it.
 ```bash
 ./gradlew :shared:test                     # engine/rules unit tests
 ./gradlew :tv-app:assembleDebug
+./gradlew :tv-app:assembleRelease          # signed only with the TABLERO_KEY* Gradle properties (docs/releasing.md)
 adb connect <stick-ip>:5555                # stick: Developer options → network debugging
 scripts/setup-stick.sh <stick-ip>         # Xiaomi: debloat, settings, kiosk (restore-stick.sh undoes it)
 ./gradlew :tv-app:installDebug
@@ -225,11 +226,14 @@ On-device testing happens **on the stick only**, installed over adb; there is no
 - Prefer small, reviewable commits; keep `docs/` updated when behavior or decisions change.
 - **Branches:** `develop` is the integration branch. Create feature branches from `develop` and open PRs against
   it. `main` only holds released code: merge `develop` → `main` when a release is ready.
+- **Releases:** bump `appVersionName` in `tv-app/build.gradle.kts`, then tag `v<it>` on `main`: the release
+  workflow drafts a GitHub release with the signed APK (`docs/releasing.md`).
 
 ## Further reading
 
 - `docs/architecture.md` — engine model, commands, clock, persistence, Phase 2 protocol.
 - `docs/hardware.md` — hardware choices, budget, audio, placement.
 - `docs/stick-setup.md` — preparing the Xiaomi stick (ADB, setup/restore scripts, debloat, kiosk, settings).
+- `docs/releasing.md` — the version, the signing key and cutting a release.
 - `docs/roadmap.md` — phases and task checklists.
 - `docs/design/` — reference screens for the TV app.

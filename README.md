@@ -60,6 +60,19 @@ Early development — the Phase 1 design is agreed, the game engine is in place 
 | 3     | Locked-phone control (volume keys, clicker, notification)         | —                             |
 | 4     | Full basketball rules, roles, branding, more languages and sports | —                             |
 
+## Install
+
+Download `tablero-tv-<version>.apk` from the [latest release](https://github.com/vgt3j4d4/tablero/releases/latest)
+and install it on the stick over adb (enable it as in [`docs/stick-setup.md`](docs/stick-setup.md) step 1):
+
+```bash
+adb connect <stick-ip>:5555
+adb install -r tablero-tv-<version>.apk
+```
+
+On the Xiaomi stick, `scripts/setup-stick.sh <stick-ip> --apk tablero-tv-<version>.apk` installs it and prepares the
+stick in one go.
+
 ## Getting started (developers)
 
 Requires JDK 17+ and the Android SDK (Android Studio recent enough for AGP 9.4).
@@ -80,6 +93,7 @@ Preparing the stick (developer mode, debloat, tablero as the home app): [`docs/s
 - [Architecture](docs/architecture.md)
 - [Hardware](docs/hardware.md)
 - [Stick setup](docs/stick-setup.md)
+- [Releasing](docs/releasing.md)
 - [Roadmap](docs/roadmap.md)
 
 ## License
